@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require("path");
 
-const gayperc = fs.readFileSync(path.join(__dirname, "data.json"));
+const gayperc = fs.readFileSync(path.join(__dirname, "gaydata.json"));
 
 const gaypercent = JSON.parse(gayperc);
 
@@ -29,7 +29,7 @@ module.exports = {
 
 		const returnstring = JSON.stringify(gaypercent);
 
-		fs.writeFileSync(path.join(__dirname, "data.json"), returnstring);
+		fs.writeFileSync(path.join(__dirname, "gaydata.json"), returnstring);
 		
 		message.channel.send("```" + message.author.username + " is " + newperson.gay * 100 + "% gay```");
 	},

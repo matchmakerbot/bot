@@ -14,21 +14,21 @@ const exampleEmbed2 = new Discord.RichEmbed()
 
 
 
-function fuckyouhaha() {
-    const d = Math.round(Math.random())
-
-    if (d === 0) {
-        return exampleEmbed
-    } else {
-        return exampleEmbed2
-    }
-}
-
-
 module.exports = {
     name: 'rr',
     description: 'u die',
     execute(message) {
+        function fuckyouhaha() {
+            const d = Math.round(Math.random())
+        
+            if (d === 0) {
+                return exampleEmbed
+            } else {
+                return exampleEmbed2
+            }
+        }
+
+        
         message.channel.send(fuckyouhaha());
     },
 }

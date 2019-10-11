@@ -11,13 +11,26 @@ const discordEmbed = new Discord.RichEmbed()
 	.addField('!random', '`Chooses a random word from what you write.`')
 	.addField('!rr', '`Will you live or die? Take the chance!`')
 	.setTimestamp()
-	.setFooter('Page 1/1')
+	.setFooter('Page 1/2')
 	
+	const discordEmbed2 = new Discord.RichEmbed()
+
+	.setAuthor("Deformed Bot Help Page", "https://media.discordapp.net/attachments/464556094728044564/619269142268215355/68884765_417923562160410_1636845361156849664_n.jpg?width=676&height=676")
+	.setColor('#F8534F')
+	.addField('!showerthoughts', '`Thing that you think about while taking a shower.`')
+	.addField('!reddit', '`Allows you to search posts with images on any given subreddit (Example = !reddit memes)`')
+	.addField('!idea', '`Submit or receive a random idea \n Usage = !idea your idea \n !idea random`')
+	.setTimestamp()
+	.setFooter('Page 2/2')
 
 	module.exports = {
 		name: 'help',
 		description: 'Gievs you a nice command list',
 		execute(message) {
+			if(message.content === "!help" || message.content === "!help 1"){
 			message.channel.send(discordEmbed);
-		},
+		} else if(message.content === "!help 2"){
+			message.channel.send(discordEmbed2);
+		}
+	}
 	}

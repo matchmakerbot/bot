@@ -1,3 +1,4 @@
+const Discord = require('discord.js')
 let sentences = [
     'Paint yourself white to avoid getting shot by the cops',
     'Keep wasps or hornets in your car to prevent it from being stolen',
@@ -15,17 +16,42 @@ let sentences = [
     'Don\'t live in the US.',
     'To avoid the last pee droplets from wetting your boxers, squeeze all the leftover pee out of your balls.',
     'Dont embarass a guy in public by telling him his fly is open. Be a man and zip it up youself.',
-    'Wanna win a snowball fight? Cover a rock with snow and throw it at your enemy.'
+    'Wanna win a snowball fight? Cover a rock with snow and throw it at your enemy.',
+    "Running water in your toilet helps to constantly clean the bowl so you won't have to.",
+    "If you need advice, ask other Redditors for advice.... They are probably equally as successful as you are.",
+    "Can’t afford mint? Brush your teeth before eating your home cooked meals",
+    "Cut your gasoline with water for increased mpg.",
+    "Vodka looks like water when you put it in a water bottle.",
+    "Have trouble sleeping? Turn on your car in the garage. The carbon monoxide from the exhaust will help you fall asleep quickly.",
+    "Conceive and adopt 365 kids each with a different birthday, then enjoy a free kids' meal every time you go out.",
+    "On hot days, open your fridge; the cold air will cool down your house!",
+    "Tired of hearing about school shootings? Try enouraging local teens to use bombs instead.",,
+    "tired of waiting at airport security? Pull out a gun. Most airports don't allow guns so it's unlikely anyone else will have one. Everyone will be at your mercy, you will be on your upgraded to first class flight in no time.",
+    "Don't laugh at your friend for getting hurt from a paper cut cause you might make the pussy cry even more.",
+    "Don't cough while your taking a shit, trust me.",
+    "Just pretend to be a hot girl to make your room mate clean the apartment.",
+    "https://i.redd.it/i4c9ygijglq31.jpg",
+    "Spice up your panic attack by using a harmonica.",
+    "Prisons could cut down on cost, by giving inmates knives instead of having them ruin 1000s of spoons a year",
+    "Act like a pedophile to get free candy on Halloween.",
+    "If you're sad, or depressed because you're ugly, don't blame yourself. Blame the ugly fuckers that made you.",
+    "Devote your life to religion so when you need to lie, just put it on god and they’ll believe you.",
+    "Stop Saving for Retirement. Start spending that money on whiskey.",
+    "Legally change yourself to a female so that you have a longer life expectancy"
+    
 ]
-function lptrandom () { 
-    return sentences[Math.floor(Math.random() * sentences.length)]
-}
-
 
 module.exports = {
 	name: 'lpt',
 	description: 'it pongs',
 	execute(message) {
-		message.channel.send(lptrandom());
+        function lptrandom () { 
+            return sentences[Math.floor(Math.random() * sentences.length)]
+        }
+        
+        const discordEmbed = new Discord.RichEmbed()
+                    .setColor('#F8534F')
+                    .setTitle(lptrandom())
+		message.channel.send(discordEmbed);
 	},
 };

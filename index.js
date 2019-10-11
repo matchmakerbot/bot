@@ -3,7 +3,7 @@ const fs = require('fs');
 const Discord = require('discord.js')
 const { prefix, token } = require('./config.json');
 
-const client = new Discord.Client();
+const client = require("./client.js");
 client.commands = new Discord.Collection();
 
 
@@ -16,7 +16,7 @@ for (const file of commandFiles) {
 
 client.once('ready', () => {
     console.log('its rdy');
-
+    client.user.setActivity("Type !help to get info")
 });
 
 client.on('message', message => {
@@ -25,9 +25,13 @@ client.on('message', message => {
         message.channel.send("Can you not be rude.");
     }
     */
+   if (message.author.id === "309813079707877377" && message.content.startsWith(prefix)) {
+       return message.channel.send("Vai te foder")
+   }
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
-    const args = message.content.slice(prefix.length).split(/ +/);8
+    const args = message.content.slice(prefix.length).split(/ +/);
+    
     const command = args.shift().toLowerCase();
     
     if (!client.commands.has(command)) return;
