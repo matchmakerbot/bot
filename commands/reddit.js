@@ -64,10 +64,21 @@ module.exports = {
                                     message.channel.send(discordEmbed)
                                 } else {
                                     if (subreddit.data.children[randomnumber].data.is_self) {
+                                        /*let descriptionlength = allowed[randomnumber].data.selftext.length
+                                        for (let i of descriptionlength) {
+                                            while (i > 2048) {
+                                                const discordEmbed = new Discord.RichEmbed()
+                                                    .setColor('#F8534F')
+                                                    .setTitle(":x: Let's not use that word, shall we?");
+                        
+                                                return message.channel.send(discordEmbed)
+                                            }
+                                        }
+                                        */
                                         const discordEmbed = new Discord.RichEmbed()
                                             .setColor('#F8534F')
                                             .setTitle(allowed[randomnumber].data.title)
-                                            .setDescription("👍 " + allowed[randomnumber].data.ups + " | 💬 " + allowed[randomnumber].data.num_comments)
+                                            .setFooter("👍 " + allowed[randomnumber].data.ups + " | 💬 " + allowed[randomnumber].data.num_comments)
                                             .setURL("https://reddit.com" + allowed[randomnumber].data.permalink)
                                         return message.channel.send(discordEmbed)
                                     } else {
@@ -75,7 +86,7 @@ module.exports = {
                                             .setColor('#F8534F')
                                             .setTitle(allowed[randomnumber].data.title)
                                             .setImage(allowed[randomnumber].data.url)
-                                            .setDescription("👍 " + allowed[randomnumber].data.ups + " | 💬 " + allowed[randomnumber].data.num_comments)
+                                            .setFooter("👍 " + allowed[randomnumber].data.ups + " | 💬 " + allowed[randomnumber].data.num_comments)
                                             .setURL("https://reddit.com" + allowed[randomnumber].data.permalink)
                                         return message.channel.send(discordEmbed)
                                     }
@@ -86,7 +97,7 @@ module.exports = {
                         console.error(error)
                         const discordEmbed = new Discord.RichEmbed()
                             .setColor('#F8534F')
-                            .setDescription(":x: Please insert a valid subreddit");
+                            .setDescription(":x: Error");
 
                         message.channel.send(discordEmbed);
                     });
