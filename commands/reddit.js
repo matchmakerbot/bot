@@ -43,8 +43,10 @@ module.exports = {
                             message.channel.send("Let's not do that")
                         } else {
                             const data = subreddit.data;
-                            const allowed = message.channel.nsfw ? data.children : data.children.filter(post => !post.over_18);
-                            const randomnumber = Math.floor(Math.random() * allowed.length);
+
+                            const childrenConst = data.children
+                            
+                            const randomnumber = Math.floor(Math.random() * childrenConst.length);
 
                             if (subreddit.error === 404 || data.children.length === 0) {
                                 return message.channel.send(discordEmbed)
@@ -63,31 +65,49 @@ module.exports = {
                                         .setTitle(":warning: This subreddit is disabled in this channel. If you think this shouldn't be happening please contact the developer");
                                     message.channel.send(discordEmbed)
                                 } else {
+
+                                    //this code is a fucking mess pls dont spank me
+
                                     if (subreddit.data.children[randomnumber].data.is_self) {
-                                        /*let descriptionlength = allowed[randomnumber].data.selftext.length
-                                        for (let i of descriptionlength) {
-                                            while (i > 2048) {
-                                                const discordEmbed = new Discord.RichEmbed()
-                                                    .setColor('#F8534F')
-                                                    .setTitle(":x: Let's not use that word, shall we?");
-                        
-                                                return message.channel.send(discordEmbed)
-                                            }
+
+                                        if (childrenConst[randomnumber].data.selftext.length > 2048) {
+
+                                            const first2048 = child[randomnumber].data.selftext.slice(0, 2048);
+
+                                            const everythingAfterThat = childrenConst[randomnumber].data.selftext.slice(2048);
+                                            
+                                            const discordEmbed = new Discord.RichEmbed()
+                                                .setColor('#F8534F')
+                                                .setTitle(childrenConst[randomnumber].data.title)
+                                                .setDescription(first2048)
+                                                .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
+
+                                            const discordEmbed2 = new Discord.RichEmbed()
+                                                .setColor('#F8534F')
+                                                .setDescription(everythingAfterThat)
+                                                .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
+
+                                            message.channel.send(discordEmbed)
+                                            message.channel.send(discordEmbed2)
+                                            return;
+
+                                        } else {
+                                            const discordEmbed = new Discord.RichEmbed()
+                                                .setColor('#F8534F')
+                                                .setTitle(childrenConst[randomnumber].data.title)
+                                                .setDescription(childrenConst[randomnumber].data.selftext)
+                                                .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
+                                                .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
+                                                
+                                            return message.channel.send(discordEmbed)
                                         }
-                                        */
-                                        const discordEmbed = new Discord.RichEmbed()
-                                            .setColor('#F8534F')
-                                            .setTitle(allowed[randomnumber].data.title)
-                                            .setFooter("👍 " + allowed[randomnumber].data.ups + " | 💬 " + allowed[randomnumber].data.num_comments)
-                                            .setURL("https://reddit.com" + allowed[randomnumber].data.permalink)
-                                        return message.channel.send(discordEmbed)
                                     } else {
                                         const discordEmbed = new Discord.RichEmbed()
                                             .setColor('#F8534F')
-                                            .setTitle(allowed[randomnumber].data.title)
-                                            .setImage(allowed[randomnumber].data.url)
-                                            .setFooter("👍 " + allowed[randomnumber].data.ups + " | 💬 " + allowed[randomnumber].data.num_comments)
-                                            .setURL("https://reddit.com" + allowed[randomnumber].data.permalink)
+                                            .setTitle(childrenConst[randomnumber].data.title)
+                                            .setImage(childrenConst[randomnumber].data.url)
+                                            .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
+                                            .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
                                         return message.channel.send(discordEmbed)
                                     }
                                 }
