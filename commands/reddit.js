@@ -45,7 +45,7 @@ module.exports = {
                             const data = subreddit.data;
 
                             const childrenConst = data.children
-                            
+
                             const randomnumber = Math.floor(Math.random() * childrenConst.length);
 
                             if (subreddit.error === 404 || data.children.length === 0) {
@@ -66,8 +66,7 @@ module.exports = {
                                     message.channel.send(discordEmbed)
                                 } else {
 
-                                    //this code is a fucking mess pls dont spank me
-
+                                    //this code is a fucking mess pls dont spank me daddy
                                     if (subreddit.data.children[randomnumber].data.is_self) {
 
                                         if (childrenConst[randomnumber].data.selftext.length > 2048) {
@@ -75,7 +74,7 @@ module.exports = {
                                             const first2048 = child[randomnumber].data.selftext.slice(0, 2048);
 
                                             const everythingAfterThat = childrenConst[randomnumber].data.selftext.slice(2048);
-                                            
+
                                             const discordEmbed = new Discord.RichEmbed()
                                                 .setColor('#F8534F')
                                                 .setTitle(childrenConst[randomnumber].data.title)
@@ -98,7 +97,7 @@ module.exports = {
                                                 .setDescription(childrenConst[randomnumber].data.selftext)
                                                 .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
                                                 .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
-                                                
+
                                             return message.channel.send(discordEmbed)
                                         }
                                     } else {
