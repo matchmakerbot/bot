@@ -6,9 +6,6 @@ module.exports = {
   name: 'reddit',
   description: 'ur gay',
   execute(message) {
-    if (message.author.id === "474656347380645889") {
-      return
-    }
 
     //Before the reddit thingy actually works
     function WordCount() {
@@ -65,11 +62,12 @@ module.exports = {
                 if (nsfwpost && message.channel.id === "416015319736385547") {
                   const discordEmbed = new Discord.RichEmbed()
                     .setColor('#F8534F')
-                    .setTitle(":warning: This subreddit is disabled in this channel. If you think this shouldn't be happening please contact the developer");
+                    .setTitle(":warning: This subreddit is disabled in this channel. If you think this shouldn't be happening please ping Tweeno");
                   message.channel.send(discordEmbed)
                 } else {
 
-                  //this code is a fucking mess pls dont spank me daddy
+                  //this code is a fucking mess pls not the belt daddy
+
                   if (subreddit.data.children[randomnumber].data.is_self) {
 
                     if (childrenConst[randomnumber].data.selftext.length > 2048) {
@@ -119,7 +117,7 @@ module.exports = {
             console.error(error)
             const discordEmbed = new Discord.RichEmbed()
               .setColor('#F8534F')
-              .setDescription(":x: Error");
+              .setTitle(":x: Error. Either the subreddit doesn't exist or Reddit made a Fuckie Wookie.");
 
             message.channel.send(discordEmbed);
           });

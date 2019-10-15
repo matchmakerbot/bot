@@ -22,7 +22,9 @@ module.exports = {
   name: 'idea',
   description: 'ur gay',
   execute(message) {
-    //random idea and fetching nam
+
+    //random idea and fetching name
+
     if (message.content === "!idea random") {
       const idk = Math.floor(Math.random() * storedideas.length)
 
@@ -56,13 +58,20 @@ module.exports = {
 
     } else {
 
-      //latest idea that also fetches name
+      //Deletes idea
+
       if (message.content === "!idea delete") {
       
       let aaa = storedideas.find(THEARRAY => THEARRAY.thegayassthatwrotethis === message.author.id)
-      console.log(storedideas.indexOf(aaa))
+      let foundnumber = storedideas.indexOf(aaa)
+      console.log(foundnumber)
+      storedideas.splice(foundnumber, 1)
+      return message.channel.send("Idea Deleted")
+      
 
       } 
+
+      //latest idea that also fetches name
 
       else if (message.content === "!idea latest") {
 
