@@ -12,23 +12,25 @@ module.exports = {
       let split2 = message.content
       return split2.split(" ").length;
     }
+
     const discordEmbed = new Discord.RichEmbed()
       .setColor('#F8534F')
-      .setDescription(":x: Please only insert one word.")
+      .setTitle(":x: Please only insert one word.")
 
     if (WordCount() > 2) {
       message.channel.send(discordEmbed)
     } else {
+
       function messageEndswith() {
         const split = message.content.split(" ");
 
         return split[split.length - 1];
       }
-      
+
       if (message.content === "!reddit") {
         const discordEmbed = new Discord.RichEmbed()
-        .setColor('#F8534F')
-        .setDescription(":x: Please specify the subreddit you want to search.")
+          .setColor('#F8534F')
+          .setDescription(":x: Please specify the subreddit you want to search.")
         message.channel.send(discordEmbed)
       } else {
 
@@ -49,6 +51,9 @@ module.exports = {
               const randomnumber = Math.floor(Math.random() * childrenConst.length);
 
               if (subreddit.error === 404 || data.children.length === 0) {
+                const discordEmbed = new Discord.RichEmbed()
+              .setColor('#F8534F')
+              .setTitle(":x: Error. Either the subreddit doesn't exist or Reddit made a Fuckie Wookie.");
                 return message.channel.send(discordEmbed)
               }
               const nsfwpost = subreddit.data.children[randomnumber].data.over_18;
