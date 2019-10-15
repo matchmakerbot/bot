@@ -3,7 +3,7 @@ const Discord = require('discord.js')
 const rp = require("request-promise-native");
 
 module.exports = {
-  name: 'reddit',
+  name: 'r',
   description: 'ur gay',
   execute(message) {
 
@@ -27,7 +27,7 @@ module.exports = {
       return split[split.length - 1];
     }
 
-    if (message.content === "!reddit") {
+    if (WordCount() === 1) {
       const discordEmbed = new Discord.RichEmbed()
         .setColor('#F8534F')
         .setDescription(":x: Please specify the subreddit you want to search.")
