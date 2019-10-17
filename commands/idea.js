@@ -6,9 +6,7 @@ const ideas = fs.readFileSync(path.join(__dirname, "ideadata.json"));
 
 const storedideas = JSON.parse(ideas);
 
-const {
-  prefix
-} = require('../config.json');
+const { prefix } = require('../config.json');
 
 const Discord = require('discord.js')
 
@@ -23,9 +21,18 @@ module.exports = {
   description: 'ur gay',
   execute(message) {
 
+    function messageEndswith() {
+      const split = message.content.split(" ");
+
+      return split[split.length - 1];
+    }
+    function WordCount() {
+      let split2 = message.content
+      return split2.split(" ").length;
+    }
     //random idea and fetching name
 
-    if (message.content === "!idea random") {
+    if (messageEndswith() === "random" && WordCount() == 2) {
       const idk = Math.floor(Math.random() * storedideas.length)
 
       const today2 = storedideas[idk].date
@@ -45,6 +52,7 @@ module.exports = {
             .setColor('#F8534F')
             .setTitle(rIdea)
             .setFooter('Sent by: ' + username + " at " + today3);
+
           return message.channel.send(discordEmbed)
 
 
@@ -60,20 +68,22 @@ module.exports = {
 
       //Deletes idea
 
-      if (message.content === "!idea delete") {
+      if (messageEndswith() === "delete" && WordCount() == 2) {
       
       let aaa = storedideas.find(THEARRAY => THEARRAY.thegayassthatwrotethis === message.author.id)
-      let foundnumber = storedideas.indexOf(aaa)
-      console.log(foundnumber)
-      storedideas.splice(foundnumber, 1)
-      return message.channel.send("Idea Deleted")
-      
 
+      let foundnumber = storedideas.indexOf(aaa)
+
+      console.log(foundnumber)
+
+      storedideas.splice(foundnumber, 1)
+
+      return message.channel.send("Idea Deleted")
       } 
 
       //latest idea that also fetches name
 
-      else if (message.content === "!idea latest") {
+       if (message.content === "!idea latest") {
 
         let sortedArray = storedideas.sort(function (a, b) {
           return new Date(a.date) - new Date(b.date)
@@ -112,7 +122,10 @@ module.exports = {
 
         for (let person of storedideas) {
           if (person.thegayassthatwrotethis === message.author.id) {
-            message.channel.send("You can't send more than 1 idea. Do !idea delete do delete your old idea");
+            const discordEmbed = new Discord.RichEmbed()
+          .setColor('#F8534F')
+          .setTitle("You can't send more than 1 idea. Do !idea delete do delete your old idea")
+            message.channel.send(discordEmbed);
             return;
           }}
             
