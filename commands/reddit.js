@@ -8,6 +8,7 @@ module.exports = {
   execute(message) {
 
     //Before the reddit thingy actually works
+    
     function WordCount() {
       let split2 = message.content
       return split2.split(" ").length;
@@ -115,8 +116,6 @@ module.exports = {
             .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
           return message.channel.send(discordEmbed)
         }
-
-
 
 
       }).catch(error => {

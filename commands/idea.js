@@ -6,7 +6,9 @@ const ideas = fs.readFileSync(path.join(__dirname, "ideadata.json"));
 
 const storedideas = JSON.parse(ideas);
 
-const { prefix } = require('../config.json');
+const {
+  prefix
+} = require('../config.json');
 
 const Discord = require('discord.js')
 
@@ -26,6 +28,7 @@ module.exports = {
 
       return split[split.length - 1];
     }
+
     function WordCount() {
       let split2 = message.content
       return split2.split(" ").length;
@@ -69,21 +72,30 @@ module.exports = {
       //Deletes idea
 
       if (messageEndswith() === "delete" && WordCount() == 2) {
-      
-      let aaa = storedideas.find(THEARRAY => THEARRAY.thegayassthatwrotethis === message.author.id)
 
-      let foundnumber = storedideas.indexOf(aaa)
+        let aaa = storedideas.find(THEARRAY => THEARRAY.thegayassthatwrotethis === message.author.id)
 
-      console.log(foundnumber)
+        let foundnumber = storedideas.indexOf(aaa)
 
-      storedideas.splice(foundnumber, 1)
+        console.log(foundnumber)
 
-      return message.channel.send("Idea Deleted")
-      } 
+        storedideas.splice(foundnumber, 1)
+
+        const returnstring = JSON.stringify(storedideas);
+
+        fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
+
+        const discordEmbed = new Discord.RichEmbed()
+              .setColor('#F8534F')
+              .setTitle("Idea Deleted");
+
+        return message.channel.send(discordEmbed)
+        
+      }
 
       //latest idea that also fetches name
 
-       if (message.content === "!idea latest") {
+      if (message.content === "!idea latest") {
 
         let sortedArray = storedideas.sort(function (a, b) {
           return new Date(a.date) - new Date(b.date)
@@ -123,12 +135,13 @@ module.exports = {
         for (let person of storedideas) {
           if (person.thegayassthatwrotethis === message.author.id) {
             const discordEmbed = new Discord.RichEmbed()
-          .setColor('#F8534F')
-          .setTitle("You can't send more than 1 idea. Do !idea delete do delete your old idea")
+              .setColor('#F8534F')
+              .setTitle("You can't send more than 1 idea. Do !idea delete do delete your old idea")
             message.channel.send(discordEmbed);
             return;
-          }}
-            
+          }
+        }
+
 
         for (let word of blacklist) {
           if (message.content.includes(word)) {
