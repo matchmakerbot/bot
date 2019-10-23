@@ -65,118 +65,126 @@ module.exports = {
 
       }
 
-      idk2()
+     return idk2()
 
-    } else {
+    }
 
-      //Deletes idea
+    //Deletes idea
 
-      if (messageEndswith() === "delete" && WordCount() == 2) {
+    if (messageEndswith() === "delete" && WordCount() == 2) {
 
-        let aaa = storedideas.find(THEARRAY => THEARRAY.thegayassthatwrotethis === message.author.id)
+      let aaa = storedideas.find(THEARRAY => THEARRAY.thegayassthatwrotethis === message.author.id)
 
-        let foundnumber = storedideas.indexOf(aaa)
+      let foundnumber = storedideas.indexOf(aaa)
 
-        console.log(foundnumber)
+      console.log(foundnumber)
 
-        storedideas.splice(foundnumber, 1)
-
-        const returnstring = JSON.stringify(storedideas);
-
-        fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
-
+      if (foundnumber === -1) {
         const discordEmbed = new Discord.RichEmbed()
-              .setColor('#F8534F')
-              .setTitle("Idea Deleted");
+        .setColor('#F8534F')
+        .setTitle(":x: You have no ideas to delete!");
 
         return message.channel.send(discordEmbed)
-        
       }
 
-      //latest idea that also fetches name
+      storedideas.splice(foundnumber, 1)
 
-      if (message.content === "!idea latest") {
+      const returnstring = JSON.stringify(storedideas);
 
-        let sortedArray = storedideas.sort(function (a, b) {
-          return new Date(a.date) - new Date(b.date)
+      fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
+
+      const discordEmbed = new Discord.RichEmbed()
+        .setColor('#F8534F')
+        .setTitle("Idea Deleted");
+
+      return message.channel.send(discordEmbed)
+
+    }
+
+    //latest idea that also fetches name
+
+    if (message.content === "!idea latest") {
+
+      let sortedArray = storedideas.sort(function (a, b) {
+        return new Date(a.date) - new Date(b.date)
+      })
+
+      let lastArray = sortedArray[sortedArray.length - 1];
+
+      const today4 = new Date(lastArray.date).toLocaleString()
+
+      const idyeet = lastArray.thegayassthatwrotethis
+
+      async function idk3() {
+        await client.fetchUser(idyeet).then(response => {
+
+          const username = response.username
+
+          const discordEmbed = new Discord.RichEmbed()
+            .setColor('#F8534F')
+            .setTitle(lastArray.text)
+            .setFooter('Sent by: ' + username + " at " + today4);
+          return message.channel.send(discordEmbed)
+
+            .catch(error => {
+              console.log(error)
+            })
         })
 
-        let lastArray = sortedArray[sortedArray.length - 1];
+      }
 
-        const today4 = new Date(lastArray.date).toLocaleString()
+      idk3()
 
-        const idyeet = lastArray.thegayassthatwrotethis
+    }
+    //Inserting new ideas
 
-        async function idk3() {
-          await client.fetchUser(idyeet).then(response => {
+    let blacklist = ["faggot", "nigger", "nigga", "fag", ]
 
-            const username = response.username
-
-            const discordEmbed = new Discord.RichEmbed()
-              .setColor('#F8534F')
-              .setTitle(lastArray.text)
-              .setFooter('Sent by: ' + username + " at " + today4);
-            return message.channel.send(discordEmbed)
-
-              .catch(error => {
-                console.log(error)
-              })
-          })
-
-        }
-
-        idk3()
-
-      } else {
-        //Inserting new ideas
-
-        let blacklist = ["faggot", "nigger", "nigga", "fag", ]
-
-        for (let person of storedideas) {
-          if (person.thegayassthatwrotethis === message.author.id) {
-            const discordEmbed = new Discord.RichEmbed()
-              .setColor('#F8534F')
-              .setTitle("You can't send more than 1 idea. Do !idea delete do delete your old idea")
-            message.channel.send(discordEmbed);
-            return;
-          }
-        }
-
-
-        for (let word of blacklist) {
-          if (message.content.includes(word)) {
-            const discordEmbed = new Discord.RichEmbed()
-              .setColor('#F8534F')
-              .setTitle(":x: Let's not use that word, shall we?");
-
-            return message.channel.send(discordEmbed)
-          }
-        }
-
-        function ideastring() {
-          return message.content.slice(prefix.length + "idea ".length);
-        }
-        const storedvalue = ideastring()
-
-        const today = new Date();
-
-        let newIdea = {
-          text: storedvalue,
-          thegayassthatwrotethis: message.author.id,
-          date: today
-        };
-
-        storedideas.push(newIdea);
-
-        const returnstring = JSON.stringify(storedideas);
-
-        fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
-
+    for (let person of storedideas) {
+      if (person.thegayassthatwrotethis === message.author.id) {
         const discordEmbed = new Discord.RichEmbed()
           .setColor('#F8534F')
-          .setTitle("Idea inserted into the database. ")
+          .setTitle(":x: You can't send more than 1 idea. Do !idea delete do delete your old idea")
+        message.channel.send(discordEmbed);
+        return;
+      }
+    }
+
+
+    for (let word of blacklist) {
+      if (message.content.includes(word)) {
+        const discordEmbed = new Discord.RichEmbed()
+          .setColor('#F8534F')
+          .setTitle(":x: Let's not use that word, shall we?");
+
         return message.channel.send(discordEmbed)
       }
     }
+
+    function ideastring() {
+      return message.content.slice(prefix.length + "idea ".length);
+    }
+    const storedvalue = ideastring()
+
+    const today = new Date();
+
+    let newIdea = {
+      text: storedvalue,
+      thegayassthatwrotethis: message.author.id,
+      date: today
+    };
+
+    storedideas.push(newIdea);
+
+    const returnstring = JSON.stringify(storedideas);
+
+    fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
+
+    const discordEmbed = new Discord.RichEmbed()
+      .setColor('#F8534F')
+      .setTitle("Idea inserted into the database. ")
+    return message.channel.send(discordEmbed)
+
+
   }
 }
