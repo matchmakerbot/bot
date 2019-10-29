@@ -25,9 +25,6 @@ client.on('message', message => {
         message.channel.send("Can you not be rude.");
     }
     */
-   if (message.author.id === "309813079707877377" && message.content.startsWith(prefix)) {
-       return message.channel.send("Vai te foder")
-   }
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     const args = message.content.slice(prefix.length).split(/ +/);
