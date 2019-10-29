@@ -39,4 +39,4 @@ client.on('message', message => {
 client.commands.get(command).execute(message, args);
 });
 
-client.login(token);
+client.login(process.env.token);
