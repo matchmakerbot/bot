@@ -1,7 +1,7 @@
 "use strict";
 const fs = require('fs');
 const Discord = require('discord.js')
-const prefix = require("../prefix.json");
+const prefix = require("./prefix.json");
 
 const client = require("./client.js");
 client.commands = new Discord.Collection();
