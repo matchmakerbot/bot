@@ -8,7 +8,7 @@ const storedideas = JSON.parse(ideas);
 
 const {
   prefix
-} = "!"
+} = require("../prefix.json")
 
 const Discord = require('discord.js')
 
