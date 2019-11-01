@@ -1,4 +1,4 @@
-const {prefix} = require("../prefix.json")
+const prefix = require('../config.json').prefix;
 
 
 module.exports = {
@@ -6,8 +6,9 @@ module.exports = {
     description: 'idk',
     execute(message) {
         if(message.content === "!random"){
-            message.channel.send("Please specify your words.")
+            return message.channel.send("Please specify your words.")
         }
+        
         let messagewithoutrandom = message.content.slice(prefix.length + "random ".length);
 
 

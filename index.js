@@ -1,9 +1,12 @@
 "use strict";
 const fs = require('fs');
+
 const Discord = require('discord.js')
-const prefix = require("./prefix.json");
+
+const prefix = require("./config.json").prefix;
 
 const client = require("./client.js");
+
 client.commands = new Discord.Collection();
 
 
@@ -20,11 +23,7 @@ client.once('ready', () => {
 });
 
 client.on('message', message => {
-/*
-    if(message.content.startsWith("fuck")) {
-        message.channel.send("Can you not be rude.");
-    }
-    */
+
     if (!message.content.startsWith(prefix) || message.author.bot) return;
 
     const args = message.content.slice(prefix.length).split(/ +/);
