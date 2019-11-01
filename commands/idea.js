@@ -6,9 +6,7 @@ const ideas = fs.readFileSync(path.join(__dirname, "ideadata.json"));
 
 const storedideas = JSON.parse(ideas);
 
-const {
-  prefix
-} = require("../prefix.json")
+const prefix = require('../config.json').prefix;
 
 const Discord = require('discord.js')
 
