@@ -8,7 +8,7 @@ module.exports = {
   execute(message) {
 
     //Before the reddit thingy actually works
-    
+
     function WordCount() {
       let split2 = message.content
       return split2.split(" ").length;
@@ -111,14 +111,17 @@ module.exports = {
           const discordEmbed = new Discord.RichEmbed()
             .setColor('#F8534F')
             .setTitle(childrenConst[randomnumber].data.title)
-            .setImage(childrenConst[randomnumber].data.url)
             .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
             .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
-          return message.channel.send(discordEmbed)
-        }
+          
+            
+            message.channel.send(childrenConst[randomnumber].data.url)
+            message.channel.send(discordEmbed)
+          }
 
 
-      }).catch(error => {
+      })
+      .catch(error => {
         console.error(error)
         const discordEmbed = new Discord.RichEmbed()
           .setColor('#F8534F')
