@@ -35,4 +35,4 @@ client.on('message', message => {
 client.commands.get(command).execute(message, args);
 });
 
-client.login("NTcxODM5ODI2NzQ0MTgwNzM2.XY404w.gBT0GHVwx8Nt1SuiDCZt8Oi6gGg");
+client.login(process.env.token);
