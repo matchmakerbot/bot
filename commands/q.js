@@ -8,7 +8,7 @@ let Csixmansarray = []
 let Dsixmansarray = []
 let Esixmansarray = []
 
-const shuffle = function (array) {
+let shuffle = function (array) {
 
     const currentIndex = array.length;
     let temporaryValue, randomIndex;
@@ -29,11 +29,12 @@ const shuffle = function (array) {
 
 };
 
+//yea i know this code is horrible no need to bash me
+
 module.exports = {
     name: 'q',
     description: '6man bot',
     execute(message) {
-
         const toAdd = {
             id: message.author.id,
             name: message.author.username,
@@ -45,7 +46,7 @@ module.exports = {
             return split[split.length - 1];
         };
 
-        const sixmans = sixmansarray => {
+        let sixmans = sixmansarray => {
             if (messageEndswith() === "leave") {
 
                 const index = sixmansarray.map(e => e.id).indexOf(message.author.id)
