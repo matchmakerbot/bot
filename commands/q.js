@@ -10,7 +10,7 @@ let Esixmansarray = []
 
 let shuffle = function (array) {
 
-    const currentIndex = array.length;
+    let currentIndex = array.length;
     let temporaryValue, randomIndex;
 
     while (0 !== currentIndex) {
