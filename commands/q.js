@@ -285,7 +285,7 @@ const execute = (message) => {
 
                     embed.setTitle(":x: You're already in the queue!");
 
-                    //return message.channel.send(embed);
+                    return message.channel.send(embed);
                 }
             };
 
@@ -329,10 +329,9 @@ const execute = (message) => {
                         fs.writeFileSync(path.join(__dirname, "sixmansdata.json"), returnstring);
                     };
 
-                    const indexPlayerData = storedData.map(e => e.id).indexOf(userId)
+                    const indexPlayerData = storedData.map(e => e.id).indexOf(user.id)
 
                     if (storedData.map(e => e.id).includes(user.id) && !storedData[indexPlayerData].servers.map(e => e.channelID).includes(message.channel.id)) {
-
 
                         storedData[indexPlayerData].servers.push(channelStatus);
 
@@ -359,7 +358,7 @@ const execute = (message) => {
 
                 const discordEmbed1 = new Discord.RichEmbed()
                     .setColor(EMBED_COLOR)
-                    .addField("Game is ready:", "Join your team's chat")
+                    .addField("Game is ready:", `Game ID is: ${gameCount}`)
                     .addField(":small_orange_diamond: -Team 1-", `${sixmansarray[0].name}, ${sixmansarray[1].name}, ${sixmansarray[2].name}`)
                     .addField(":small_blue_diamond: -Team 2-", `${sixmansarray[3].name}, ${sixmansarray[4].name}, ${sixmansarray[5].name}`);
                 message.channel.send(discordEmbed1);
@@ -464,4 +463,4 @@ module.exports = {
 
 //captains
 //cancel
-//reset 
+//reset scoreO bot 
