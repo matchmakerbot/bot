@@ -22,16 +22,16 @@ let channelQueues = {
         name: "a"
     }, {
         id: "215982178046181376",
-        name: "a"
+        name: "b"
     }, {
         id: "215982178046181376",
-        name: "a"
+        name: "c"
     }, {
         id: "215982178046181376",
-        name: "a"
+        name: "d"
     }, {
         id: "215982178046181376",
-        name: "a"
+        name: "e"
     }]
 };
 
@@ -268,10 +268,12 @@ const execute = (message) => {
 
             for (let j = 0; j < storedData.length; j++) {
                 if (storedData[j].id === userId) {
+                    
+                    const scoreDirectory =  storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
 
-                    embed.addField("Wins:", storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)].wins);
+                    embed.addField("Wins:", scoreDirectory.wins);
 
-                    embed.addField("Losses:", storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)].losses);
+                    embed.addField("Losses:", scoreDirectory.losses);
 
                     return message.channel.send(embed);
                 }
@@ -463,4 +465,4 @@ module.exports = {
 
 //captains
 //cancel
-//reset scoreO bot 
+//reset score channel
