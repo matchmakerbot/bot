@@ -37,18 +37,18 @@ let sentences = [
     "If you're sad, or depressed because you're ugly, don't blame yourself. Blame the ugly fuckers that made you.",
     "Devote your life to religion so when you need to lie, just put it on god and they’ll believe you.",
     "Stop Saving for Retirement. Start spending that money on whiskey.",
-    "Legally change yourself to a female so that you have a longer life expectancy"
+    "Legally change yourself to a female so that you have a longer life expectancy",
+    "Spice up any Social media comment with random quotation marks: \n “Congrats“ on your baby. \n Congrats on “your“ baby. \n Congrats on your “baby“."
+
     
 ]
-
+function lptrandom () { 
+    return sentences[Math.floor(Math.random() * sentences.length)]
+}
 module.exports = {
 	name: 'lpt',
 	description: 'it pongs',
 	execute(message) {
-        function lptrandom () { 
-            return sentences[Math.floor(Math.random() * sentences.length)]
-        }
-        
         const discordEmbed = new Discord.RichEmbed()
                     .setColor('#F8534F')
                     .setTitle(lptrandom())

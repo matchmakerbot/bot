@@ -1,4 +1,7 @@
 "use strict";
+
+const config = require("./config.json");
+
 const fs = require('fs');
 
 const Discord = require('discord.js')
@@ -7,9 +10,15 @@ const prefix = require("./config.json").prefix;
 
 const client = require("./client.js");
 
+const MongoDB = require("./mongodb");
+
 client.commands = new Discord.Collection();
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+
+MongoDB.connectdb(async (err) => {
+
+  if (err) throw err
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
@@ -39,5 +48,9 @@ client.on('message', message => {
     client.commands.get(command).execute(message, args);
 
 });
+
+})
+
+
 
 client.login(process.env.token);

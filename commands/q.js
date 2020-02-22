@@ -6,34 +6,40 @@ const Discord = require("discord.js")
 
 const client = require("../client.js");
 
-const data = fs.readFileSync(path.join(__dirname, "sixmansdata.json"));
+const MongoDB = require("../mongodb");
 
-const storedData = JSON.parse(data);
+const db = MongoDB.getDB()
+
+const dbCollection = db.collection('sixman')
+
+let gameCount = 0;
 
 const EMBED_COLOR = "#F8534F";
 
-let gameCount = 0
-
 let ongoingGames = [];
+
+let storedData;
 
 let channelQueues = {
     '615184953721880617': [{
-        id: "215982178046181376",
+        id: "286832262937444352",
         name: "a"
     }, {
-        id: "215982178046181376",
+        id: "306892029349068804",
         name: "b"
     }, {
-        id: "215982178046181376",
+        id: "280742339868229643",
         name: "c"
     }, {
-        id: "215982178046181376",
+        id: "138051800853905408",
         name: "d"
     }, {
-        id: "215982178046181376",
+        id: "204200071670136833",
         name: "e"
     }]
 };
+
+let cancelqueue = {}
 
 const shuffle = function (array) {
 
@@ -68,29 +74,42 @@ const args = message => {
     return arraywords[0].substring(1)
 }
 
-const execute = (message) => {
 
-    const givewinLose = (score) => {
+const execute = async (message) => {
+
+    await dbCollection.find().toArray().then(dataDB => {
+        storedData = dataDB
+    })
+
+    const channel_ID = message.channel.id
+
+    const givewinLose = async (score) => {
+
+        const a = `servers.$.${score}`
+
         for (let games of ongoingGames) {
             for (let j = 0; j < storedData.length; j++) {
-                if (storedData[j].id === games[i].id && storedData[j].servers.map(e => e.channelID).includes(message.channel.id)) {
+                if (storedData[j].id === games[i].id && storedData[j].servers.map(e => e.channelID).includes(channel_ID)) {
 
-                    storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)][score]++;
-
-                    const returnstring = JSON.stringify(storedData);
-
-                    fs.writeFileSync(path.join(__dirname, "sixmansdata.json"), returnstring);
+                    await dbCollection.update({
+                        id: storedData[j].id,
+                        ["servers.channelID"]: channel_ID
+                    }, {
+                        $set: {
+                            [a]: storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(channel_ID)][score] + 1
+                        }
+                    });
                 }
             }
         }
     }
 
-    if (!Object.keys(channelQueues).includes(message.channel.id)) {
+    if (!Object.keys(channelQueues).includes(channel_ID)) {
 
-        channelQueues[message.channel.id] = []
+        channelQueues[channel_ID] = []
     }
 
-    const sixmansarray = channelQueues[message.channel.id]
+    const sixmansarray = channelQueues[channel_ID]
 
     const userId = message.author.id
 
@@ -140,13 +159,18 @@ const execute = (message) => {
                         return message.channel.send(embed);
                     }
 
+                    if (!ongoingGames.flat().map(e => e.id).includes(userId) || ongoingGames.length === 0) {
+
+                        embed.setTitle(":x: You are not in a game!");
+
+                        return message.channel.send(embed)
+                    }
+
                     for (let games of ongoingGames) {
 
-                        if (!games.map(e => e.id).includes(userId) || ongoingGames.length === 0) {
+                        if (!games.map(e => e.id).includes(userId)) {
 
-                            embed.setTitle(":x: You are not in a game!");
-
-                            return message.channel.send(embed)
+                            continue
                         }
 
                         embed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
@@ -200,14 +224,18 @@ const execute = (message) => {
 
                         return message.channel.send(embed)
                     }
+                    if (!ongoingGames.flat().map(e => e.id).includes(userId)) {
+
+                        embed.setTitle(":x: You are not in a game!");
+
+                        return message.channel.send(embed);
+                    }
 
                     for (let games of ongoingGames) {
 
-                        if (!games.map(e => e.id).includes(userId) || ongoingGames.length === 0) {
+                        if (!games.map(e => e.id).includes(userId)) {
 
-                            embed.setTitle(":x: You are not in a game!");
-
-                            return message.channel.send(embed);
+                            continue
                         }
 
                         embed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
@@ -229,7 +257,7 @@ const execute = (message) => {
                             }
                             for (i = 0; i < 3; i++) {
                                 givewinLose("wins");
-                                5
+
                             }
                         }
 
@@ -253,6 +281,70 @@ const execute = (message) => {
                         return message.channel.send(embed);
                     }
                 }
+                default: {
+                    embed.setTitle(":x: Invalid Parameters!")
+                    return message.channel.send(embed);
+                }
+            }
+        }
+
+        case "cancel": {
+            if (!ongoingGames.flat().map(e => e.id).includes(userId) || ongoingGames.length === 0) {
+
+                embed.setTitle(":x: You are not in a game!");
+
+                return message.channel.send(embed);
+            }
+            for (let games of ongoingGames) {
+
+                if (!games.map(e => e.id).includes(userId)) {
+
+                    continue
+                }
+
+                const IDGame = games[6].gameID
+
+                const index = games.map(e => e.id).indexOf(userId);
+
+                if (!Object.keys(cancelqueue).includes(IDGame.toString())) {
+
+                    cancelqueue[IDGame] = []
+                }
+
+                const cancelqueuearray = cancelqueue[IDGame]
+
+                cancelqueuearray.push({
+                    id: userId
+                })
+
+                embed.setTitle(`:exclamation: ${games[index].name} wants to cancel game ${IDGame}. (${cancelqueuearray.length}/4)`)
+
+                message.channel.send(embed)
+
+                if (cancelqueuearray.length === 4) {
+
+                    for (let channel of message.guild.channels.array()) {
+
+                        if (channel.name === `Team-1-Game-${games[6].gameID}`) {
+
+                            channel.delete()
+                        }
+
+                        if (channel.name === `Team-2-Game-${games[6].gameID}`) {
+
+                            channel.delete()
+                        }
+                    }
+
+                    embed.setTitle(`:white_check_mark: Game ${games[6].gameID} Cancelled!`)
+
+                    let index = ongoingGames.indexOf(games);
+
+                    ongoingGames.splice(index, 1);
+
+                    return message.channel.send(embed)
+                }
+
             }
             break;
         }
@@ -268,8 +360,15 @@ const execute = (message) => {
 
             for (let j = 0; j < storedData.length; j++) {
                 if (storedData[j].id === userId) {
-                    
-                    const scoreDirectory =  storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
+
+                    const scoreDirectory = storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
+
+                    if (scoreDirectory === undefined) {
+
+                        embed.setTitle(":x: You haven't played any games in here yet!");
+
+                        return message.channel.send(embed);
+                    }
 
                     embed.addField("Wins:", scoreDirectory.wins);
 
@@ -280,6 +379,78 @@ const execute = (message) => {
             }
             break;
         }
+
+        case "reset": {
+            if (message.content.split(" ").length == 1) {
+                embed.setTitle(":x: Invalid Parameters!")
+                return message.channel.send(embed)
+            }
+            const secondarg = message.content.split(" ")[1]
+
+            const thirdparam = message.content.split(" ")[2]
+
+            if (!message.member.hasPermission("ADMINISTRATOR")) {
+                embed.setTitle(":x: You do not have Administrator permission!")
+                return message.channel.send(embed)
+            }
+
+            const winlossarray = ["wins", "losses"]
+
+            switch (secondarg) {
+                case "channel": {
+
+                    if (message.content.split(" ").length !== 2) {
+
+                        embed.setTitle(":x: Invalid Parameters!")
+
+                        return message.channel.send(embed)
+                    }
+
+                    for (let score of winlossarray) {
+                        const a = `servers.$.${score}`
+                        await dbCollection.update({
+                            ["servers.channelID"]: channel_ID
+                        }, {
+                            $set: {
+                                [a]: 0
+                            }
+                        });
+                    }
+                    embed.setTitle(":white_check_mark: Player's score reset!")
+                    return message.channel.send(embed)
+                }
+                case "player": {
+                    if (message.content.split(" ").length !== 3) {
+
+                        embed.setTitle(":x: Invalid Parameters!")
+
+                        return message.channel.send(embed)
+
+                    }
+                    for (let score of winlossarray) {
+                        const a = `servers.$.${score}`
+                        await dbCollection.update({
+                            id: thirdparam,
+                            ["servers.channelID"]: channel_ID
+                        }, {
+                            $set: {
+                                [a]: 0
+                            }
+
+                        });
+                    }
+                    embed.setTitle(":white_check_mark: Player's score reset!")
+
+                    return message.channel.send(embed)
+                }
+                default: {
+                    embed.setTitle(":x: Invalid Parameters!")
+
+                    return message.channel.send(embed);
+                }
+            }
+        }
+
         case "q": {
 
             for (let person of sixmansarray) {
@@ -291,14 +462,12 @@ const execute = (message) => {
                 }
             };
 
-            for (let games of ongoingGames) {
 
-                if (games.map(e => e.id).includes(userId)) {
+            if (ongoingGames.flat().map(e => e.id).includes(userId)) {
 
-                    embed.setTitle(":x: You are in the middle of a game!");
+                embed.setTitle(":x: You are in the middle of a game!");
 
-                    return message.channel.send(embed);
-                };
+                return message.channel.send(embed);
             };
 
             sixmansarray.push(toAdd);
@@ -316,30 +485,35 @@ const execute = (message) => {
                         servers: []
                     };
 
-                    const channelStatus = {
-                        channelID: message.channel.id,
-                        wins: 0,
-                        losses: 0
-                    }
+                    // yes i know having lots of requests isnt good ill change when i can be fucked to
 
-                    if (!storedData.map(e => e.id).includes(user.id)) {
-
-                        storedData.push(newUser);
-
-                        const returnstring = JSON.stringify(storedData);
-
-                        fs.writeFileSync(path.join(__dirname, "sixmansdata.json"), returnstring);
+                    if (await dbCollection.find({
+                            id: user.id
+                        }).toArray().then(dataDB => dataDB.length === 0)) {
+                        (async function () {
+                            await dbCollection.insert(newUser);
+                        })()
                     };
 
-                    const indexPlayerData = storedData.map(e => e.id).indexOf(user.id)
+                    if (await dbCollection.find({
+                            id: user.id,
+                            ["servers.channelID"]: channel_ID
+                        }).toArray().then(dataDB => dataDB.length === 0)) {
 
-                    if (storedData.map(e => e.id).includes(user.id) && !storedData[indexPlayerData].servers.map(e => e.channelID).includes(message.channel.id)) {
+                        (async function () {
+                            await dbCollection.update({
+                                id: user.id
+                            }, {
+                                $push: {
+                                    servers: {
+                                        channelID: channel_ID,
+                                        wins: 0,
+                                        losses: 0
+                                    }
+                                }
+                            });
+                        })()
 
-                        storedData[indexPlayerData].servers.push(channelStatus);
-
-                        const returnstring = JSON.stringify(storedData);
-
-                        fs.writeFileSync(path.join(__dirname, "sixmansdata.json"), returnstring);
                     };
                 };
 
@@ -347,6 +521,16 @@ const execute = (message) => {
                     name: Math.floor(Math.random() * 99999),
                     password: Math.floor(Math.random() * 99999)
                 };
+
+                /*                embed.setTitle("A game has been made! Please select your preferred gamemode: Captains (c) or Random (r) ")
+
+                                message.channel.send(embed).then(() => {
+                                    message.channel.awaitMessages( { maxMatches: 1, time: 30000, errors: ['time'] })
+                                        .then(collected => {
+                                            console.log(collected)
+                                        })
+
+                                    });*/
 
                 shuffle(sixmansarray);
 
@@ -458,11 +642,10 @@ const execute = (message) => {
 };
 
 module.exports = {
-    name: ['q', "status", "leave", "report", "score"],
+    name: ['q', "status", "leave", "report", "score", "cancel"],
     description: '6man bot',
     execute
 };
 
 //captains
 //cancel
-//reset score channel
