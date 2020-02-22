@@ -398,7 +398,7 @@ const execute = async (message) => {
 
             switch (secondarg) {
                 case "channel": {
-
+//needs to be fixed, channel doesnt work, probably because of the params in update
                     if (message.content.split(" ").length !== 2) {
 
                         embed.setTitle(":x: Invalid Parameters!")
@@ -642,7 +642,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-    name: ['q', "status", "leave", "report", "score", "cancel"],
+    name: ['q', "status", "leave", "report", "score", "cancel", "reset"],
     description: '6man bot',
     execute
 };
