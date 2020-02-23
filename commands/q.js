@@ -1,7 +1,3 @@
-const fs = require("fs");
-
-const path = require("path");
-
 const Discord = require("discord.js")
 
 const client = require("../client.js");
@@ -20,24 +16,7 @@ let ongoingGames = [];
 
 let storedData;
 
-let channelQueues = {
-    '615184953721880617': [{
-        id: "286832262937444352",
-        name: "a"
-    }, {
-        id: "306892029349068804",
-        name: "b"
-    }, {
-        id: "280742339868229643",
-        name: "c"
-    }, {
-        id: "138051800853905408",
-        name: "d"
-    }, {
-        id: "204200071670136833",
-        name: "e"
-    }]
-};
+let channelQueues = {};
 
 let cancelqueue = {}
 
@@ -85,18 +64,17 @@ const execute = async (message) => {
 
     const givewinLose = async (score) => {
 
-        const a = `servers.$.${score}`
-
-        for (let games of ongoingGames) {
-            for (let j = 0; j < storedData.length; j++) {
-                if (storedData[j].id === games[i].id && storedData[j].servers.map(e => e.channelID).includes(channel_ID)) {
+            for (let user of storedData) {
+                for (let games of ongoingGames) {
+                const channelpos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
+                const a = `servers.${channelpos}.${score}`
+                if (user.id === games[i].id) {
 
                     await dbCollection.update({
-                        id: storedData[j].id,
-                        ["servers.channelID"]: channel_ID
+                        id: user.id
                     }, {
                         $set: {
-                            [a]: storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(channel_ID)][score] + 1
+                            [a]: user.servers[user.servers.map(e => e.channelID).indexOf(channel_ID)][score] + 1
                         }
                     });
                 }
@@ -398,24 +376,29 @@ const execute = async (message) => {
 
             switch (secondarg) {
                 case "channel": {
-//needs to be fixed, channel doesnt work, probably because of the params in update
                     if (message.content.split(" ").length !== 2) {
 
                         embed.setTitle(":x: Invalid Parameters!")
 
                         return message.channel.send(embed)
                     }
+                    for (let user of storedData) {
+                        const channelpos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
+                        if (channelpos !== -1) {
+                            for (let score of winlossarray) {
+                                const a = `servers.${channelpos}.${score}`
 
-                    for (let score of winlossarray) {
-                        const a = `servers.$.${score}`
-                        await dbCollection.update({
-                            ["servers.channelID"]: channel_ID
-                        }, {
-                            $set: {
-                                [a]: 0
+                                await dbCollection.update({
+                                    id: user.id
+                                }, {
+                                    $set: {
+                                        [a]: 0
+                                    }
+                                });
                             }
-                        });
+                        }
                     }
+
                     embed.setTitle(":white_check_mark: Player's score reset!")
                     return message.channel.send(embed)
                 }
@@ -427,18 +410,27 @@ const execute = async (message) => {
                         return message.channel.send(embed)
 
                     }
-                    for (let score of winlossarray) {
-                        const a = `servers.$.${score}`
-                        await dbCollection.update({
-                            id: thirdparam,
-                            ["servers.channelID"]: channel_ID
-                        }, {
-                            $set: {
-                                [a]: 0
-                            }
+                        const channelpos = storedData[storedData.map(e => e.id).indexOf(thirdparam)].servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
 
-                        });
-                    }
+                        if (channelpos == -1) {
+                            embed.setTitle(":x: This user hasn't played any games in this channel!")
+                            return message.channel.send(embed)
+                        } else {
+                            for (let score of winlossarray) {
+
+                                const a = `servers.${channelpos}.${score}`
+                                await dbCollection.update({
+                                    id: thirdparam
+                                }, {
+                                    $set: {
+                                        [a]: 0
+                                    }
+
+                                });
+                            }
+                        }
+                    
+
                     embed.setTitle(":white_check_mark: Player's score reset!")
 
                     return message.channel.send(embed)
