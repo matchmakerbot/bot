@@ -16,7 +16,11 @@ let ongoingGames = [];
 
 let storedData;
 
+const usednums = []
+
 const tempobject = {}
+
+let hasvoted = false
 
 let channelQueues = {};
 
@@ -322,6 +326,8 @@ const execute = async (message) => {
 
                     let index = ongoingGames.indexOf(games);
 
+                    cancelqueue[IDGame] = []
+
                     ongoingGames.splice(index, 1);
 
                     return message.channel.send(embed)
@@ -470,6 +476,13 @@ const execute = async (message) => {
                 return message.channel.send(embed);
             };
 
+            if (Object.entries(tempobject).length !== 0) {
+
+                embed.setTitle(":x: Please wait for the next game to be decided!")
+
+                return message.channel.send(embed)
+            }
+
             sixmansarray.push(toAdd);
 
             embed.setTitle(":white_check_mark: Added to queue!");
@@ -534,7 +547,7 @@ const execute = async (message) => {
 
                 message.channel.send(embed)
 
-                const filter = m => m.content.split("")[1] === "r" || m.content.split("")[1] === "c"
+                let filter = m => m.content.split("")[1] === "r" || m.content.split("")[1] === "c"
 
                 message.channel.createMessageCollector(filter, {
                     time: 15000
@@ -548,15 +561,25 @@ const execute = async (message) => {
                             param: m.content.split("")[1]
                         })
                     }
-
                 })
 
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                await new Promise(resolve => setTimeout(resolve, 15000));
 
                 function getOccurrence(array, value) {
+
                     return array.filter((v) => (v === value)).length;
                 }
+
+                const rc = ["r", "c"]
+                if (rorcArray.length === 0) {
+
+                    rorcArray.push({
+                        param: rc[Math.floor(Math.random() * rc.length)]
+                    })
+                }
+
                 if (getOccurrence(rorcArray.map(e => e.param), "r") === getOccurrence(rorcArray.map(e => e.param), "c")) {
+
                     rorcArray.push({
                         param: rorcArray[Math.floor(Math.random() * rorcArray.map(e => e.param).length)].param
                     })
@@ -584,18 +607,16 @@ const execute = async (message) => {
                         .addField("Password:", valuesforpm.password)
                         .addField("You have to:", `Join match(Created by ${sixmansarray[0].name})`);
 
-                    const errorEmbed = new Discord.RichEmbed()
-                        .setColor(EMBED_COLOR)
-
 
                     for (let users of sixmansarray) {
                         if (users.id !== sixmansarray[0].id && users.id !== sixmansarray[6].id) {
 
                             client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
+                                const errorEmbed = new Discord.RichEmbed()
+                                    .setColor(EMBED_COLOR)
+                                    .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
 
                                 console.error(error);
-
-                                errorEmbed.setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
 
                                 message.channel.send(errorEmbed)
                             });
@@ -609,12 +630,12 @@ const execute = async (message) => {
                         .addField("You have to:", "Create Match");
 
                     client.users.get(sixmansarray[0].id).send(CreateMatchEmbed).catch(error => {
-
-                        console.error(error);
-
-                        errorEmbed.setTitle(`:x: Couldn't sent message to ${sixmansarray[0].name}, please check if your DM'S aren't set to friends only.`);
+                        const errorEmbed = new Discord.RichEmbed()
+                            .setColor(EMBED_COLOR)
+                            .setTitle(`:x: Couldn't sent message to ${sixmansarray[0].name}, please check if your DM'S aren't set to friends only.`);
 
                         message.channel.send(errorEmbed)
+                        console.error(error);
                     });
 
                     message.guild.createChannel(`Team-1-Game-${gameCount}`, {
@@ -667,6 +688,8 @@ const execute = async (message) => {
 
                 } else if (getOccurrence(rorcArray.map(e => e.param), "c") > getOccurrence(rorcArray.map(e => e.param), "r")) {
 
+                    //yes this code is horrible no shit sherlock
+
                     sixmansarray.push({
                         gameID: gameCount
                     })
@@ -697,14 +720,269 @@ const execute = async (message) => {
                             .setColor(EMBED_COLOR)
                             .setTitle(`Game ID: ${tempObjectlol[6].gameID}`)
                             .addField(`Captain for team 1`, tempObjectlol[0].name)
-                            .addField(`Captain for team 2`, tempObjectlol[1].name)
+                            .addField(`Captain for team 2`, tempObjectlol[1].name);
 
                         message.channel.send(CaptainsEmbed)
-                        //im getting there
+
+                        const privatedm0 = client.users.get("215982178046181376")
+
+                        const privatedm1 = client.users.get("215982178046181376")
+
+                        tempObjectlol.shift()
+                        tempObjectlol.shift()
+
+                        const Captain1st = new Discord.RichEmbed()
+                            .setColor(EMBED_COLOR)
+                            .setTitle("Choose one:")
+                            .addField(`1 :`, tempObjectlol[0].name)
+                            .addField(`2 :`, tempObjectlol[1].name)
+                            .addField(`3 :`, tempObjectlol[2].name)
+                            .addField(`4 :`, tempObjectlol[3].name);
+
+                        privatedm0.send(Captain1st).catch(error => {
+                            const errorEmbed = new Discord.RichEmbed()
+                                .setColor(EMBED_COLOR)
+                                .setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`);
+
+                            console.error(error);
+
+                            message.channel.send(errorEmbed)
+                        });
+
+                        filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 4
+
+                        await privatedm0.createDM().then(m => {
+                            m.createMessageCollector(filter, {
+                                time: 20000
+                            }).on('collect', m => {
+                                const parsedM = parseInt(m) - 1
+                                if (!hasvoted) {
+
+                                    sixmansarray[1] = tempObjectlol[parsedM]
+
+                                    tempObjectlol.splice(parsedM, 1)
+
+                                    hasvoted = true
+                                }
+                            })
+                        })
+
+                        await new Promise(resolve => setTimeout(resolve, 20000));
+
+                        if (!hasvoted) {
+
+                            const randomnumber = Math.floor(Math.random() * 4)
+
+                            sixmansarray[1] = tempObjectlol[randomnumber]
+
+                            tempObjectlol.splice(randomnumber, 1)
+                        }
+
+                        hasvoted = false
+
+                        const Captain2nd = new Discord.RichEmbed()
+                            .setColor(EMBED_COLOR)
+                            .setTitle("Choose two:")
+                            .addField(`1 :`, tempObjectlol[0].name)
+                            .addField(`2 :`, tempObjectlol[1].name)
+                            .addField(`3 :`, tempObjectlol[2].name);
+
+                        privatedm1.send(Captain2nd).catch(error => {
+                            const errorEmbed = new Discord.RichEmbed()
+                                .setColor(EMBED_COLOR)
+                                .setTitle(`:x: Couldn't sent message to ${privatedm1}, please check if your DM'S aren't set to friends only.`);
+
+                            console.error(error);
+
+                            message.channel.send(errorEmbed)
+                        });
+
+                        filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 4
+
+                        privatedm1.createDM().then(m => {
+                            m.createMessageCollector(filter, {
+                                time: 20000
+                            }).on('collect', m => {
+
+                                const parsedM = parseInt(m) - 1
+
+                                if (!hasvoted) {
+
+                                    sixmansarray[4] = tempObjectlol[parsedM]
+
+                                    hasvoted = true
+
+                                    usednums.push(parsedM)
+
+                                } else if (hasvoted && !usednums.includes(parsedM) && hasvoted !== "all") {
+
+                                    sixmansarray[5] = tempObjectlol[parsedM]
+
+                                    hasvoted = "all"
+
+                                    usednums.push(parsedM)
+
+                                    tempObjectlol.splice(usednums[0], 1)
+
+                                    if (usednums[1] > usednums[0]) {
+
+                                        tempObjectlol.splice(usednums[1] - 1, 1)
+                                    } else {
+
+                                        tempObjectlol.splice(usednums[1], 1)
+                                    }
+
+                                }
+
+                            })
+                        })
+
+                        await new Promise(resolve => setTimeout(resolve, 20000));
+
+                        const randomnumber = Math.floor(Math.random() * 3)
+
+                        let randomnumber2 = Math.floor(Math.random() * 3)
+
+                        if (!hasvoted) {
+
+                            while (randomnumber === randomnumber2) {
+                                randomnumber2 = Math.floor(Math.random() * 3)
+                            }
+
+                            sixmansarray[4] = tempObjectlol[randomnumber]
+
+                            sixmansarray[5] = tempObjectlol[randomnumber2]
+
+                            tempObjectlol.splice(randomnumber, 1)
+
+                            if (randomnumber2 > randomnumber) {
+
+                                tempObjectlol.splice(randomnumber2 - 1, 1)
+                            } else {
+
+                                tempObjectlol.splice(randomnumber2, 1)
+                            }
+
+                        } else if (hasvoted && hasvoted !== "all") {
+
+                            while (usednums.includes(randomnumber2)) {
+
+                                randomnumber2 = Math.floor(Math.random() * 2)
+                            }
+
+                            sixmansarray[5] = tempObjectlol[randomnumber2]
+
+                            tempObjectlol.splice(usednums[0], 1)
+
+                            if (randomnumber2 > usednums[0]) {
+
+                            tempObjectlol.splice(randomnumber2 - 1, 1)
+                            } else {
+
+                                tempObjectlol.splice(randomnumber2, 1)
+                            }
+                        }
+
+                        sixmansarray[2] = tempObjectlol[0]
+
+                        tempObjectlol.splice(0, tempObjectlol.length);
+
+                        ongoingGames.push([...sixmansarray])
+
+                        const discordEmbed1 = new Discord.RichEmbed()
+                            .setColor(EMBED_COLOR)
+                            .addField("Game is ready:", `Game ID is: ${sixmansarray[6].gameID}`)
+                            .addField(":small_orange_diamond: -Team 1-", `${sixmansarray[0].name}, ${sixmansarray[1].name}, ${sixmansarray[2].name}`)
+                            .addField(":small_blue_diamond: -Team 2-", `${sixmansarray[3].name}, ${sixmansarray[4].name}, ${sixmansarray[5].name}`);
+                        message.channel.send(discordEmbed1);
+
+                        const JoinMatchEmbed = new Discord.RichEmbed()
+                            .setColor(EMBED_COLOR)
+                            .addField("Name:", valuesforpm.name)
+                            .addField("Password:", valuesforpm.password)
+                            .addField("You have to:", `Join match(Created by ${sixmansarray[0].name})`);
+
+
+                        for (let users of sixmansarray) {
+                            if (users.id !== sixmansarray[0].id && users.id !== sixmansarray[6].id) {
+
+                                client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
+                                    const errorEmbed = new Discord.RichEmbed()
+                                        .setColor(EMBED_COLOR)
+                                        .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
+
+                                    console.error(error);
+
+                                    message.channel.send(errorEmbed)
+                                });
+                            };
+                        };
+
+                        const CreateMatchEmbed = new Discord.RichEmbed()
+                            .setColor(EMBED_COLOR)
+                            .addField("Name:", valuesforpm.name)
+                            .addField("Password:", valuesforpm.password)
+                            .addField("You have to:", "Create Match");
+
+                        client.users.get(sixmansarray[0].id).send(CreateMatchEmbed).catch(error => {
+                            const errorEmbed = new Discord.RichEmbed()
+                                .setColor(EMBED_COLOR)
+                                .setTitle(`:x: Couldn't sent message to ${sixmansarray[0].name}, please check if your DM'S aren't set to friends only.`);
+
+                            message.channel.send(errorEmbed)
+                            console.error(error);
+                        });
+
+                        message.guild.createChannel(`Team-1-Game-${sixmansarray[6].gameID}`, {
+                                type: 'voice',
+                                parent: message.channel.parentID,
+                                permissionOverwrites: [{
+                                        id: message.guild.defaultRole,
+                                        deny: "CONNECT"
+                                    },
+                                    {
+                                        id: sixmansarray[0].id,
+                                        allow: "CONNECT"
+                                    },
+                                    {
+                                        id: sixmansarray[1].id,
+                                        allow: "CONNECT"
+                                    },
+                                    {
+                                        id: sixmansarray[2].id,
+                                        allow: "CONNECT"
+                                    }
+                                ]
+                            })
+                            .catch(console.error)
+
+                        message.guild.createChannel(`Team-2-Game-${gameCount}`, {
+                                type: 'voice',
+                                parent: message.channel.parentID,
+                                permissionOverwrites: [{
+                                        id: message.guild.defaultRole,
+                                        deny: "CONNECT"
+                                    },
+                                    {
+                                        id: sixmansarray[3].id,
+                                        allow: "CONNECT"
+                                    },
+                                    {
+                                        id: sixmansarray[4].id,
+                                        allow: "CONNECT"
+                                    },
+                                    {
+                                        id: sixmansarray[5].id,
+                                        allow: "CONNECT"
+                                    }
+                                ]
+                            })
+                            .catch(console.error)
+
+                        sixmansarray.splice(0, sixmansarray.length);
+
                     }
-
                 }
-
             };
         }
     };
@@ -716,6 +994,3 @@ module.exports = {
     description: '6man bot',
     execute
 };
-
-//captains
-//cancel
