@@ -387,11 +387,13 @@ const execute = async (message) => {
                         return message.channel.send(embed)
                     }
 
-                    storedData.filter(a => {
+                    storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1)
 
-                        return a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1
+                    if (storedData.length === 0) {
+                        embed.setTitle(":x: No games have been played in here!");
 
-                    })
+                        return message.channel.send(embed);
+                    }
 
                     storedData.sort((a, b) => {
 
