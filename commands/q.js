@@ -72,9 +72,9 @@ const execute = async (message) => {
         for (let user of storedData) {
             for (let games of ongoingGames) {
 
-                const channelpos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
+                const channelpos = user.servers.map(e => e.channelID).indexOf(channel_ID)
 
-                const a = `servers.${channelpos}.${score}`
+                const sort = `servers.${channelpos}.${score}`
 
                 if (user.id === games[i].id) {
 
@@ -82,7 +82,7 @@ const execute = async (message) => {
                         id: user.id
                     }, {
                         $set: {
-                            [a]: user.servers[user.servers.map(e => e.channelID).indexOf(channel_ID)][score] + 1
+                            [sort]: user.servers[channelpos][score] + 1,
                         }
                     });
                 }
@@ -104,12 +104,21 @@ const execute = async (message) => {
         name: message.author.username,
     };
 
+    const index = sixmansarray.map(e => e.id).indexOf(userId);
+
     const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
 
     switch (args(message)) {
 
         case "leave": {
-            const index = sixmansarray.map(e => e.id).indexOf(userId);
+
+            for (let captainGames of Object.values(tempobject).flat()) {
+                if (captainGames.map(e => e.id).includes(userId) || sixmansarray.length === 6) {
+
+                    embed.setTitle(":x: You can't leave now!");
+                    return message.channel.send(embed);
+                }
+            }
 
             if (index === -1) {
 
@@ -338,35 +347,78 @@ const execute = async (message) => {
         }
 
         case "score": {
+            switch (messageEndswith(message)) {
+                case "me": {
+                    if (!storedData.map(e => e.id).includes(userId)) {
 
-            if (!storedData.map(e => e.id).includes(userId)) {
-
-                embed.setTitle(":x: You haven't played any games yet!");
-
-                return message.channel.send(embed);
-            }
-
-            for (let j = 0; j < storedData.length; j++) {
-                if (storedData[j].id === userId) {
-
-                    const scoreDirectory = storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
-
-                    if (scoreDirectory === undefined) {
-
-                        embed.setTitle(":x: You haven't played any games in here yet!");
+                        embed.setTitle(":x: You haven't played any games yet!");
 
                         return message.channel.send(embed);
                     }
 
-                    embed.addField("Wins:", scoreDirectory.wins);
+                    for (let j = 0; j < storedData.length; j++) {
+                        if (storedData[j].id === userId) {
 
-                    embed.addField("Losses:", scoreDirectory.losses);
+                            const scoreDirectory = storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
 
-                    return message.channel.send(embed);
+                            if (scoreDirectory === undefined) {
+
+                                embed.setTitle(":x: You haven't played any games in here yet!");
+
+                                return message.channel.send(embed);
+                            }
+
+                            embed.addField("Wins:", scoreDirectory.wins);
+
+                            embed.addField("Losses:", scoreDirectory.losses);
+
+                            embed.addField("Winrate:", isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? "0%" : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%");
+
+                            return message.channel.send(embed);
+                        }
+                    }
+                }
+                case "channel": {
+
+                    if (!message.member.hasPermission("ADMINISTRATOR")) {
+
+                        embed.setTitle(":x: You do not have Administrator permission!")
+        
+                        return message.channel.send(embed)
+                    }
+
+                    storedData.filter(a => {
+
+                        return a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1
+
+                    })
+
+                    storedData.sort((a, b) => {
+
+                        const indexA = a.servers.map(e => e.channelID).indexOf(channel_ID)
+
+                        const indexB = b.servers.map(e => e.channelID).indexOf(channel_ID)
+
+                        const winrateb = isNaN(Math.floor((b.servers[indexB].wins / (b.servers[indexB].wins + b.servers[indexB].losses)) * 100)) ? 0 : Math.floor((b.servers[indexB].wins / (b.servers[indexB].wins + b.servers[indexB].losses)) * 100)
+
+                        const winratea = isNaN(Math.floor((a.servers[indexA].wins / (a.servers[indexA].wins + a.servers[indexA].losses)) * 100)) ? 0 : Math.floor((a.servers[indexA].wins / (a.servers[indexA].wins + a.servers[indexA].losses)) * 100)
+
+                        return winrateb - winratea
+                    })
+
+                    for (let users of storedData) {
+                        for (let servers of users.servers) {
+                            if (servers.channelID === channel_ID) {
+                                embed.addField(users.name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+                            }
+                        }
+                    }
+                    message.channel.send(embed)
                 }
             }
             break;
         }
+
 
         case "reset": {
             if (message.content.split(" ").length == 1) {
@@ -394,19 +446,20 @@ const execute = async (message) => {
 
                         return message.channel.send(embed)
                     }
+
                     for (let user of storedData) {
 
                         const channelpos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
 
                         if (channelpos !== -1) {
                             for (let score of winlossarray) {
-                                const a = `servers.${channelpos}.${score}`
+                                const sort = `servers.${channelpos}.${score}`
 
                                 await dbCollection.update({
                                     id: user.id
                                 }, {
                                     $set: {
-                                        [a]: 0
+                                        [sort]: 0
                                     }
                                 });
                             }
@@ -433,12 +486,12 @@ const execute = async (message) => {
                     } else {
                         for (let score of winlossarray) {
 
-                            const a = `servers.${channelpos}.${score}`
+                            const sort = `servers.${channelpos}.${score}`
                             await dbCollection.update({
                                 id: thirdparam
                             }, {
                                 $set: {
-                                    [a]: 0
+                                    [sort]: 0
                                 }
 
                             });
@@ -476,7 +529,7 @@ const execute = async (message) => {
                 return message.channel.send(embed);
             };
 
-            if (Object.entries(tempobject).length !== 0) {
+            if (Object.entries(tempobject).length !== 0 || sixmansarray.length === 6) {
 
                 embed.setTitle(":x: Please wait for the next game to be decided!")
 
@@ -535,7 +588,7 @@ const execute = async (message) => {
                     password: Math.floor(Math.random() * 99999)
                 };
 
-                embed.setTitle("A game has been made! Please select your preferred gamemode: Captains (c) or Random (r) ")
+                embed.setTitle("a game has been made! Please select your preferred gamemode: Captains (c) or Random (r) ")
 
                 gameCount++
 
@@ -876,7 +929,7 @@ const execute = async (message) => {
 
                             if (randomnumber2 > usednums[0]) {
 
-                            tempObjectlol.splice(randomnumber2 - 1, 1)
+                                tempObjectlol.splice(randomnumber2 - 1, 1)
                             } else {
 
                                 tempObjectlol.splice(randomnumber2, 1)
