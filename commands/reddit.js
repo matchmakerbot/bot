@@ -3,7 +3,7 @@ const Discord = require('discord.js')
 const rp = require("request-promise-native");
 
 module.exports = {
-  name: 'r',
+  name: 'reddit',
   description: 'ur gay',
   execute(message) {
 

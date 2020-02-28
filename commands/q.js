@@ -24,6 +24,10 @@ let hasvoted = false
 
 let channelQueues = {};
 
+const winlossarray = ["wins", "losses"]
+
+const rc = ["r", "c"]
+
 let cancelqueue = {}
 
 const shuffle = function (array) {
@@ -60,6 +64,10 @@ const args = message => {
 
 
 const execute = async (message) => {
+
+    const secondarg = message.content.split(" ")[1]
+
+    const thirdparam = message.content.split(" ")[2]
 
     await dbCollection.find().toArray().then(dataDB => {
         storedData = dataDB
@@ -109,7 +117,7 @@ const execute = async (message) => {
     const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
 
     switch (args(message)) {
-
+        
         case "leave": {
 
             for (let captainGames of Object.values(tempobject).flat()) {
@@ -347,7 +355,7 @@ const execute = async (message) => {
         }
 
         case "score": {
-            switch (messageEndswith(message)) {
+            switch (secondarg) {
                 case "me": {
                     if (!storedData.map(e => e.id).includes(userId)) {
 
@@ -383,7 +391,7 @@ const execute = async (message) => {
                     if (!message.member.hasPermission("ADMINISTRATOR")) {
 
                         embed.setTitle(":x: You do not have Administrator permission!")
-        
+
                         return message.channel.send(embed)
                     }
 
@@ -408,10 +416,35 @@ const execute = async (message) => {
                         return winrateb - winratea
                     })
 
-                    for (let users of storedData) {
-                        for (let servers of users.servers) {
-                            if (servers.channelID === channel_ID) {
-                                embed.addField(users.name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+                    if (!isNaN(thirdparam) && thirdparam > 0) {
+
+                        for (i = 0 + (20 * (thirdparam - 1)); i < 20 * thirdparam; i++) {
+                            if(storedData[i] == undefined) {
+                                embed.addField(`No more members to list in this page!`,"Encourage your friends to play!");
+                                break
+                            }
+                            for (let servers of storedData[i].servers) {
+                                if (servers.channelID === channel_ID) {
+
+                                    embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+
+                                    embed.setFooter(`Showing page ${thirdparam}`);
+                                }
+                            }
+                        }
+                    } else {
+                        for (i = 0; i < 20 ; i++) {
+                            if(storedData[i] == undefined) {
+                                embed.addField(`No more members to list in this page!`,"Encourage your friends to play!");
+                                break
+                            }
+                            for (let servers of storedData[i].servers) {
+                                if (servers.channelID === channel_ID) {
+
+                                    embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+
+                                    embed.setFooter(`Showing page ${1}`);
+                                }
                             }
                         }
                     }
@@ -421,15 +454,13 @@ const execute = async (message) => {
             break;
         }
 
-
         case "reset": {
             if (message.content.split(" ").length == 1) {
+
                 embed.setTitle(":x: Invalid Parameters!")
+
                 return message.channel.send(embed)
             }
-            const secondarg = message.content.split(" ")[1]
-
-            const thirdparam = message.content.split(" ")[2]
 
             if (!message.member.hasPermission("ADMINISTRATOR")) {
 
@@ -437,8 +468,6 @@ const execute = async (message) => {
 
                 return message.channel.send(embed)
             }
-
-            const winlossarray = ["wins", "losses"]
 
             switch (secondarg) {
                 case "channel": {
@@ -625,7 +654,6 @@ const execute = async (message) => {
                     return array.filter((v) => (v === value)).length;
                 }
 
-                const rc = ["r", "c"]
                 if (rorcArray.length === 0) {
 
                     rorcArray.push({
