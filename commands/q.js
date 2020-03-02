@@ -26,24 +26,7 @@ let storedData;
 
 let hasvoted = false
 
-let channelQueues = {
-  '615184953721880617': [{
-    id: "286832262937444352",
-    name: "a"
-}, {
-    id: "306892029349068804",
-    name: "b"
-}, {
-    id: "280742339868229643",
-    name: "c"
-}, {
-    id: "138051800853905408",
-    name: "d"
-}, {
-    id: "204200071670136833",
-    name: "e"
-}]
-};
+let channelQueues = {};
 
 let cancelqueue = {}
 
