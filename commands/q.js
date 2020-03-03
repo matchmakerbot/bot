@@ -26,7 +26,24 @@ let storedData;
 
 let hasvoted = false
 
-let channelQueues = {};
+let channelQueues = {
+  '615184953721880617': [{
+    id: "286832262937444352",
+    name: "a"
+  }, {
+    id: "306892029349068804",
+    name: "b"
+  }, {
+    id: "280742339868229643",
+    name: "c"
+  }, {
+    id: "138051800853905408",
+    name: "d"
+  }, {
+    id: "204200071670136833",
+    name: "e"
+  }]
+};
 
 let cancelqueue = {}
 
@@ -107,6 +124,8 @@ const execute = async (message) => {
 
   const userId = message.author.id
 
+  const includesUserID = (array) => array.map(e => e.id).includes(userId)
+
   const toAdd = {
     id: userId,
     name: message.author.username,
@@ -121,7 +140,7 @@ const execute = async (message) => {
     case "leave": {
 
       for (let captainGames of Object.values(tempobject).flat()) {
-        if (captainGames.map(e => e.id).includes(userId) || sixmansarray.length === 6) {
+        if (includesUserID(captainGames) || sixmansarray.length === 6) {
 
           embed.setTitle(":x: You can't leave now!");
           return message.channel.send(embed);
@@ -162,7 +181,7 @@ const execute = async (message) => {
             return message.channel.send(embed);
           }
 
-          if (!ongoingGames.flat().map(e => e.id).includes(userId) || ongoingGames.length === 0) {
+          if (!includesUserID(ongoingGames.flat()) || ongoingGames.length === 0) {
 
             embed.setTitle(":x: You are not in a game!");
 
@@ -171,7 +190,7 @@ const execute = async (message) => {
 
           for (let games of ongoingGames) {
 
-            if (!games.map(e => e.id).includes(userId)) {
+            if (!includesUserID(games)) {
 
               continue
             }
@@ -228,7 +247,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          if (!ongoingGames.flat().map(e => e.id).includes(userId)) {
+          if (!includesUserID(ongoingGames.flat())) {
 
             embed.setTitle(":x: You are not in a game!");
 
@@ -237,7 +256,7 @@ const execute = async (message) => {
 
           for (let games of ongoingGames) {
 
-            if (!games.map(e => e.id).includes(userId)) {
+            if (!includesUserID(games)) {
 
               continue
             }
@@ -293,7 +312,7 @@ const execute = async (message) => {
     }
 
     case "cancel": {
-      if (!ongoingGames.flat().map(e => e.id).includes(userId) || ongoingGames.length === 0) {
+      if (!includesUserID(ongoingGames.flat()) || ongoingGames.length === 0) {
 
         embed.setTitle(":x: You are not in a game!");
 
@@ -301,7 +320,7 @@ const execute = async (message) => {
       }
       for (let games of ongoingGames) {
 
-        if (!games.map(e => e.id).includes(userId)) {
+        if (!includesUserID(games)) {
 
           continue
         }
@@ -317,6 +336,13 @@ const execute = async (message) => {
 
         const cancelqueuearray = cancelqueue[IDGame]
 
+        /*if (cancelqueuearray.includes({
+            id: userId
+          })) {
+          embed.setTitle(":x: You've already voted to cancel!");
+
+          return message.channel.send(embed);
+        }*/
         cancelqueuearray.push({
           id: userId
         })
@@ -358,7 +384,7 @@ const execute = async (message) => {
     case "score": {
       switch (secondarg) {
         case "me": {
-          if (!storedData.map(e => e.id).includes(userId)) {
+          if (!includesUserID(storedData)) {
 
             embed.setTitle(":x: You haven't played any games yet!");
 
@@ -556,7 +582,7 @@ const execute = async (message) => {
         }
       };
 
-      if (ongoingGames.flat().map(e => e.id).includes(userId)) {
+      if (includesUserID(ongoingGames.flat())) {
 
         embed.setTitle(":x: You are in the middle of a game!");
 
@@ -787,7 +813,7 @@ const execute = async (message) => {
           tempobjectArray.push([...sixmansarray]);
 
           for (let tempObjectloop of tempobjectArray) {
-            if (!tempObjectloop.map(e => e.id).includes(userId)) {
+            if (!includesUserID(tempObjectloop)) {
               continue
             }
             const tempvar = tempObjectloop[6]
@@ -853,7 +879,7 @@ const execute = async (message) => {
               })
             })
 
-            await new Promise(resolve => setTimeout(resolve, 20000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             if (!hasvoted) {
 
@@ -923,7 +949,7 @@ const execute = async (message) => {
               })
             })
 
-            await new Promise(resolve => setTimeout(resolve, 20000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             const randomnumber = Math.floor(Math.random() * 3)
 
@@ -971,7 +997,7 @@ const execute = async (message) => {
 
             sixmansarray[2] = tempObjectloop[0]
 
-            tempObjectloop.splice(0, tempObjectloop.length);
+            delete tempobject[gameCount]
 
             ongoingGames.push([...sixmansarray])
 
