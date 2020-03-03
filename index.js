@@ -1,7 +1,5 @@
 "use strict";
 
-const config = require("./config.json");
-
 const fs = require('fs');
 
 const Discord = require('discord.js')
@@ -33,7 +31,7 @@ for (const file of commandFiles) {
 
 client.once('ready', () => {
     console.log('its rdy');
-    client.user.setActivity("Type !help to get info")
+    client.user.setActivity("Type !help6mans to get info.")
 });
 
 client.on('message', message => {
@@ -50,7 +48,5 @@ client.on('message', message => {
 });
 
 })
-
-
 
 client.login(process.env.token);
