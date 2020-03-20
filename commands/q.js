@@ -22,28 +22,33 @@ let gameCount = 0;
 
 let ongoingGames = [];
 
-let storedData;
+let storedData;    
 
 let hasvoted = false
 
 let channelQueues = {
-  '615184953721880617': [{
-    id: "286832262937444352",
-    name: "a"
-  }, {
-    id: "306892029349068804",
-    name: "b"
-  }, {
-    id: "280742339868229643",
-    name: "c"
-  }, {
-    id: "138051800853905408",
-    name: "d"
-  }, {
-    id: "204200071670136833",
-    name: "e"
-  }]
+
 };
+
+const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
+
+const embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+
+setInterval(() => {
+  if (Object.entries(channelQueues).length !== 0) {
+    for (let channel of Object.values(channelQueues)) {
+      for (let user of channel) {
+        if((Date.now() - user.date) >  45 * 10 * 1000) {
+          const actualChannel = client.channels.get(Object.keys(channelQueues).find(key => channelQueues[key] === channel))
+          embedRemove.setTitle(`You were removed from the queue after no game has been made in 45 minutes!`)
+          actualChannel.send(`<@${user.id}>`)
+          actualChannel.send(embedRemove)
+          channel.splice(channel.indexOf(user), 1)
+        }
+      }
+    }
+  }
+}, 60 * 1000)
 
 let cancelqueue = {}
 
@@ -65,7 +70,6 @@ const shuffle = function (array) {
   }
 
   return array;
-
 };
 
 function messageEndswith(message) {
@@ -129,11 +133,10 @@ const execute = async (message) => {
   const toAdd = {
     id: userId,
     name: message.author.username,
+    date: new Date()
   };
 
   const index = sixmansarray.map(e => e.id).indexOf(userId);
-
-  const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
 
   switch (args(message)) {
 
@@ -441,11 +444,10 @@ const execute = async (message) => {
             const winratea = isNaN(Math.floor((a.servers[indexA].wins / (a.servers[indexA].wins + a.servers[indexA].losses)) * 100)) ? 0 : Math.floor((a.servers[indexA].wins / (a.servers[indexA].wins + a.servers[indexA].losses)) * 100)
 
             return winrateb - winratea;
-          })
-
-          let indexes = 20 * (thirdparam - 1)
+          });
 
           if (!isNaN(thirdparam) && thirdparam > 0) {
+            let indexes = 20 * (thirdparam - 1);
             for (indexes; indexes < 20 * thirdparam; indexes++) {
               if (storedData[indexes] == undefined) {
 
