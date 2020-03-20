@@ -38,7 +38,7 @@ setInterval(() => {
   if (Object.entries(channelQueues).length !== 0) {
     for (let channel of Object.values(channelQueues)) {
       for (let user of channel) {
-        if((Date.now() - user.date) >  45 * 10 * 1000) {
+        if((Date.now() - user.date) >  45 * 60 * 1000) {
           const actualChannel = client.channels.get(Object.keys(channelQueues).find(key => channelQueues[key] === channel))
           embedRemove.setTitle(`You were removed from the queue after no game has been made in 45 minutes!`)
           actualChannel.send(`<@${user.id}>`)
