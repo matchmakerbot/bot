@@ -339,13 +339,14 @@ const execute = async (message) => {
 
         const cancelqueuearray = cancelqueue[IDGame]
 
-        /*if (cancelqueuearray.includes({
+        if (cancelqueuearray.includes({
             id: userId
           })) {
           embed.setTitle(":x: You've already voted to cancel!");
 
           return message.channel.send(embed);
-        }*/
+        }
+        
         cancelqueuearray.push({
           id: userId
         })
@@ -1015,7 +1016,6 @@ const execute = async (message) => {
               .addField("Name:", valuesforpm.name)
               .addField("Password:", valuesforpm.password)
               .addField("You have to:", `Join match(Created by ${sixmansarray[0].name})`);
-
 
             for (let users of sixmansarray) {
               if (users.id !== sixmansarray[0].id && users.id !== sixmansarray[6].id) {
