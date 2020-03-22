@@ -8,49 +8,96 @@ const db = MongoDB.getDB()
 
 const dbCollection = db.collection('sixman')
 
-const usednums = []
+const usedNums = []
 
-const tempobject = {}
-
-const winlossarray = ["wins", "losses"]
+const tempObject = {}
 
 const rc = ["r", "c"]
 
 const EMBED_COLOR = "#F8534F";
 
-let gameCount = 0;
+const ongoingGames = [];
 
-let ongoingGames = [];
-
-let storedData;    
-
-let hasvoted = false
-
-let channelQueues = {
-
+const channelQueues = {
+  '615184953721880617': [{
+    id: "286832262937444352",
+    name: "a"
+}, {
+    id: "306892029349068804",
+    name: "b"
+}, {
+    id: "280742339868229643",
+    name: "c"
+}, {
+    id: "138051800853905408",
+    name: "d"
+}, {
+    id: "204200071670136833",
+    name: "e"
+}]
 };
 
-const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
+const cancelQueue = {}
 
-const embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+let gameCount = 0;
+
+let storedData;
+
+let hasVoted = false
+
+let embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
 
 setInterval(() => {
   if (Object.entries(channelQueues).length !== 0) {
     for (let channel of Object.values(channelQueues)) {
       for (let user of channel) {
-        if((Date.now() - user.date) >  45 * 60 * 1000) {
+        if ((Date.now() - user.date) > 45 * 60 * 1000) {
+
           const actualChannel = client.channels.get(Object.keys(channelQueues).find(key => channelQueues[key] === channel))
+
           embedRemove.setTitle(`You were removed from the queue after no game has been made in 45 minutes!`)
+
           actualChannel.send(`<@${user.id}>`)
+
           actualChannel.send(embedRemove)
+
+          embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+
           channel.splice(channel.indexOf(user), 1)
         }
       }
     }
   }
-}, 60 * 1000)
 
-let cancelqueue = {}
+  if (ongoingGames.length !== 0) {
+    for (let games of ongoingGames) {
+      if ((Date.now() - games[6].time) > 3 * 60 * 60 * 1000) {
+        for (let channel of client.channels.get(games[6].channelID).guild.channels.array()) {
+
+          if (channel.name === `Team-1-Game-${games[6].gameID}`) {
+
+            channel.delete()
+          }
+
+          if (channel.name === `Team-2-Game-${games[6].gameID}`) {
+
+            channel.delete()
+          }
+        }
+
+        embedRemove.setTitle(`:white_check_mark: Game ${games[6].gameID} Cancelled due to not being finished in 3 Hours!`)
+
+        let index = ongoingGames.indexOf(games);
+
+        ongoingGames.splice(index, 1)
+
+        client.channels.get(games[6].channelID).send(embedRemove)
+
+        embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+      }
+    }
+  }
+}, 60 * 1000)
 
 const shuffle = function (array) {
 
@@ -86,7 +133,9 @@ const args = message => {
 
 const execute = async (message) => {
 
-  const secondarg = message.content.split(" ")[1]
+  const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
+
+  const secondArg = message.content.split(" ")[1]
 
   const thirdparam = message.content.split(" ")[2]
 
@@ -101,9 +150,9 @@ const execute = async (message) => {
     for (let user of storedData) {
       for (let games of ongoingGames) {
 
-        const channelpos = user.servers.map(e => e.channelID).indexOf(channel_ID)
+        const channelPos = user.servers.map(e => e.channelID).indexOf(channel_ID)
 
-        const sort = `servers.${channelpos}.${score}`
+        const sort = `servers.${channelPos}.${score}`
 
         if (user.id === games[i].id) {
 
@@ -111,7 +160,7 @@ const execute = async (message) => {
             id: user.id
           }, {
             $set: {
-              [sort]: user.servers[channelpos][score] + 1,
+              [sort]: user.servers[channelPos][score] + 1,
             }
           });
         }
@@ -124,7 +173,7 @@ const execute = async (message) => {
     channelQueues[channel_ID] = []
   }
 
-  const sixmansarray = channelQueues[channel_ID]
+  const sixMansArray = channelQueues[channel_ID]
 
   const userId = message.author.id
 
@@ -136,28 +185,35 @@ const execute = async (message) => {
     date: new Date()
   };
 
-  const index = sixmansarray.map(e => e.id).indexOf(userId);
+  const index = sixMansArray.map(e => e.id).indexOf(userId);
 
   switch (args(message)) {
 
     case "leave": {
 
-      for (let captainGames of Object.values(tempobject).flat()) {
-        if (includesUserID(captainGames) || sixmansarray.length === 6) {
+      for (let captainGames of Object.values(tempObject).flat()) {
+        if (includesUserID(captainGames)) {
 
           embed.setTitle(":x: You can't leave now!");
+
           return message.channel.send(embed);
         }
+      }
+      if (sixMansArray.length === 6) {
+
+        embed.setTitle(":x: You can't leave now!");
+
+        return message.channel.send(embed);
       }
 
       if (index === -1) {
 
-        embed.setTitle(":x: You are not in the queue!");
+        embed.setTitle(":x: You aren't in the queue!");
 
         return message.channel.send(embed);
       };
 
-      sixmansarray.splice(index, 1);
+      sixMansArray.splice(index, 1);
 
       embed.setTitle(`:white_check_mark: ${message.author.username} left the queue!`);
 
@@ -168,7 +224,7 @@ const execute = async (message) => {
 
       embed.setTitle("Players in queue:");
 
-      embed.setDescription(sixmansarray.map(e => e.name).join(", "));
+      embed.setDescription(sixMansArray.map(e => e.name).join(", "));
 
       return message.channel.send(embed);
     }
@@ -177,16 +233,9 @@ const execute = async (message) => {
       switch (messageEndswith(message)) {
         case "win": {
 
-          if (ongoingGames.length === 0) {
-
-            embed.setTitle(":x: You are not in a game!");
-
-            return message.channel.send(embed);
-          }
-
           if (!includesUserID(ongoingGames.flat()) || ongoingGames.length === 0) {
 
-            embed.setTitle(":x: You are not in a game!");
+            embed.setTitle(":x: You aren't in a game!");
 
             return message.channel.send(embed)
           }
@@ -243,16 +292,9 @@ const execute = async (message) => {
 
         case "lose": {
 
-          if (ongoingGames.length === 0) {
+          if (!includesUserID(ongoingGames.flat()) || ongoingGames.length === 0) {
 
-            embed.setTitle(":x: You are not in a game!");
-
-            return message.channel.send(embed)
-          }
-
-          if (!includesUserID(ongoingGames.flat())) {
-
-            embed.setTitle(":x: You are not in a game!");
+            embed.setTitle(":x: You aren't in a game!");
 
             return message.channel.send(embed);
           }
@@ -317,7 +359,7 @@ const execute = async (message) => {
     case "cancel": {
       if (!includesUserID(ongoingGames.flat()) || ongoingGames.length === 0) {
 
-        embed.setTitle(":x: You are not in a game!");
+        embed.setTitle(":x: You aren't in a game!");
 
         return message.channel.send(embed);
       }
@@ -332,24 +374,20 @@ const execute = async (message) => {
 
         const index = games.map(e => e.id).indexOf(userId);
 
-        if (!Object.keys(cancelqueue).includes(IDGame.toString())) {
+        if (!Object.keys(cancelQueue).includes(IDGame.toString())) {
 
-          cancelqueue[IDGame] = []
+          cancelQueue[IDGame] = []
         }
 
-        const cancelqueuearray = cancelqueue[IDGame]
+        const cancelqueuearray = cancelQueue[IDGame]
 
-        if (cancelqueuearray.includes({
-            id: userId
-          })) {
+        if (cancelqueuearray.includes(userId)) {
           embed.setTitle(":x: You've already voted to cancel!");
 
           return message.channel.send(embed);
         }
-        
-        cancelqueuearray.push({
-          id: userId
-        })
+
+        cancelqueuearray.push(userId)
 
         embed.setTitle(`:exclamation: ${games[index].name} wants to cancel game ${IDGame}. (${cancelqueuearray.length}/4)`)
 
@@ -374,7 +412,7 @@ const execute = async (message) => {
 
           let index = ongoingGames.indexOf(games);
 
-          cancelqueue[IDGame] = []
+          cancelQueue[IDGame] = []
 
           ongoingGames.splice(index, 1);
 
@@ -386,7 +424,7 @@ const execute = async (message) => {
     }
 
     case "score": {
-      switch (secondarg) {
+      switch (secondArg) {
         case "me": {
           if (!includesUserID(storedData)) {
 
@@ -502,7 +540,7 @@ const execute = async (message) => {
         return message.channel.send(embed)
       }
 
-      switch (secondarg) {
+      switch (secondArg) {
         case "channel": {
           if (message.content.split(" ").length !== 2) {
 
@@ -513,20 +551,19 @@ const execute = async (message) => {
 
           for (let user of storedData) {
 
-            const channelpos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
+            const channelPos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
 
-            if (channelpos !== -1) {
-              for (let score of winlossarray) {
-                const sort = `servers.${channelpos}.${score}`
+            if (channelPos !== -1) {
 
-                await dbCollection.update({
-                  id: user.id
-                }, {
-                  $set: {
-                    [sort]: 0
+              await dbCollection.update({
+                id: user.id
+              }, {
+                $pull: {
+                  servers: {
+                    channelID: channel_ID
                   }
-                });
-              }
+                }
+              });
             }
           }
 
@@ -542,24 +579,23 @@ const execute = async (message) => {
             return message.channel.send(embed)
 
           }
-          const channelpos = storedData[storedData.map(e => e.id).indexOf(thirdparam)].servers.map(e => e.channelID).indexOf(channel_ID)
+          const channelPos = storedData[storedData.map(e => e.id).indexOf(thirdparam)].servers.map(e => e.channelID).indexOf(channel_ID)
 
-          if (channelpos == -1) {
+          if (channelPos == -1) {
+
             embed.setTitle(":x: This user hasn't played any games in this channel!")
+
             return message.channel.send(embed)
           } else {
-            for (let score of winlossarray) {
-
-              const sort = `servers.${channelpos}.${score}`
-              await dbCollection.update({
-                id: thirdparam
-              }, {
-                $set: {
-                  [sort]: 0
+            await dbCollection.update({
+              id: thirdparam
+            }, {
+              $pull: {
+                servers: {
+                  channelID: channel_ID
                 }
-
-              });
-            }
+              }
+            });
           }
 
           embed.setTitle(":white_check_mark: Player's score reset!")
@@ -576,7 +612,7 @@ const execute = async (message) => {
 
     case "q": {
 
-      for (let person of sixmansarray) {
+      for (let person of sixMansArray) {
         if (person.id === userId) {
 
           embed.setTitle(":x: You're already in the queue!");
@@ -592,21 +628,21 @@ const execute = async (message) => {
         return message.channel.send(embed);
       };
 
-      if (Object.entries(tempobject).length !== 0 || sixmansarray.length === 6) {
+      if (Object.entries(tempObject).length !== 0 || sixMansArray.length === 6) {
 
         embed.setTitle(":x: Please wait for the next game to be decided!")
 
         return message.channel.send(embed)
       }
 
-      sixmansarray.push(toAdd);
+      sixMansArray.push(toAdd);
 
       embed.setTitle(":white_check_mark: Added to queue!");
 
       message.channel.send(embed);
 
-      if (sixmansarray.length === 6) {
-        for (let user of sixmansarray) {
+      if (sixMansArray.length === 6) {
+        for (let user of sixMansArray) {
 
           const newUser = {
             id: user.id,
@@ -668,7 +704,7 @@ const execute = async (message) => {
         message.channel.createMessageCollector(filter, {
           time: 15000
         }).on('collect', m => {
-          if (!sixmansarray.map(e => e.id).includes(m.author.id) || rorcArray.map(e => e.id).includes(m.author.id)) {
+          if (!sixMansArray.map(e => e.id).includes(m.author.id) || rorcArray.map(e => e.id).includes(m.author.id)) {
 
           } else {
 
@@ -701,30 +737,33 @@ const execute = async (message) => {
         }
         if (getOccurrence(rorcArray.map(e => e.param), "r") > getOccurrence(rorcArray.map(e => e.param), "c")) {
 
-          shuffle(sixmansarray);
+          shuffle(sixMansArray);
 
-          sixmansarray.push({
-            gameID: gameCount
+          sixMansArray.push({
+            gameID: gameCount,
+            time: new Date(),
+            channelID: channel_ID
           })
 
-          ongoingGames.push([...sixmansarray]);
+          ongoingGames.push([...sixMansArray]);
+
 
           const discordEmbed1 = new Discord.RichEmbed()
             .setColor(EMBED_COLOR)
             .addField("Game is ready:", `Game ID is: ${gameCount}`)
-            .addField(":small_orange_diamond: -Team 1-", `${sixmansarray[0].name}, ${sixmansarray[1].name}, ${sixmansarray[2].name}`)
-            .addField(":small_blue_diamond: -Team 2-", `${sixmansarray[3].name}, ${sixmansarray[4].name}, ${sixmansarray[5].name}`);
+            .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}`)
+            .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[3].name}, ${sixMansArray[4].name}, ${sixMansArray[5].name}`);
           message.channel.send(discordEmbed1);
 
           const JoinMatchEmbed = new Discord.RichEmbed()
             .setColor(EMBED_COLOR)
             .addField("Name:", valuesforpm.name)
             .addField("Password:", valuesforpm.password)
-            .addField("You have to:", `Join match(Created by ${sixmansarray[0].name})`);
+            .addField("You have to:", `Join match(Created by ${sixMansArray[0].name})`);
 
 
-          for (let users of sixmansarray) {
-            if (users.id !== sixmansarray[0].id && users.id !== sixmansarray[6].id) {
+          for (let users of sixMansArray) {
+            if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[6].id) {
 
               client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
                 const errorEmbed = new Discord.RichEmbed()
@@ -744,10 +783,10 @@ const execute = async (message) => {
             .addField("Password:", valuesforpm.password)
             .addField("You have to:", "Create Match");
 
-          client.users.get(sixmansarray[0].id).send(CreateMatchEmbed).catch(error => {
+          client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
             const errorEmbed = new Discord.RichEmbed()
               .setColor(EMBED_COLOR)
-              .setTitle(`:x: Couldn't sent message to ${sixmansarray[0].name}, please check if your DM'S aren't set to friends only.`);
+              .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
 
             message.channel.send(errorEmbed)
             console.error(error);
@@ -761,15 +800,15 @@ const execute = async (message) => {
                   deny: "CONNECT"
                 },
                 {
-                  id: sixmansarray[0].id,
+                  id: sixMansArray[0].id,
                   allow: "CONNECT"
                 },
                 {
-                  id: sixmansarray[1].id,
+                  id: sixMansArray[1].id,
                   allow: "CONNECT"
                 },
                 {
-                  id: sixmansarray[2].id,
+                  id: sixMansArray[2].id,
                   allow: "CONNECT"
                 }
               ]
@@ -784,75 +823,77 @@ const execute = async (message) => {
                   deny: "CONNECT"
                 },
                 {
-                  id: sixmansarray[3].id,
+                  id: sixMansArray[3].id,
                   allow: "CONNECT"
                 },
                 {
-                  id: sixmansarray[4].id,
+                  id: sixMansArray[4].id,
                   allow: "CONNECT"
                 },
                 {
-                  id: sixmansarray[5].id,
+                  id: sixMansArray[5].id,
                   allow: "CONNECT"
                 }
               ]
             })
             .catch(console.error)
 
-          sixmansarray.splice(0, sixmansarray.length);
+          sixMansArray.splice(0, sixMansArray.length);
 
         } else if (getOccurrence(rorcArray.map(e => e.param), "c") > getOccurrence(rorcArray.map(e => e.param), "r")) {
 
           //yes this code is horrible no shit sherlock
 
-          sixmansarray.push({
-            gameID: gameCount
+          sixMansArray.push({
+            gameID: gameCount,
+            time: new Date(),
+            channelID: channel_ID
           })
 
-          tempobject[gameCount] = []
+          tempObject[gameCount] = []
 
-          const tempobjectArray = tempobject[gameCount]
+          const tempobjectArray = tempObject[gameCount]
 
-          tempobjectArray.push([...sixmansarray]);
+          tempobjectArray.push([...sixMansArray]);
 
-          for (let tempObjectloop of tempobjectArray) {
-            if (!includesUserID(tempObjectloop)) {
+          for (let tempObjectLoop of tempobjectArray) {
+            if (!includesUserID(tempObjectLoop)) {
               continue
             }
-            const tempvar = tempObjectloop[6]
+            const tempvar = tempObjectLoop[6]
 
-            shuffle(tempObjectloop);
+            shuffle(tempObjectLoop);
 
-            tempObjectloop.splice(tempObjectloop.findIndex(o => o.gameID === tempvar.gameID), 1)
+            tempObjectLoop.splice(tempObjectLoop.findIndex(o => o.gameID === tempvar.gameID), 1)
 
-            tempObjectloop.push(tempvar)
+            tempObjectLoop.push(tempvar)
 
-            sixmansarray[0] = tempObjectloop[0]
+            sixMansArray[0] = tempObjectLoop[0]
 
-            sixmansarray[3] = tempObjectloop[1]
+            sixMansArray[3] = tempObjectLoop[1]
 
             const CaptainsEmbed = new Discord.RichEmbed()
               .setColor(EMBED_COLOR)
-              .setTitle(`Game ID: ${tempObjectloop[6].gameID}`)
-              .addField(`Captain for team 1`, tempObjectloop[0].name)
-              .addField(`Captain for team 2`, tempObjectloop[1].name);
+              .setTitle(`Game ID: ${tempObjectLoop[6].gameID}`)
+              .addField(`Captain for team 1`, tempObjectLoop[0].name)
+              .addField(`Captain for team 2`, tempObjectLoop[1].name);
 
             message.channel.send(CaptainsEmbed)
 
-            const privatedm0 = client.users.get(tempObjectloop[0].id)
+            const privatedm0 = client.users.get(tempObjectLoop[0].id)
 
-            const privatedm1 = client.users.get(tempObjectloop[1].id)
+            const privatedm1 = client.users.get(tempObjectLoop[1].id)
 
-            tempObjectloop.shift()
-            tempObjectloop.shift()
+            tempObjectLoop.shift()
+            tempObjectLoop.shift()
 
             const Captain1st = new Discord.RichEmbed()
               .setColor(EMBED_COLOR)
               .setTitle("Choose one:")
-              .addField(`1 :`, tempObjectloop[0].name)
-              .addField(`2 :`, tempObjectloop[1].name)
-              .addField(`3 :`, tempObjectloop[2].name)
-              .addField(`4 :`, tempObjectloop[3].name);
+              .addField(`1 :`, tempObjectLoop[0].name)
+              .addField(`2 :`, tempObjectLoop[1].name)
+              .addField(`3 :`, tempObjectLoop[2].name)
+              .addField(`4 :`, tempObjectLoop[3].name);
 
             privatedm0.send(Captain1st).catch(error => {
               const errorEmbed = new Discord.RichEmbed()
@@ -871,36 +912,36 @@ const execute = async (message) => {
                 time: 20000
               }).on('collect', m => {
                 const parsedM = parseInt(m) - 1
-                if (!hasvoted) {
+                if (!hasVoted) {
 
-                  sixmansarray[1] = tempObjectloop[parsedM]
+                  sixMansArray[1] = tempObjectLoop[parsedM]
 
-                  tempObjectloop.splice(parsedM, 1)
+                  tempObjectLoop.splice(parsedM, 1)
 
-                  hasvoted = true
+                  hasVoted = true
                 }
               })
             })
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 20000));
 
-            if (!hasvoted) {
+            if (!hasVoted) {
 
               const randomnumber = Math.floor(Math.random() * 4)
 
-              sixmansarray[1] = tempObjectloop[randomnumber]
+              sixMansArray[1] = tempObjectLoop[randomnumber]
 
-              tempObjectloop.splice(randomnumber, 1)
+              tempObjectLoop.splice(randomnumber, 1)
             }
 
-            hasvoted = false
+            hasVoted = false
 
             const Captain2nd = new Discord.RichEmbed()
               .setColor(EMBED_COLOR)
               .setTitle("Choose two:")
-              .addField(`1 :`, tempObjectloop[0].name)
-              .addField(`2 :`, tempObjectloop[1].name)
-              .addField(`3 :`, tempObjectloop[2].name);
+              .addField(`1 :`, tempObjectLoop[0].name)
+              .addField(`2 :`, tempObjectLoop[1].name)
+              .addField(`3 :`, tempObjectLoop[2].name);
 
             privatedm1.send(Captain2nd).catch(error => {
               const errorEmbed = new Discord.RichEmbed()
@@ -921,30 +962,30 @@ const execute = async (message) => {
 
                 const parsedM = parseInt(m) - 1
 
-                if (!hasvoted) {
+                if (!hasVoted) {
 
-                  sixmansarray[4] = tempObjectloop[parsedM]
+                  sixMansArray[4] = tempObjectLoop[parsedM]
 
-                  hasvoted = true
+                  hasVoted = true
 
-                  usednums.push(parsedM)
+                  usedNums.push(parsedM)
 
-                } else if (hasvoted && !usednums.includes(parsedM) && hasvoted !== "all") {
+                } else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== "all") {
 
-                  sixmansarray[5] = tempObjectloop[parsedM]
+                  sixMansArray[5] = tempObjectLoop[parsedM]
 
-                  hasvoted = "all"
+                  hasVoted = "all"
 
-                  usednums.push(parsedM)
+                  usedNums.push(parsedM)
 
-                  tempObjectloop.splice(usednums[0], 1)
+                  tempObjectLoop.splice(usedNums[0], 1)
 
-                  if (usednums[1] > usednums[0]) {
+                  if (usedNums[1] > usedNums[0]) {
 
-                    tempObjectloop.splice(usednums[1] - 1, 1)
+                    tempObjectLoop.splice(usedNums[1] - 1, 1)
                   } else {
 
-                    tempObjectloop.splice(usednums[1], 1)
+                    tempObjectLoop.splice(usedNums[1], 1)
                   }
 
                 }
@@ -952,73 +993,73 @@ const execute = async (message) => {
               })
             })
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 20000));
 
             const randomnumber = Math.floor(Math.random() * 3)
 
             let randomnumber2 = Math.floor(Math.random() * 3)
 
-            if (!hasvoted) {
+            if (!hasVoted) {
 
               while (randomnumber === randomnumber2) {
                 randomnumber2 = Math.floor(Math.random() * 3)
               }
 
-              sixmansarray[4] = tempObjectloop[randomnumber]
+              sixMansArray[4] = tempObjectLoop[randomnumber]
 
-              sixmansarray[5] = tempObjectloop[randomnumber2]
+              sixMansArray[5] = tempObjectLoop[randomnumber2]
 
-              tempObjectloop.splice(randomnumber, 1)
+              tempObjectLoop.splice(randomnumber, 1)
 
               if (randomnumber2 > randomnumber) {
 
-                tempObjectloop.splice(randomnumber2 - 1, 1)
+                tempObjectLoop.splice(randomnumber2 - 1, 1)
               } else {
 
-                tempObjectloop.splice(randomnumber2, 1)
+                tempObjectLoop.splice(randomnumber2, 1)
               }
 
-            } else if (hasvoted && hasvoted !== "all") {
+            } else if (hasVoted && hasVoted !== "all") {
 
-              while (usednums.includes(randomnumber2)) {
+              while (usedNums.includes(randomnumber2)) {
 
                 randomnumber2 = Math.floor(Math.random() * 2)
               }
 
-              sixmansarray[5] = tempObjectloop[randomnumber2]
+              sixMansArray[5] = tempObjectLoop[randomnumber2]
 
-              tempObjectloop.splice(usednums[0], 1)
+              tempObjectLoop.splice(usedNums[0], 1)
 
-              if (randomnumber2 > usednums[0]) {
+              if (randomnumber2 > usedNums[0]) {
 
-                tempObjectloop.splice(randomnumber2 - 1, 1)
+                tempObjectLoop.splice(randomnumber2 - 1, 1)
               } else {
 
-                tempObjectloop.splice(randomnumber2, 1)
+                tempObjectLoop.splice(randomnumber2, 1)
               }
             }
 
-            sixmansarray[2] = tempObjectloop[0]
+            sixMansArray[2] = tempObjectLoop[0]
 
-            delete tempobject[gameCount]
+            delete tempObject[gameCount]
 
-            ongoingGames.push([...sixmansarray])
+            ongoingGames.push([...sixMansArray])
 
             const discordEmbed1 = new Discord.RichEmbed()
               .setColor(EMBED_COLOR)
-              .addField("Game is ready:", `Game ID is: ${sixmansarray[6].gameID}`)
-              .addField(":small_orange_diamond: -Team 1-", `${sixmansarray[0].name}, ${sixmansarray[1].name}, ${sixmansarray[2].name}`)
-              .addField(":small_blue_diamond: -Team 2-", `${sixmansarray[3].name}, ${sixmansarray[4].name}, ${sixmansarray[5].name}`);
+              .addField("Game is ready:", `Game ID is: ${sixMansArray[6].gameID}`)
+              .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}`)
+              .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[3].name}, ${sixMansArray[4].name}, ${sixMansArray[5].name}`);
             message.channel.send(discordEmbed1);
 
             const JoinMatchEmbed = new Discord.RichEmbed()
               .setColor(EMBED_COLOR)
               .addField("Name:", valuesforpm.name)
               .addField("Password:", valuesforpm.password)
-              .addField("You have to:", `Join match(Created by ${sixmansarray[0].name})`);
+              .addField("You have to:", `Join match(Created by ${sixMansArray[0].name})`);
 
-            for (let users of sixmansarray) {
-              if (users.id !== sixmansarray[0].id && users.id !== sixmansarray[6].id) {
+            for (let users of sixMansArray) {
+              if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[6].id) {
 
                 client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
                   const errorEmbed = new Discord.RichEmbed()
@@ -1038,16 +1079,16 @@ const execute = async (message) => {
               .addField("Password:", valuesforpm.password)
               .addField("You have to:", "Create Match");
 
-            client.users.get(sixmansarray[0].id).send(CreateMatchEmbed).catch(error => {
+            client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
               const errorEmbed = new Discord.RichEmbed()
                 .setColor(EMBED_COLOR)
-                .setTitle(`:x: Couldn't sent message to ${sixmansarray[0].name}, please check if your DM'S aren't set to friends only.`);
+                .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
 
               message.channel.send(errorEmbed)
               console.error(error);
             });
 
-            message.guild.createChannel(`Team-1-Game-${sixmansarray[6].gameID}`, {
+            message.guild.createChannel(`Team-1-Game-${sixMansArray[6].gameID}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{
@@ -1055,15 +1096,15 @@ const execute = async (message) => {
                     deny: "CONNECT"
                   },
                   {
-                    id: sixmansarray[0].id,
+                    id: sixMansArray[0].id,
                     allow: "CONNECT"
                   },
                   {
-                    id: sixmansarray[1].id,
+                    id: sixMansArray[1].id,
                     allow: "CONNECT"
                   },
                   {
-                    id: sixmansarray[2].id,
+                    id: sixMansArray[2].id,
                     allow: "CONNECT"
                   }
                 ]
@@ -1078,22 +1119,22 @@ const execute = async (message) => {
                     deny: "CONNECT"
                   },
                   {
-                    id: sixmansarray[3].id,
+                    id: sixMansArray[3].id,
                     allow: "CONNECT"
                   },
                   {
-                    id: sixmansarray[4].id,
+                    id: sixMansArray[4].id,
                     allow: "CONNECT"
                   },
                   {
-                    id: sixmansarray[5].id,
+                    id: sixMansArray[5].id,
                     allow: "CONNECT"
                   }
                 ]
               })
               .catch(console.error)
 
-            sixmansarray.splice(0, sixmansarray.length);
+            sixMansArray.splice(0, sixMansArray.length);
 
           }
         }
