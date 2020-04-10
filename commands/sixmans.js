@@ -19,22 +19,6 @@ const EMBED_COLOR = "#F8534F";
 const ongoingGames = [];
 
 const channelQueues = {
-  '615184953721880617': [{
-    id: "286832262937444352",
-    name: "a"
-}, {
-    id: "306892029349068804",
-    name: "b"
-}, {
-    id: "280742339868229643",
-    name: "c"
-}, {
-    id: "138051800853905408",
-    name: "d"
-}, {
-    id: "204200071670136833",
-    name: "e"
-}]
 };
 
 const cancelQueue = {}
@@ -637,7 +621,7 @@ const execute = async (message) => {
 
       sixMansArray.push(toAdd);
 
-      embed.setTitle(":white_check_mark: Added to queue!");
+      embed.setTitle(":white_check_mark: Addeed to queue!");
 
       message.channel.send(embed);
 
