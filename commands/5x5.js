@@ -8,7 +8,7 @@ const db = MongoDB.getDB()
 
 const dbCollection = db.collection('sixman')
 
-const usedNums = []
+let usedNums = []
 
 const tempObject = {}
 
@@ -57,12 +57,12 @@ setInterval(() => {
       if ((Date.now() - games[10].time) > 3 * 60 * 60 * 1000) {
         for (let channel of client.channels.get(games[10].channelID).guild.channels.array()) {
 
-          if (channel.name === `Team-1-Game-${games[10].gameID}`) {
+          if (channel.name === `:small_orange_diamond:Team-1-Game-${games[10].gameID}`) {
 
             channel.delete()
           }
 
-          if (channel.name === `Team-2-Game-${games[10].gameID}`) {
+          if (channel.name === `:small_blue_diamond:Team-2-Game-${games[10].gameID}`) {
 
             channel.delete()
           }
@@ -257,12 +257,12 @@ const execute = async (message) => {
 
             for (let channel of message.guild.channels.array()) {
 
-              if (channel.name === `Team-1-Game-${games[10].gameID}`) {
+              if (channel.name === `:small_orange_diamond:Team-1-Game-${games[10].gameID}`) {
 
                 channel.delete()
               }
 
-              if (channel.name === `Team-2-Game-${games[10].gameID}`) {
+              if (channel.name === `:small_blue_diamond:Team-2-Game-${games[10].gameID}`) {
 
                 channel.delete()
               }
@@ -316,12 +316,12 @@ const execute = async (message) => {
 
             for (let channel of message.guild.channels.array()) {
 
-              if (channel.name === `Team-1-Game-${games[10].gameID}`) {
+              if (channel.name === `:small_orange_diamond:Team-1-Game-${games[10].gameID}`) {
 
                 channel.delete()
               }
 
-              if (channel.name === `Team-2-Game-${games[10].gameID}`) {
+              if (channel.name === `:small_blue_diamond:Team-2-Game-${games[10].gameID}`) {
 
                 channel.delete()
               }
@@ -378,12 +378,12 @@ const execute = async (message) => {
 
           for (let channel of message.guild.channels.array()) {
 
-            if (channel.name === `Team-1-Game-${games[10].gameID}`) {
+            if (channel.name === `:small_orange_diamond:Team-1-Game-${games[10].gameID}`) {
 
               channel.delete()
             }
 
-            if (channel.name === `Team-2-Game-${games[10].gameID}`) {
+            if (channel.name === `:small_blue_diamond:Team-2-Game-${games[10].gameID}`) {
 
               channel.delete()
             }
@@ -477,6 +477,9 @@ const execute = async (message) => {
               }
               for (let servers of storedData[indexes].servers) {
                 if (servers.channelID === channel_ID) {
+                  if (servers.wins === 0 && servers.losses === 0) {
+                    continue
+                  }
 
                   embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -492,6 +495,9 @@ const execute = async (message) => {
               }
               for (let servers of storedData[i].servers) {
                 if (servers.channelID === channel_ID) {
+                  if (servers.wins === 0 && servers.losses === 0) {
+                    continue
+                  }
 
                   embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -772,65 +778,65 @@ const execute = async (message) => {
             console.error(error);
           });
 
-          message.guild.createChannel(`Team-1-Game-${gameCount}`, {
+          message.guild.createChannel(`:small_orange_diamond:Team-1-Game-${gameCount}`, {
               type: 'voice',
               parent: message.channel.parentID,
               permissionOverwrites: [{
-                id: message.guild.defaultRole,
-                deny: "CONNECT"
-              },
-              {
-                id: sixMansArray[0].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[1].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[2].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[3].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[4].id,
-                allow: "CONNECT"
-              }
-            ]
+                  id: message.guild.defaultRole,
+                  deny: "CONNECT"
+                },
+                {
+                  id: sixMansArray[0].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[1].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[2].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[3].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[4].id,
+                  allow: "CONNECT"
+                }
+              ]
             })
             .catch(console.error)
 
-          message.guild.createChannel(`Team-2-Game-${gameCount}`, {
+          message.guild.createChannel(`:small_blue_diamond:Team-2-Game-${gameCount}`, {
               type: 'voice',
               parent: message.channel.parentID,
               permissionOverwrites: [{
-                id: message.guild.defaultRole,
-                deny: "CONNECT"
-              },
-              {
-                id: sixMansArray[5].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[6].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[7].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[8].id,
-                allow: "CONNECT"
-              },
-              {
-                id: sixMansArray[9].id,
-                allow: "CONNECT"
-              }
-            ]
+                  id: message.guild.defaultRole,
+                  deny: "CONNECT"
+                },
+                {
+                  id: sixMansArray[5].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[6].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[7].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[8].id,
+                  allow: "CONNECT"
+                },
+                {
+                  id: sixMansArray[9].id,
+                  allow: "CONNECT"
+                }
+              ]
             })
             .catch(console.error)
 
@@ -840,7 +846,7 @@ const execute = async (message) => {
 
           //yes this code is horrible no shit sherlock
 
-          //also what youre about to see will kill you, its not permanent, as even i have standart
+          //also what youre about to see will kill you, its not permanent, as even i have standarts
 
           sixMansArray.push({
             gameID: gameCount,
@@ -1043,6 +1049,8 @@ const execute = async (message) => {
               }
             }
 
+            usedNums = []
+
             hasVoted = false
 
             const Captain3rd = new Discord.RichEmbed()
@@ -1143,6 +1151,8 @@ const execute = async (message) => {
                 tempObjectLoop.splice(randomnumber2, 1)
               }
             }
+
+            usedNums = []
 
             hasVoted = false
 
@@ -1292,7 +1302,7 @@ const execute = async (message) => {
               console.error(error);
             });
 
-            message.guild.createChannel(`Team-1-Game-${sixMansArray[10].gameID}`, {
+            message.guild.createChannel(`:small_orange_diamond:Team-1-Game-${sixMansArray[10].gameID}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{
@@ -1323,7 +1333,7 @@ const execute = async (message) => {
               })
               .catch(console.error)
 
-            message.guild.createChannel(`Team-2-Game-${gameCount}`, {
+            message.guild.createChannel(`:small_blue_diamond:Team-2-Game-${gameCount}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{

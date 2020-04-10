@@ -480,6 +480,9 @@ const execute = async (message) => {
               }
               for (let servers of storedData[indexes].servers) {
                 if (servers.channelID === channel_ID) {
+                  if (servers.wins === 0 && servers.losses === 0) {
+                    continue
+                  }
 
                   embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -495,6 +498,9 @@ const execute = async (message) => {
               }
               for (let servers of storedData[i].servers) {
                 if (servers.channelID === channel_ID) {
+                  if (servers.wins === 0 && servers.losses === 0) {
+                    continue
+                  }
 
                   embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -621,7 +627,7 @@ const execute = async (message) => {
 
       sixMansArray.push(toAdd);
 
-      embed.setTitle(":white_check_mark: Addeed to queue!");
+      embed.setTitle(":white_check_mark: Added to queue!");
 
       message.channel.send(embed);
 
