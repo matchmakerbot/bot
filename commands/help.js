@@ -3,6 +3,7 @@ const discordEmbed = new Discord.RichEmbed()
 
 	.setAuthor("Deformed Bot Help Page", "https://media.discordapp.net/attachments/464556094728044564/619269142268215355/68884765_417923562160410_1636845361156849664_n.jpg?width=676&height=676")
 	.setColor('#F8534F')
+	.setTitle("For MatchMaking related commands, please use the command !helpmatchmaking")
 	.addField('!ping', '`It pongs! Very useful!`')
 	.addField('!lpt', '`Gives you a nice life pro tip.`')
 	.addField('!gaypercentage', '`Tells you how gay you are! Aaaaand you\'ll be stuck with it for the rest of your life.`')
