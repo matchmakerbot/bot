@@ -58,12 +58,12 @@ setInterval(() => {
       if ((Date.now() - games[6].time) > 3 * 60 * 60 * 1000) {
         for (let channel of client.channels.get(games[6].channelID).guild.channels.array()) {
 
-          if (channel.name === `Team-1-Game-${games[6].gameID}`) {
+          if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
             channel.delete()
           }
 
-          if (channel.name === `Team-2-Game-${games[6].gameID}`) {
+          if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
 
             channel.delete()
           }
@@ -206,7 +206,7 @@ const execute = async (message) => {
 
     case "status": {
 
-      embed.setTitle("Players in queue:");
+      embed.setTitle(`Players in queue: ${sixMansArray.length}`);
 
       embed.setDescription(sixMansArray.map(e => e.name).join(", "));
 
@@ -259,12 +259,12 @@ const execute = async (message) => {
 
             for (let channel of message.guild.channels.array()) {
 
-              if (channel.name === `Team-1-Game-${games[6].gameID}`) {
+              if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
                 channel.delete()
               }
 
-              if (channel.name === `Team-2-Game-${games[6].gameID}`) {
+              if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
 
                 channel.delete()
               }
@@ -319,12 +319,12 @@ const execute = async (message) => {
 
             for (let channel of message.guild.channels.array()) {
 
-              if (channel.name === `Team-1-Game-${games[6].gameID}`) {
+              if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
                 channel.delete()
               }
 
-              if (channel.name === `Team-2-Game-${games[6].gameID}`) {
+              if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
 
                 channel.delete()
               }
@@ -381,12 +381,12 @@ const execute = async (message) => {
 
           for (let channel of message.guild.channels.array()) {
 
-            if (channel.name === `Team-1-Game-${games[6].gameID}`) {
+            if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
               channel.delete()
             }
 
-            if (channel.name === `Team-2-Game-${games[6].gameID}`) {
+            if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
 
               channel.delete()
             }
@@ -782,7 +782,7 @@ const execute = async (message) => {
             console.error(error);
           });
 
-          message.guild.createChannel(`Team-1-Game-${gameCount}`, {
+          message.guild.createChannel(`🔸Team-1-Game-${gameCount}`, {
               type: 'voice',
               parent: message.channel.parentID,
               permissionOverwrites: [{
@@ -805,7 +805,7 @@ const execute = async (message) => {
             })
             .catch(console.error)
 
-          message.guild.createChannel(`Team-2-Game-${gameCount}`, {
+          message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
               type: 'voice',
               parent: message.channel.parentID,
               permissionOverwrites: [{
@@ -1078,7 +1078,7 @@ const execute = async (message) => {
               console.error(error);
             });
 
-            message.guild.createChannel(`Team-1-Game-${sixMansArray[6].gameID}`, {
+            message.guild.createChannel(`🔸Team-1-Game-${sixMansArray[6].gameID}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{
@@ -1101,7 +1101,7 @@ const execute = async (message) => {
               })
               .catch(console.error)
 
-            message.guild.createChannel(`Team-2-Game-${gameCount}`, {
+            message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{
