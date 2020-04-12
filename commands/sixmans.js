@@ -448,7 +448,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1)
+          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !==0)
 
           if (storedData.length === 0) {
             embed.setTitle(":x: No games have been played in here!");
@@ -480,9 +480,6 @@ const execute = async (message) => {
               }
               for (let servers of storedData[indexes].servers) {
                 if (servers.channelID === channel_ID) {
-                  if (servers.wins === 0 && servers.losses === 0) {
-                    continue
-                  }
 
                   embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -498,9 +495,6 @@ const execute = async (message) => {
               }
               for (let servers of storedData[i].servers) {
                 if (servers.channelID === channel_ID) {
-                  if (servers.wins === 0 && servers.losses === 0) {
-                    continue
-                  }
 
                   embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -569,6 +563,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
 
           }
+
           const channelPos = storedData[storedData.map(e => e.id).indexOf(thirdparam)].servers.map(e => e.channelID).indexOf(channel_ID)
 
           if (channelPos == -1) {
@@ -1028,6 +1023,8 @@ const execute = async (message) => {
                 tempObjectLoop.splice(randomnumber2, 1)
               }
             }
+
+            usedNums = []
 
             sixMansArray[2] = tempObjectLoop[0]
 

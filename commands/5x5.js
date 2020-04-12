@@ -6,7 +6,7 @@ const MongoDB = require("../mongodb");
 
 const db = MongoDB.getDB()
 
-const dbCollection = db.collection('sixmans') //CHANGE
+const dbCollection = db.collection('test') //CHANGE
 
 let usedNums = []
 
@@ -445,7 +445,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !==0)
+          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !== 0)
 
           if (storedData.length === 0) {
             embed.setTitle(":x: No games have been played in here!");
@@ -618,7 +618,7 @@ const execute = async (message) => {
 
       sixMansArray.push(toAdd);
 
-      embed.setTitle(":white_check_mark: Added to queue!");
+      embed.setTitle(`:white_check_mark: Added to queue! ${sixMansArray.length}/10`);
 
       message.channel.send(embed);
 
@@ -858,6 +858,7 @@ const execute = async (message) => {
             if (!includesUserID(tempObjectLoop)) {
               continue
             }
+
             const tempvar = tempObjectLoop[10]
 
             shuffle(tempObjectLoop);
@@ -883,6 +884,7 @@ const execute = async (message) => {
             const privatedm1 = client.users.get(tempObjectLoop[1].id)
 
             tempObjectLoop.shift()
+
             tempObjectLoop.shift()
 
             const Captain1st = new Discord.RichEmbed()
@@ -913,7 +915,9 @@ const execute = async (message) => {
               m.createMessageCollector(filter, {
                 time: 20000
               }).on('collect', m => {
-                const parsedM = parseInt(m) - 1
+
+                const parsedM = parseInt(m.content) - 1
+
                 if (!hasVoted) {
 
                   sixMansArray[1] = tempObjectLoop[parsedM]
@@ -966,10 +970,9 @@ const execute = async (message) => {
                 time: 20000
               }).on('collect', m => {
 
-                const parsedM = parseInt(m) - 1
+                const parsedM = parseInt(m.content) - 1
 
                 if (!hasVoted) {
-
                   sixMansArray[6] = tempObjectLoop[parsedM]
 
                   hasVoted = true
@@ -1023,7 +1026,7 @@ const execute = async (message) => {
                 tempObjectLoop.splice(randomnumber2, 1)
               }
 
-            } else if (hasVoted && hasVoted !== "all") {
+            } else if (hasVoted !== "all") {
 
               while (usedNums.includes(randomnumber2)) {
 
@@ -1073,9 +1076,10 @@ const execute = async (message) => {
                 time: 20000
               }).on('collect', m => {
 
-                const parsedM = parseInt(m) - 1
+                const parsedM = parseInt(m.content) - 1
 
                 if (!hasVoted) {
+
 
                   sixMansArray[2] = tempObjectLoop[parsedM]
 
@@ -1130,7 +1134,7 @@ const execute = async (message) => {
                 tempObjectLoop.splice(randomnumber2, 1)
               }
 
-            } else if (hasVoted && hasVoted !== "all") {
+            } else if (hasVoted !== "all") {
 
               while (usedNums.includes(randomnumber2)) {
 
@@ -1178,7 +1182,7 @@ const execute = async (message) => {
                 time: 20000
               }).on('collect', m => {
 
-                const parsedM = parseInt(m) - 1
+                const parsedM = parseInt(m.content) - 1
 
                 if (!hasVoted) {
 
@@ -1211,9 +1215,9 @@ const execute = async (message) => {
 
             await new Promise(resolve => setTimeout(resolve, 20000));
 
-            randomnumber =  Math.floor(Math.random() * 3)
+            randomnumber = Math.floor(Math.random() * 3)
 
-            randomnumber2 =  Math.floor(Math.random() * 3)
+            randomnumber2 = Math.floor(Math.random() * 3)
 
             if (!hasVoted) {
 
@@ -1254,6 +1258,8 @@ const execute = async (message) => {
                 tempObjectLoop.splice(randomnumber2, 1)
               }
             }
+
+            usedNums = []
 
             sixMansArray[4] = tempObjectLoop[0]
 
@@ -1367,7 +1373,6 @@ const execute = async (message) => {
               .catch(console.error)
 
             sixMansArray.splice(0, sixMansArray.length);
-
           }
         }
       };
