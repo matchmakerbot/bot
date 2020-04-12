@@ -6,7 +6,7 @@ const MongoDB = require("../mongodb");
 
 const db = MongoDB.getDB()
 
-const dbCollection = db.collection('sixman')
+const dbCollection = db.collection('sixmans') //CHANGE
 
 let usedNums = []
 
@@ -445,7 +445,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1)
+          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !==0)
 
           if (storedData.length === 0) {
             embed.setTitle(":x: No games have been played in here!");
@@ -477,9 +477,6 @@ const execute = async (message) => {
               }
               for (let servers of storedData[indexes].servers) {
                 if (servers.channelID === channel_ID) {
-                  if (servers.wins === 0 && servers.losses === 0) {
-                    continue
-                  }
 
                   embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -495,9 +492,6 @@ const execute = async (message) => {
               }
               for (let servers of storedData[i].servers) {
                 if (servers.channelID === channel_ID) {
-                  if (servers.wins === 0 && servers.losses === 0) {
-                    continue
-                  }
 
                   embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
@@ -913,7 +907,7 @@ const execute = async (message) => {
               message.channel.send(errorEmbed)
             });
 
-            filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 8
+            filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 9
 
             await privatedm0.createDM().then(m => {
               m.createMessageCollector(filter, {
@@ -965,7 +959,7 @@ const execute = async (message) => {
               message.channel.send(errorEmbed)
             });
 
-            filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 7
+            filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 8
 
             privatedm1.createDM().then(m => {
               m.createMessageCollector(filter, {
@@ -1005,14 +999,14 @@ const execute = async (message) => {
 
             await new Promise(resolve => setTimeout(resolve, 20000));
 
-            const randomnumber = Math.floor(Math.random() * 3)
+            let randomnumber = Math.floor(Math.random() * 7)
 
-            let randomnumber2 = Math.floor(Math.random() * 3)
+            let randomnumber2 = Math.floor(Math.random() * 7)
 
             if (!hasVoted) {
 
               while (randomnumber === randomnumber2) {
-                randomnumber2 = Math.floor(Math.random() * 3)
+                randomnumber2 = Math.floor(Math.random() * 7)
               }
 
               sixMansArray[6] = tempObjectLoop[randomnumber]
@@ -1033,7 +1027,7 @@ const execute = async (message) => {
 
               while (usedNums.includes(randomnumber2)) {
 
-                randomnumber2 = Math.floor(Math.random() * 2)
+                randomnumber2 = Math.floor(Math.random() * 6)
               }
 
               sixMansArray[7] = tempObjectLoop[randomnumber2]
@@ -1072,7 +1066,7 @@ const execute = async (message) => {
               message.channel.send(errorEmbed)
             });
 
-            filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 5
+            filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 6
 
             privatedm0.createDM().then(m => {
               m.createMessageCollector(filter, {
@@ -1112,10 +1106,14 @@ const execute = async (message) => {
 
             await new Promise(resolve => setTimeout(resolve, 20000));
 
+            randomnumber = Math.floor(Math.random() * 5)
+
+            randomnumber2 = Math.floor(Math.random() * 5)
+
             if (!hasVoted) {
 
               while (randomnumber === randomnumber2) {
-                randomnumber2 = Math.floor(Math.random() * 3)
+                randomnumber2 = Math.floor(Math.random() * 5)
               }
 
               sixMansArray[2] = tempObjectLoop[randomnumber]
@@ -1136,7 +1134,7 @@ const execute = async (message) => {
 
               while (usedNums.includes(randomnumber2)) {
 
-                randomnumber2 = Math.floor(Math.random() * 2)
+                randomnumber2 = Math.floor(Math.random() * 4)
               }
 
               sixMansArray[3] = tempObjectLoop[randomnumber2]
@@ -1173,7 +1171,7 @@ const execute = async (message) => {
               message.channel.send(errorEmbed)
             });
 
-            filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 5
+            filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 4
 
             privatedm1.createDM().then(m => {
               m.createMessageCollector(filter, {
@@ -1212,6 +1210,10 @@ const execute = async (message) => {
             })
 
             await new Promise(resolve => setTimeout(resolve, 20000));
+
+            randomnumber =  Math.floor(Math.random() * 3)
+
+            randomnumber2 =  Math.floor(Math.random() * 3)
 
             if (!hasVoted) {
 
