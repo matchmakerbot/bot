@@ -16,6 +16,10 @@ const tempObject = {}
 
 const rc = ["r", "c"]
 
+const valorantMaps = ["Haven", "Bind", "Split"]
+
+const CSGOMaps = ["Cache", "Dust II", "Inferno", "Mirage", "Train"]
+
 const EMBED_COLOR = "#F8534F";
 
 const ongoingGames = [];
@@ -505,6 +509,14 @@ const execute = async (message) => {
             return message.channel.send(embed);
           }
 
+          storedUsers.sort((a,b) => {
+            const indexA = a.servers.map(e => e.channelID).indexOf(channel_ID);
+
+            const indexB = b.servers.map(e => e.channelID).indexOf(channel_ID);
+
+            return b.servers[indexB].wins - a.servers[indexA].wins
+          })
+
           storedUsers.sort((a, b) => {
 
             const indexA = a.servers.map(e => e.channelID).indexOf(channel_ID);
@@ -646,7 +658,12 @@ const execute = async (message) => {
     case "q": {
 
       for (let person of sixMansArray) {
+        if (person.id === userId) {
 
+          embed.setTitle(":x: You're already in the queue!");
+
+          return message.channel.send(embed);
+        }
       };
 
       if (includesUserID(ongoingGames.flat())) {
@@ -1206,18 +1223,20 @@ const execute = async (message) => {
         }
         ongoingGames.push([...sixMansArray]);
 
+        const gameName = storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game
+
         const discordEmbed1 = new Discord.RichEmbed()
           .setColor(EMBED_COLOR)
           .addField("Game is ready:", `Game ID is: ${gameCount}`)
           .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}, ${sixMansArray[3].name}, ${sixMansArray[4].name}`)
           .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[5].name}, ${sixMansArray[6].name}, ${sixMansArray[7].name}, ${sixMansArray[8].name}, ${sixMansArray[9].name}`);
-          if(storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game !== "LeagueOfLegends") {
+          if(gameName !== "LeagueOfLegends") {
             
-            discordEmbed1.addField("Please organize a match with your teammates and opponents", "Good Luck!")
+            discordEmbed1.addField(`Map: ${gameName === "Valorant" ? valorantMaps[Math.floor(Math.random() * valorantMaps.length)] : CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)]}`, "Please organize a match with your teammates and opponents. Good Luck!")
           }
         message.channel.send(discordEmbed1);
 
-        if (storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game === "LeagueOfLegends") {
+        if (gameName === "LeagueOfLegends") {
 
           const JoinMatchEmbed = new Discord.RichEmbed()
             .setColor(EMBED_COLOR)
