@@ -6,7 +6,9 @@ const MongoDB = require("../mongodb");
 
 const db = MongoDB.getDB()
 
-const dbCollection = db.collection('test') //CHANGE
+const usersCollection = db.collection('sixman') //CHANGE
+
+const serversCollection = db.collection('guilds')
 
 let usedNums = []
 
@@ -22,9 +24,13 @@ const channelQueues = {};
 
 const cancelQueue = {}
 
+const avaiableGames = ["Valorant", "CSGO", "LeagueOfLegends"]
+
 let gameCount = 0;
 
-let storedData;
+let storedUsers;
+
+let storedGuilds;
 
 let hasVoted = false
 
@@ -121,15 +127,19 @@ const execute = async (message) => {
 
   const thirdparam = message.content.split(" ")[2]
 
-  await dbCollection.find().toArray().then(dataDB => {
-    storedData = dataDB
+  await usersCollection.find().toArray().then(dataDB => {
+    storedUsers = dataDB
+  })
+
+  await serversCollection.find().toArray().then(dataDB => {
+    storedGuilds = dataDB
   })
 
   const channel_ID = message.channel.id
 
   const givewinLose = async (score) => {
 
-    for (let user of storedData) {
+    for (let user of storedUsers) {
       for (let games of ongoingGames) {
 
         const channelPos = user.servers.map(e => e.channelID).indexOf(channel_ID)
@@ -138,7 +148,7 @@ const execute = async (message) => {
 
         if (user.id === games[i].id) {
 
-          await dbCollection.update({
+          await usersCollection.update({
             id: user.id
           }, {
             $set: {
@@ -167,9 +177,51 @@ const execute = async (message) => {
     date: new Date()
   };
 
+  const serverInfo = {
+    id: message.guild.id,
+    game: secondArg
+  }
+
   const index = sixMansArray.map(e => e.id).indexOf(userId);
 
+  if (!storedGuilds.map(e => e.id).includes(message.guild.id) && args(message) !== "game") {
+
+    embed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(", ")}`)
+
+    return message.channel.send(embed)
+  }
+
   switch (args(message)) {
+
+    case "game": {
+      if (!avaiableGames.includes(secondArg)) {
+
+        embed.setTitle(":x: Wrong game")
+
+        return message.channel.send(embed)
+      }
+      if (!storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
+
+        await serversCollection.insert(serverInfo);
+
+        embed.setTitle(":white_check_mark: Server added!")
+
+        return message.channel.send(embed)
+
+      } else if (storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
+
+        await serversCollection.update({
+          id: message.guild.id
+        }, {
+          $set: {
+            game: secondArg
+          }
+        });
+        embed.setTitle(":white_check_mark: Game updated!")
+
+        return message.channel.send(embed)
+      }
+    }
 
     case "leave": {
 
@@ -197,7 +249,7 @@ const execute = async (message) => {
 
       sixMansArray.splice(index, 1);
 
-      embed.setTitle(`:white_check_mark: ${message.author.username} left the queue!`);
+      embed.setTitle(`:white_check_mark: ${message.author.username} left the queue! ${sixMansArray.length}/10`);
 
       return message.channel.send(embed);
     }
@@ -407,17 +459,17 @@ const execute = async (message) => {
     case "score": {
       switch (secondArg) {
         case "me": {
-          if (!includesUserID(storedData)) {
+          if (!includesUserID(storedUsers)) {
 
             embed.setTitle(":x: You haven't played any games yet!");
 
             return message.channel.send(embed);
           }
 
-          for (let j = 0; j < storedData.length; j++) {
-            if (storedData[j].id === userId) {
+          for (let j = 0; j < storedUsers.length; j++) {
+            if (storedUsers[j].id === userId) {
 
-              const scoreDirectory = storedData[j].servers[storedData[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
+              const scoreDirectory = storedUsers[j].servers[storedUsers[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
 
               if (scoreDirectory === undefined) {
 
@@ -445,15 +497,15 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !== 0)
+          storedUsers = storedUsers.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !== 0)
 
-          if (storedData.length === 0) {
+          if (storedUsers.length === 0) {
             embed.setTitle(":x: No games have been played in here!");
 
             return message.channel.send(embed);
           }
 
-          storedData.sort((a, b) => {
+          storedUsers.sort((a, b) => {
 
             const indexA = a.servers.map(e => e.channelID).indexOf(channel_ID);
 
@@ -469,33 +521,33 @@ const execute = async (message) => {
           if (!isNaN(thirdparam) && thirdparam > 0) {
             let indexes = 20 * (thirdparam - 1);
             for (indexes; indexes < 20 * thirdparam; indexes++) {
-              if (storedData[indexes] == undefined) {
+              if (storedUsers[indexes] == undefined) {
 
                 embed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
 
                 break
               }
-              for (let servers of storedData[indexes].servers) {
+              for (let servers of storedUsers[indexes].servers) {
                 if (servers.channelID === channel_ID) {
 
-                  embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+                  embed.addField(storedUsers[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
-                  embed.setFooter(`Showing page ${thirdparam}/${Math.ceil(storedData.length / 20)}`);
+                  embed.setFooter(`Showing page ${thirdparam}/${Math.ceil(storedUsers.length / 20)}`);
                 }
               }
             }
           } else {
             for (i = 0; i < 20; i++) {
-              if (storedData[i] == undefined) {
+              if (storedUsers[i] == undefined) {
                 embed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
                 break
               }
-              for (let servers of storedData[i].servers) {
+              for (let servers of storedUsers[i].servers) {
                 if (servers.channelID === channel_ID) {
 
-                  embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+                  embed.addField(storedUsers[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
 
-                  embed.setFooter(`Showing page ${1}/${Math.ceil(storedData.length / 20)}`);
+                  embed.setFooter(`Showing page ${1}/${Math.ceil(storedUsers.length / 20)}`);
                 }
               }
             }
@@ -530,13 +582,13 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          for (let user of storedData) {
+          for (let user of storedUsers) {
 
             const channelPos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
 
             if (channelPos !== -1) {
 
-              await dbCollection.update({
+              await usersCollection.update({
                 id: user.id
               }, {
                 $pull: {
@@ -560,7 +612,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
 
           }
-          const channelPos = storedData[storedData.map(e => e.id).indexOf(thirdparam)].servers.map(e => e.channelID).indexOf(channel_ID)
+          const channelPos = storedUsers[storedUsers.map(e => e.id).indexOf(thirdparam)].servers.map(e => e.channelID).indexOf(channel_ID)
 
           if (channelPos == -1) {
 
@@ -568,7 +620,7 @@ const execute = async (message) => {
 
             return message.channel.send(embed)
           } else {
-            await dbCollection.update({
+            await usersCollection.update({
               id: thirdparam
             }, {
               $pull: {
@@ -594,12 +646,7 @@ const execute = async (message) => {
     case "q": {
 
       for (let person of sixMansArray) {
-        if (person.id === userId) {
 
-          embed.setTitle(":x: You're already in the queue!");
-
-          return message.channel.send(embed);
-        }
       };
 
       if (includesUserID(ongoingGames.flat())) {
@@ -633,21 +680,21 @@ const execute = async (message) => {
 
           // yes i know having lots of requests isnt good ill change when i can be fucked to
 
-          if (await dbCollection.find({
+          if (await usersCollection.find({
               id: user.id
             }).toArray().then(dataDB => dataDB.length === 0)) {
             (async function () {
-              await dbCollection.insert(newUser);
+              await usersCollection.insert(newUser);
             })()
           };
 
-          if (await dbCollection.find({
+          if (await usersCollection.find({
               id: user.id,
               ["servers.channelID"]: channel_ID
             }).toArray().then(dataDB => dataDB.length === 0)) {
 
             (async function () {
-              await dbCollection.update({
+              await usersCollection.update({
                 id: user.id
               }, {
                 $push: {
@@ -726,115 +773,6 @@ const execute = async (message) => {
             time: new Date(),
             channelID: channel_ID
           })
-
-          ongoingGames.push([...sixMansArray]);
-
-          const discordEmbed1 = new Discord.RichEmbed()
-            .setColor(EMBED_COLOR)
-            .addField("Game is ready:", `Game ID is: ${gameCount}`)
-            .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}, ${sixMansArray[3].name}, ${sixMansArray[4].name}`)
-            .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[5].name}, ${sixMansArray[6].name}, ${sixMansArray[7].name}, ${sixMansArray[8].name}, ${sixMansArray[9].name}`);
-          message.channel.send(discordEmbed1);
-
-          const JoinMatchEmbed = new Discord.RichEmbed()
-            .setColor(EMBED_COLOR)
-            .addField("Name:", valuesforpm.name)
-            .addField("Password:", valuesforpm.password)
-            .addField("You have to:", `Join match(Created by ${sixMansArray[0].name})`);
-
-          for (let users of sixMansArray) {
-            if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[10].id) {
-
-              client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
-                const errorEmbed = new Discord.RichEmbed()
-                  .setColor(EMBED_COLOR)
-                  .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
-
-                console.error(error);
-
-                message.channel.send(errorEmbed)
-              });
-            };
-          };
-
-          const CreateMatchEmbed = new Discord.RichEmbed()
-            .setColor(EMBED_COLOR)
-            .addField("Name:", valuesforpm.name)
-            .addField("Password:", valuesforpm.password)
-            .addField("You have to:", "Create Match");
-
-          client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
-            const errorEmbed = new Discord.RichEmbed()
-              .setColor(EMBED_COLOR)
-              .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
-
-            message.channel.send(errorEmbed)
-            console.error(error);
-          });
-
-          message.guild.createChannel(`🔸Team-1-Game-${gameCount}`, {
-              type: 'voice',
-              parent: message.channel.parentID,
-              permissionOverwrites: [{
-                  id: message.guild.defaultRole,
-                  deny: "CONNECT"
-                },
-                {
-                  id: sixMansArray[0].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[1].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[2].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[3].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[4].id,
-                  allow: "CONNECT"
-                }
-              ]
-            })
-            .catch(console.error)
-
-          message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
-              type: 'voice',
-              parent: message.channel.parentID,
-              permissionOverwrites: [{
-                  id: message.guild.defaultRole,
-                  deny: "CONNECT"
-                },
-                {
-                  id: sixMansArray[5].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[6].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[7].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[8].id,
-                  allow: "CONNECT"
-                },
-                {
-                  id: sixMansArray[9].id,
-                  allow: "CONNECT"
-                }
-              ]
-            })
-            .catch(console.error)
-
-          sixMansArray.splice(0, sixMansArray.length);
 
         } else if (getOccurrence(rorcArray.map(e => e.param), "c") > getOccurrence(rorcArray.map(e => e.param), "r")) {
 
@@ -1264,124 +1202,130 @@ const execute = async (message) => {
             sixMansArray[4] = tempObjectLoop[0]
 
             delete tempObject[gameCount]
-
-            ongoingGames.push([...sixMansArray])
-
-            const discordEmbed1 = new Discord.RichEmbed()
-              .setColor(EMBED_COLOR)
-              .addField("Game is ready:", `Game ID is: ${sixMansArray[10].gameID}`)
-              .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}, ${sixMansArray[3].name}, ${sixMansArray[4].name}`)
-              .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[5].name}, ${sixMansArray[6].name}, ${sixMansArray[7].name}, ${sixMansArray[8].name}, ${sixMansArray[9].name}`);
-            message.channel.send(discordEmbed1);
-
-            const JoinMatchEmbed = new Discord.RichEmbed()
-              .setColor(EMBED_COLOR)
-              .addField("Name:", valuesforpm.name)
-              .addField("Password:", valuesforpm.password)
-              .addField("You have to:", `Join match(Created by ${sixMansArray[0].name})`);
-
-            for (let users of sixMansArray) {
-              if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[10].id) {
-
-                client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
-                  const errorEmbed = new Discord.RichEmbed()
-                    .setColor(EMBED_COLOR)
-                    .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
-
-                  console.error(error);
-
-                  message.channel.send(errorEmbed)
-                });
-              };
-            };
-
-            const CreateMatchEmbed = new Discord.RichEmbed()
-              .setColor(EMBED_COLOR)
-              .addField("Name:", valuesforpm.name)
-              .addField("Password:", valuesforpm.password)
-              .addField("You have to:", "Create Match");
-
-            client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
-              const errorEmbed = new Discord.RichEmbed()
-                .setColor(EMBED_COLOR)
-                .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
-
-              message.channel.send(errorEmbed)
-              console.error(error);
-            });
-
-            message.guild.createChannel(`🔸Team-1-Game-${sixMansArray[10].gameID}`, {
-                type: 'voice',
-                parent: message.channel.parentID,
-                permissionOverwrites: [{
-                    id: message.guild.defaultRole,
-                    deny: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[0].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[1].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[2].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[3].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[4].id,
-                    allow: "CONNECT"
-                  }
-                ]
-              })
-              .catch(console.error)
-
-            message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
-                type: 'voice',
-                parent: message.channel.parentID,
-                permissionOverwrites: [{
-                    id: message.guild.defaultRole,
-                    deny: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[5].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[6].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[7].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[8].id,
-                    allow: "CONNECT"
-                  },
-                  {
-                    id: sixMansArray[9].id,
-                    allow: "CONNECT"
-                  }
-                ]
-              })
-              .catch(console.error)
-
-            sixMansArray.splice(0, sixMansArray.length);
           }
         }
+        ongoingGames.push([...sixMansArray]);
+
+        const discordEmbed1 = new Discord.RichEmbed()
+          .setColor(EMBED_COLOR)
+          .addField("Game is ready:", `Game ID is: ${gameCount}`)
+          .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}, ${sixMansArray[3].name}, ${sixMansArray[4].name}`)
+          .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[5].name}, ${sixMansArray[6].name}, ${sixMansArray[7].name}, ${sixMansArray[8].name}, ${sixMansArray[9].name}`);
+          if(storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game !== "LeagueOfLegends") {
+            
+            discordEmbed1.addField("Please organize a match with your teammates and opponents", "Good Luck!")
+          }
+        message.channel.send(discordEmbed1);
+
+        if (storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game === "LeagueOfLegends") {
+
+          const JoinMatchEmbed = new Discord.RichEmbed()
+            .setColor(EMBED_COLOR)
+            .addField("Name:", valuesforpm.name)
+            .addField("Password:", valuesforpm.password)
+            .addField("You have to:", `Join match(Created by ${sixMansArray[0].name})`);
+
+          for (let users of sixMansArray) {
+            if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[10].id) {
+
+              client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
+                const errorEmbed = new Discord.RichEmbed()
+                  .setColor(EMBED_COLOR)
+                  .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
+
+                console.error(error);
+
+                message.channel.send(errorEmbed)
+              });
+            };
+          };
+
+          const CreateMatchEmbed = new Discord.RichEmbed()
+            .setColor(EMBED_COLOR)
+            .addField("Name:", valuesforpm.name)
+            .addField("Password:", valuesforpm.password)
+            .addField("You have to:", "Create Custom Match");
+
+          client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
+            const errorEmbed = new Discord.RichEmbed()
+              .setColor(EMBED_COLOR)
+              .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
+
+            message.channel.send(errorEmbed)
+            console.error(error);
+          });
+        }
+
+        message.guild.createChannel(`🔸Team-1-Game-${gameCount}`, {
+            type: 'voice',
+            parent: message.channel.parentID,
+            permissionOverwrites: [{
+                id: message.guild.defaultRole,
+                deny: "CONNECT"
+              },
+              {
+                id: sixMansArray[0].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[1].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[2].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[3].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[4].id,
+                allow: "CONNECT"
+              }
+            ]
+          })
+          .catch(console.error)
+
+        message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
+            type: 'voice',
+            parent: message.channel.parentID,
+            permissionOverwrites: [{
+                id: message.guild.defaultRole,
+                deny: "CONNECT"
+              },
+              {
+                id: sixMansArray[5].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[6].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[7].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[8].id,
+                allow: "CONNECT"
+              },
+              {
+                id: sixMansArray[9].id,
+                allow: "CONNECT"
+              }
+            ]
+          })
+          .catch(console.error)
+
+        sixMansArray.splice(0, sixMansArray.length);
       };
     }
   };
 };
 
 module.exports = {
-  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c"],
+  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game"],
   description: '6man bot',
   execute
 };
