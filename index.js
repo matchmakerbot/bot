@@ -10,7 +10,7 @@ const client = require("./client.js");
 
 const MongoDB = require("./mongodb");
 
-const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game"]
+const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game","whitelist","ongoinggames"]
 
 client.commands = new Discord.Collection();
 

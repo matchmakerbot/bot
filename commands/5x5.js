@@ -183,7 +183,8 @@ const execute = async (message) => {
 
   const serverInfo = {
     id: message.guild.id,
-    game: secondArg
+    game: secondArg,
+    whitelist: []
   }
 
   const index = sixMansArray.map(e => e.id).indexOf(userId);
@@ -194,16 +195,24 @@ const execute = async (message) => {
 
     return message.channel.send(embed)
   }
+  if (storedGuilds.map(e => e.id).indexOf(message.guild.id) !== -1) {
+    if (!storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(message.channel.id) && args(message) !== "whitelist") {
+      embed.setTitle(":x: Please add this channel to the whitelist using !whitelist channelId.")
+
+      return message.channel.send(embed)
+    }
+  }
 
   switch (args(message)) {
 
     case "game": {
       if (!avaiableGames.includes(secondArg)) {
 
-        embed.setTitle(":x: Wrong game")
+        embed.setTitle(":x: Invalid argument")
 
         return message.channel.send(embed)
       }
+
       if (!storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
 
         await serversCollection.insert(serverInfo);
@@ -225,6 +234,56 @@ const execute = async (message) => {
 
         return message.channel.send(embed)
       }
+    }
+
+    case "whitelist": {
+
+      if (isNaN(secondArg)) {
+        embed.setTitle(":x: Please copy the actual discord id of the channel, more info can be found here \n https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
+
+        return message.channel.send(embed)
+      }
+
+      if (!message.guild.channels.map(e => e.id).includes(secondArg)) {
+        embed.setTitle(":x: This channel does not belong to this server.")
+
+        return message.channel.send(embed)
+      }
+
+      if (!message.member.hasPermission("ADMINISTRATOR")) {
+
+        embed.setTitle(":x: You do not have Administrator permission!")
+
+        return message.channel.send(embed)
+      }
+
+      if (storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(secondArg)) {
+
+        await serversCollection.update({
+          id: message.guild.id
+        }, {
+          $pull: {
+            whitelist: secondArg
+          }
+        });
+
+        embed.setTitle(":white_check_mark: Channel removed from whitelist!")
+
+        return message.channel.send(embed)
+      }
+
+      await serversCollection.update({
+        id: message.guild.id
+      }, {
+        $push: {
+          whitelist: secondArg
+        }
+      });
+
+      embed.setTitle(":white_check_mark: Channel Whitelisted!")
+
+      return message.channel.send(embed)
+
     }
 
     case "leave": {
@@ -509,7 +568,7 @@ const execute = async (message) => {
             return message.channel.send(embed);
           }
 
-          storedUsers.sort((a,b) => {
+          storedUsers.sort((a, b) => {
             const indexA = a.servers.map(e => e.channelID).indexOf(channel_ID);
 
             const indexB = b.servers.map(e => e.channelID).indexOf(channel_ID);
@@ -1017,8 +1076,7 @@ const execute = async (message) => {
             privatedm0.send(Captain3rd).catch(error => {
               const errorEmbed = new Discord.RichEmbed()
                 .setColor(EMBED_COLOR)
-                .setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`);
-
+                .setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`); -
               console.error(error);
 
               message.channel.send(errorEmbed)
@@ -1034,7 +1092,6 @@ const execute = async (message) => {
                 const parsedM = parseInt(m.content) - 1
 
                 if (!hasVoted) {
-
 
                   sixMansArray[2] = tempObjectLoop[parsedM]
 
@@ -1230,10 +1287,10 @@ const execute = async (message) => {
           .addField("Game is ready:", `Game ID is: ${gameCount}`)
           .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}, ${sixMansArray[3].name}, ${sixMansArray[4].name}`)
           .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[5].name}, ${sixMansArray[6].name}, ${sixMansArray[7].name}, ${sixMansArray[8].name}, ${sixMansArray[9].name}`);
-          if(gameName !== "LeagueOfLegends") {
-            
-            discordEmbed1.addField(`Map: ${gameName === "Valorant" ? valorantMaps[Math.floor(Math.random() * valorantMaps.length)] : CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)]}`, "Please organize a match with your teammates and opponents. Good Luck!")
-          }
+        if (gameName !== "LeagueOfLegends") {
+
+          discordEmbed1.addField(`Map: ${gameName === "Valorant" ? valorantMaps[Math.floor(Math.random() * valorantMaps.length)] : CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)]}`, "Please organize a match with your teammates and opponents. Good Luck!")
+        }
         message.channel.send(discordEmbed1);
 
         if (gameName === "LeagueOfLegends") {
@@ -1344,7 +1401,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game"],
+  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game", "whitelist","ongoinggames"],
   description: '6man bot',
   execute
 };
