@@ -14,7 +14,7 @@ module.exports = {
       return split2.split(" ").length;
     }
 
-    const discordEmbed = new Discord.RichEmbed()
+    const discordEmbed = new Discord.MessageEmbed()
       .setColor('#F8534F')
       .setTitle(":x: Please only insert one word.")
 
@@ -29,7 +29,7 @@ module.exports = {
     }
 
     if (WordCount() === 1) {
-      const discordEmbed = new Discord.RichEmbed()
+      const discordEmbed = new Discord.MessageEmbed()
         .setColor('#F8534F')
         .setDescription(":x: Please specify the subreddit you want to search.")
       return message.channel.send(discordEmbed)
@@ -52,7 +52,7 @@ module.exports = {
         const randomnumber = Math.floor(Math.random() * childrenConst.length);
 
         if (subreddit.error === 404 || data.children.length === 0) {
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(":x: Error. Either the subreddit doesn't exist or Reddit made a Fuckie Wookie.");
           return message.channel.send(discordEmbed)
@@ -60,13 +60,13 @@ module.exports = {
         const nsfwpost = subreddit.data.children[randomnumber].data.over_18;
 
         if (nsfwpost && !message.channel.nsfw) {
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setDescription(":warning: This channel does not have a NSFW tag!");
           return message.channel.send(discordEmbed)
         }
         if (nsfwpost && message.channel.id === "416015319736385547") {
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(":warning: This subreddit is disabled in this channel. If you think this shouldn't be happening please ping Tweeno");
           return message.channel.send(discordEmbed)
@@ -80,13 +80,13 @@ module.exports = {
 
           const everythingAfterThat = childrenConst[randomnumber].data.selftext.slice(2048);
 
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(childrenConst[randomnumber].data.title)
             .setDescription(first2048)
             .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink)
 
-          const discordEmbed2 = new Discord.RichEmbed()
+          const discordEmbed2 = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setDescription(everythingAfterThat)
             .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
@@ -98,7 +98,7 @@ module.exports = {
 
         if (subreddit.data.children[randomnumber].data.is_self && childrenConst[randomnumber].data.selftext.length < 2048) {
 
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(childrenConst[randomnumber].data.title)
             .setDescription(childrenConst[randomnumber].data.selftext)
@@ -108,7 +108,7 @@ module.exports = {
           return message.channel.send(discordEmbed)
         }
         if (!subreddit.data.children[randomnumber].data.is_self) {
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(childrenConst[randomnumber].data.title)
             .setFooter("👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments)
@@ -123,7 +123,7 @@ module.exports = {
       })
       .catch(error => {
         console.error(error)
-        const discordEmbed = new Discord.RichEmbed()
+        const discordEmbed = new Discord.MessageEmbed()
           .setColor('#F8534F')
           .setTitle(":x: Error. Either the subreddit doesn't exist or Reddit made a Fuckie Wookie.");
 

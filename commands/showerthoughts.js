@@ -14,7 +14,7 @@ module.exports = {
                 if (!allowed.length) return message.channel.send('hmm');
                 const randomnumber = Math.floor(Math.random() * allowed.length)
 
-                const discordEmbed = new Discord.RichEmbed()
+                const discordEmbed = new Discord.MessageEmbed()
                     .setColor('#F8534F')
                     .setTitle(allowed[randomnumber].data.title)
                     .setDescription("Posted by: " + allowed[randomnumber].data.author)

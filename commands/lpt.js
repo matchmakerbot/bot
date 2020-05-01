@@ -1,4 +1,5 @@
 const Discord = require('discord.js')
+999
 let sentences = [
     'Paint yourself white to avoid getting shot by the cops',
     'Keep wasps or hornets in your car to prevent it from being stolen',
@@ -38,9 +39,7 @@ let sentences = [
     "Devote your life to religion so when you need to lie, just put it on god and they’ll believe you.",
     "Stop Saving for Retirement. Start spending that money on whiskey.",
     "Legally change yourself to a female so that you have a longer life expectancy",
-    "Spice up any Social media comment with random quotation marks: \n “Congrats“ on your baby. \n Congrats on “your“ baby. \n Congrats on your “baby“."
-
-    
+    "Spice up any Social media comment with random quotation marks: \n “Congrats“ on your baby. \n Congrats on “your“ baby. \n Congrats on your “baby“." 
 ]
 function lptrandom () { 
     return sentences[Math.floor(Math.random() * sentences.length)]
@@ -49,7 +48,7 @@ module.exports = {
 	name: 'lpt',
 	description: 'it pongs',
 	execute(message) {
-        const discordEmbed = new Discord.RichEmbed()
+        const discordEmbed = new Discord.MessageEmbed()
                     .setColor('#F8534F')
                     .setTitle(lptrandom())
 		message.channel.send(discordEmbed);

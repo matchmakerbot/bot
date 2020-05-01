@@ -49,7 +49,7 @@ module.exports = {
 
           const username = response.username
 
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(rIdea)
             .setFooter('Sent by: ' + username + " at " + today3);
@@ -78,7 +78,7 @@ module.exports = {
       console.log(foundnumber)
 
       if (foundnumber === -1) {
-        const discordEmbed = new Discord.RichEmbed()
+        const discordEmbed = new Discord.MessageEmbed()
         .setColor('#F8534F')
         .setTitle(":x: You have no ideas to delete!");
 
@@ -91,7 +91,7 @@ module.exports = {
 
       fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
 
-      const discordEmbed = new Discord.RichEmbed()
+      const discordEmbed = new Discord.MessageEmbed()
         .setColor('#F8534F')
         .setTitle("Idea Deleted");
 
@@ -118,7 +118,7 @@ module.exports = {
 
           const username = response.username
 
-          const discordEmbed = new Discord.RichEmbed()
+          const discordEmbed = new Discord.MessageEmbed()
             .setColor('#F8534F')
             .setTitle(lastArray.text)
             .setFooter('Sent by: ' + username + " at " + today4);
@@ -140,7 +140,7 @@ module.exports = {
 
     for (let person of storedideas) {
       if (person.thegayassthatwrotethis === message.author.id) {
-        const discordEmbed = new Discord.RichEmbed()
+        const discordEmbed = new Discord.MessageEmbed()
           .setColor('#F8534F')
           .setTitle(":x: You can't send more than 1 idea. Do !idea delete do delete your old idea")
         message.channel.send(discordEmbed);
@@ -151,7 +151,7 @@ module.exports = {
 
     for (let word of blacklist) {
       if (message.content.includes(word)) {
-        const discordEmbed = new Discord.RichEmbed()
+        const discordEmbed = new Discord.MessageEmbed()
           .setColor('#F8534F')
           .setTitle(":x: Let's not use that word, shall we?");
 
@@ -178,7 +178,7 @@ module.exports = {
 
     fs.writeFileSync(path.join(__dirname, "ideadata.json"), returnstring);
 
-    const discordEmbed = new Discord.RichEmbed()
+    const discordEmbed = new Discord.MessageEmbed()
       .setColor('#F8534F')
       .setTitle("Idea inserted into the database. ")
     return message.channel.send(discordEmbed)

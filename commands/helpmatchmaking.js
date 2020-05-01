@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 
-const discordEmbed = new Discord.RichEmbed()
+const discordEmbed = new Discord.MessageEmbed()
 
     .setAuthor("5X5 MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
     .setColor('#F8534F')

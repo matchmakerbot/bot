@@ -10,7 +10,7 @@ const client = require("./client.js");
 
 const MongoDB = require("./mongodb");
 
-const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game","whitelist","ongoinggames"]
+const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "whitelist", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer","mode"]
 
 client.commands = new Discord.Collection();
 
@@ -21,6 +21,8 @@ MongoDB.connectdb(async (err) => {
     const guild1Commands = require('./commands/sixmans.js');
 
     const otherGuildCommands = require('./commands/5x5.js');
+
+    const teamsCommands = require('./commands/teams.js');
 
     if (err) throw err
 
@@ -35,8 +37,8 @@ MongoDB.connectdb(async (err) => {
         }
     }
 
-    client.once('ready', () => {
-        console.log(`Guilds: ${client.guilds.array().map(a => a.name).join(" || ")}\nNumber of Guilds: ${client.guilds.array().map(a => a.name).length}`)
+    client.once('ready', async () => {
+        console.log(`Guilds: ${client.guilds.cache.map(a => a.name).join(" || ")}\nNumber of Guilds: ${client.guilds.cache.map(a => a.name).length}`)
         console.log('Ready');
         client.user.setActivity("Type !helpmatchmaking to get info")
     });
@@ -50,19 +52,21 @@ MongoDB.connectdb(async (err) => {
         const command = args.shift().toLowerCase();
 
         if (!client.commands.has(command)) return;
-
+//make the database thingy here
         if (queueCommands.includes(command)) {
-            if (message.guild.id == "580891269488705548") {
+            if (message.guild.id == "580891269488705548" || message.guild.id == "537712402884591635") {
                 return guild1Commands.execute(message, args)
+            } else if (message.channel.id === "697856354194554881") {
+                return teamsCommands.execute(message, args)
             } else {
                 return otherGuildCommands.execute(message, args)
             }
         }
 
+
         client.commands.get(command).execute(message, args);
 
     });
-
 })
 
 client.login(process.env.token);

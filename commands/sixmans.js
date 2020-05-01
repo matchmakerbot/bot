@@ -8,20 +8,25 @@ const db = MongoDB.getDB()
 
 const dbCollection = db.collection('sixman')
 
-const usedNums = []
+const serversCollection = db.collection('guilds')
+
+let usedNums = []
 
 const tempObject = {}
 
 const rc = ["r", "c"]
 
+//change the embeds like in the teams and 5x5
+
 const EMBED_COLOR = "#F8534F";
 
 const ongoingGames = [];
 
-const channelQueues = {
-};
+const channelQueues = {};
 
 const cancelQueue = {}
+
+let storedGuilds;
 
 let gameCount = 0;
 
@@ -29,15 +34,15 @@ let storedData;
 
 let hasVoted = false
 
-let embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+setInterval(async () => {
 
-setInterval(() => {
+  let embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR)
+
   if (Object.entries(channelQueues).length !== 0) {
     for (let channel of Object.values(channelQueues)) {
       for (let user of channel) {
         if ((Date.now() - user.date) > 45 * 60 * 1000) {
-
-          const actualChannel = client.channels.get(Object.keys(channelQueues).find(key => channelQueues[key] === channel))
+          const actualChannel = client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel))
 
           embedRemove.setTitle(`You were removed from the queue after no game has been made in 45 minutes!`)
 
@@ -45,7 +50,7 @@ setInterval(() => {
 
           actualChannel.send(embedRemove)
 
-          embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+          embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR)
 
           channel.splice(channel.indexOf(user), 1)
         }
@@ -56,7 +61,7 @@ setInterval(() => {
   if (ongoingGames.length !== 0) {
     for (let games of ongoingGames) {
       if ((Date.now() - games[6].time) > 3 * 60 * 60 * 1000) {
-        for (let channel of client.channels.get(games[6].channelID).guild.channels.array()) {
+        for (let channel of client.channels.fetch(games[6].channelID).then(e => e.guild.channels.cache.array())) {
 
           if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
@@ -75,9 +80,11 @@ setInterval(() => {
 
         ongoingGames.splice(index, 1)
 
-        client.channels.get(games[6].channelID).send(embedRemove)
+        const a = await client.channels.fetch(games[6].channel)
 
-        embedRemove = new Discord.RichEmbed().setColor(EMBED_COLOR)
+        a.send(embedRemove)
+
+        embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR)
       }
     }
   }
@@ -117,7 +124,7 @@ const args = message => {
 
 const execute = async (message) => {
 
-  const embed = new Discord.RichEmbed().setColor(EMBED_COLOR)
+  const embed = new Discord.MessageEmbed().setColor(EMBED_COLOR)
 
   const secondArg = message.content.split(" ")[1]
 
@@ -125,6 +132,10 @@ const execute = async (message) => {
 
   await dbCollection.find().toArray().then(dataDB => {
     storedData = dataDB
+  })
+
+  await serversCollection.find().toArray().then(dataDB => {
+    storedGuilds = dataDB
   })
 
   const channel_ID = message.channel.id
@@ -138,13 +149,16 @@ const execute = async (message) => {
 
         const sort = `servers.${channelPos}.${score}`
 
-        if (user.id === games[i].id) {
+        const mmr = `servers.${channelPos}.mmr`
+
+        if (user.id === games[i].id && games.map(e => e.id).includes(userId)) {
 
           await dbCollection.update({
             id: user.id
           }, {
             $set: {
               [sort]: user.servers[channelPos][score] + 1,
+              [mmr]: score === "wins" ? user.servers[channelPos].mmr + 13 : user.servers[channelPos].mmr - 10
             }
           });
         }
@@ -169,7 +183,25 @@ const execute = async (message) => {
     date: new Date()
   };
 
+  const serverInfo = {
+    id: message.guild.id,
+    game: secondArg,
+    whitelist: []
+  }
+
   const index = sixMansArray.map(e => e.id).indexOf(userId);
+
+  if (!storedGuilds.map(e => e.id).includes(message.guild.id)) {
+    await serversCollection.insert(serverInfo);
+  }
+
+  if (storedGuilds.map(e => e.id).indexOf(message.guild.id) !== -1) {
+    if (!storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(message.channel.id) && args(message) !== "whitelist") {
+      wrongEmbed.setTitle(":x: Please add this channel to the whitelist using !whitelist channelId.")
+
+      return message.channel.send(wrongEmbed)
+    }
+  }
 
   switch (args(message)) {
 
@@ -199,7 +231,7 @@ const execute = async (message) => {
 
       sixMansArray.splice(index, 1);
 
-      embed.setTitle(`:white_check_mark: ${message.author.username} left the queue!`);
+      embed.setTitle(`:white_check_mark: ${message.author.username} left the queue! ${sixMansArray.length}/6`);
 
       return message.channel.send(embed);
     }
@@ -257,7 +289,7 @@ const execute = async (message) => {
 
             ongoingGames.splice(index, 1);
 
-            for (let channel of message.guild.channels.array()) {
+            for (let channel of message.guild.channels.cache.array()) {
 
               if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
@@ -317,7 +349,7 @@ const execute = async (message) => {
 
             ongoingGames.splice(index, 1);
 
-            for (let channel of message.guild.channels.array()) {
+            for (let channel of message.guild.channels.cache.array()) {
 
               if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
@@ -379,7 +411,7 @@ const execute = async (message) => {
 
         if (cancelqueuearray.length === 4) {
 
-          for (let channel of message.guild.channels.array()) {
+          for (let channel of message.guild.channels.cache.array()) {
 
             if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 
@@ -435,6 +467,8 @@ const execute = async (message) => {
 
               embed.addField("Winrate:", isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? "0%" : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%");
 
+              wrongEmbed.addField("MMR:", scoreDirectory.mmr)
+
               return message.channel.send(embed);
             }
           }
@@ -448,7 +482,7 @@ const execute = async (message) => {
             return message.channel.send(embed)
           }
 
-          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !==0)
+          storedData = storedData.filter(a => a.servers.map(e => e.channelID).indexOf(channel_ID) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(channel_ID)].losses !== 0)
 
           if (storedData.length === 0) {
             embed.setTitle(":x: No games have been played in here!");
@@ -457,17 +491,12 @@ const execute = async (message) => {
           }
 
           storedData.sort((a, b) => {
-
             const indexA = a.servers.map(e => e.channelID).indexOf(channel_ID);
 
             const indexB = b.servers.map(e => e.channelID).indexOf(channel_ID);
 
-            const winrateb = isNaN(Math.floor((b.servers[indexB].wins / (b.servers[indexB].wins + b.servers[indexB].losses)) * 100)) ? 0 : Math.floor((b.servers[indexB].wins / (b.servers[indexB].wins + b.servers[indexB].losses)) * 100)
-
-            const winratea = isNaN(Math.floor((a.servers[indexA].wins / (a.servers[indexA].wins + a.servers[indexA].losses)) * 100)) ? 0 : Math.floor((a.servers[indexA].wins / (a.servers[indexA].wins + a.servers[indexA].losses)) * 100)
-
-            return winrateb - winratea;
-          });
+            return b.servers[indexB].mmr - a.servers[indexA].mmr
+          })
 
           if (!isNaN(thirdparam) && thirdparam > 0) {
             let indexes = 20 * (thirdparam - 1);
@@ -481,7 +510,7 @@ const execute = async (message) => {
               for (let servers of storedData[indexes].servers) {
                 if (servers.channelID === channel_ID) {
 
-                  embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+                  embed.addField(storedData[indexes].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}% | MMR: ${servers.mmr}`)
 
                   embed.setFooter(`Showing page ${thirdparam}/${Math.ceil(storedData.length / 20)}`);
                 }
@@ -496,7 +525,7 @@ const execute = async (message) => {
               for (let servers of storedData[i].servers) {
                 if (servers.channelID === channel_ID) {
 
-                  embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%`)
+                  embed.addField(storedData[i].name, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}%| MMR: ${servers.mmr}`)
 
                   embed.setFooter(`Showing page ${1}/${Math.ceil(storedData.length / 20)}`);
                 }
@@ -622,7 +651,7 @@ const execute = async (message) => {
 
       sixMansArray.push(toAdd);
 
-      embed.setTitle(":white_check_mark: Added to queue!");
+      embed.setTitle(`:white_check_mark: Added to queue! ${sixMansArray.length}/6`);
 
       message.channel.send(embed);
 
@@ -658,7 +687,8 @@ const execute = async (message) => {
                   servers: {
                     channelID: channel_ID,
                     wins: 0,
-                    losses: 0
+                    losses: 0,
+                    mmr: 1000
                   }
                 }
               });
@@ -733,14 +763,14 @@ const execute = async (message) => {
           ongoingGames.push([...sixMansArray]);
 
 
-          const discordEmbed1 = new Discord.RichEmbed()
+          const discordEmbed1 = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR)
             .addField("Game is ready:", `Game ID is: ${gameCount}`)
             .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}`)
             .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[3].name}, ${sixMansArray[4].name}, ${sixMansArray[5].name}`);
           message.channel.send(discordEmbed1);
 
-          const JoinMatchEmbed = new Discord.RichEmbed()
+          const JoinMatchEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR)
             .addField("Name:", valuesforpm.name)
             .addField("Password:", valuesforpm.password)
@@ -750,8 +780,10 @@ const execute = async (message) => {
           for (let users of sixMansArray) {
             if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[6].id) {
 
-              client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
-                const errorEmbed = new Discord.RichEmbed()
+              const fetchedUser = await client.users.fetch(users.id)
+
+              fetchedUser.send(JoinMatchEmbed).catch(error => {
+                const errorEmbed = new Discord.MessageEmbed()
                   .setColor(EMBED_COLOR)
                   .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
 
@@ -762,14 +794,17 @@ const execute = async (message) => {
             };
           };
 
-          const CreateMatchEmbed = new Discord.RichEmbed()
+          const CreateMatchEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR)
             .addField("Name:", valuesforpm.name)
             .addField("Password:", valuesforpm.password)
             .addField("You have to:", "Create Match");
 
-          client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
-            const errorEmbed = new Discord.RichEmbed()
+          const fetchedUser = await client.users.fetch(sixMansArray[0].id)
+
+          fetchedUser.send(CreateMatchEmbed).catch(error => {
+
+            const errorEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
 
@@ -777,11 +812,11 @@ const execute = async (message) => {
             console.error(error);
           });
 
-          message.guild.createChannel(`🔸Team-1-Game-${gameCount}`, {
+          message.guild.channels.create(`🔸Team-1-Game-${sixMansArray[6].gameID}`, {
               type: 'voice',
               parent: message.channel.parentID,
               permissionOverwrites: [{
-                  id: message.guild.defaultRole,
+                  id: message.guild.id,
                   deny: "CONNECT"
                 },
                 {
@@ -800,11 +835,11 @@ const execute = async (message) => {
             })
             .catch(console.error)
 
-          message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
+          message.guild.channels.create(`🔹Team-2-Game-${sixMansArray[6].gameID}`, {
               type: 'voice',
               parent: message.channel.parentID,
               permissionOverwrites: [{
-                  id: message.guild.defaultRole,
+                  id: message.guild.id,
                   deny: "CONNECT"
                 },
                 {
@@ -857,7 +892,7 @@ const execute = async (message) => {
 
             sixMansArray[3] = tempObjectLoop[1]
 
-            const CaptainsEmbed = new Discord.RichEmbed()
+            const CaptainsEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .setTitle(`Game ID: ${tempObjectLoop[6].gameID}`)
               .addField(`Captain for team 1`, tempObjectLoop[0].name)
@@ -865,14 +900,14 @@ const execute = async (message) => {
 
             message.channel.send(CaptainsEmbed)
 
-            const privatedm0 = client.users.get(tempObjectLoop[0].id)
+            const privatedm0 = await client.users.fetch(tempObjectLoop[0].id)
 
-            const privatedm1 = client.users.get(tempObjectLoop[1].id)
+            const privatedm1 = await client.users.fetch(tempObjectLoop[1].id)
 
             tempObjectLoop.shift()
             tempObjectLoop.shift()
 
-            const Captain1st = new Discord.RichEmbed()
+            const Captain1st = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .setTitle("Choose one:")
               .addField(`1 :`, tempObjectLoop[0].name)
@@ -881,7 +916,7 @@ const execute = async (message) => {
               .addField(`4 :`, tempObjectLoop[3].name);
 
             privatedm0.send(Captain1st).catch(error => {
-              const errorEmbed = new Discord.RichEmbed()
+              const errorEmbed = new Discord.MessageEmbed()
                 .setColor(EMBED_COLOR)
                 .setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`);
 
@@ -921,7 +956,7 @@ const execute = async (message) => {
 
             hasVoted = false
 
-            const Captain2nd = new Discord.RichEmbed()
+            const Captain2nd = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .setTitle("Choose two:")
               .addField(`1 :`, tempObjectLoop[0].name)
@@ -929,7 +964,7 @@ const execute = async (message) => {
               .addField(`3 :`, tempObjectLoop[2].name);
 
             privatedm1.send(Captain2nd).catch(error => {
-              const errorEmbed = new Discord.RichEmbed()
+              const errorEmbed = new Discord.MessageEmbed()
                 .setColor(EMBED_COLOR)
                 .setTitle(`:x: Couldn't sent message to ${privatedm1}, please check if your DM'S aren't set to friends only.`);
 
@@ -1032,14 +1067,14 @@ const execute = async (message) => {
 
             ongoingGames.push([...sixMansArray])
 
-            const discordEmbed1 = new Discord.RichEmbed()
+            const discordEmbed1 = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .addField("Game is ready:", `Game ID is: ${sixMansArray[6].gameID}`)
               .addField(":small_orange_diamond: -Team 1-", `${sixMansArray[0].name}, ${sixMansArray[1].name}, ${sixMansArray[2].name}`)
               .addField(":small_blue_diamond: -Team 2-", `${sixMansArray[3].name}, ${sixMansArray[4].name}, ${sixMansArray[5].name}`);
             message.channel.send(discordEmbed1);
 
-            const JoinMatchEmbed = new Discord.RichEmbed()
+            const JoinMatchEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .addField("Name:", valuesforpm.name)
               .addField("Password:", valuesforpm.password)
@@ -1048,8 +1083,9 @@ const execute = async (message) => {
             for (let users of sixMansArray) {
               if (users.id !== sixMansArray[0].id && users.id !== sixMansArray[6].id) {
 
-                client.users.get(users.id).send(JoinMatchEmbed).catch(error => {
-                  const errorEmbed = new Discord.RichEmbed()
+                const fetchedUser = await client.users.fetch(users.id)
+                fetchedUser.send(JoinMatchEmbed).catch(error => {
+                  const errorEmbed = new Discord.MessageEmbed()
                     .setColor(EMBED_COLOR)
                     .setTitle(`:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`);
 
@@ -1060,14 +1096,15 @@ const execute = async (message) => {
               };
             };
 
-            const CreateMatchEmbed = new Discord.RichEmbed()
+            const CreateMatchEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR)
               .addField("Name:", valuesforpm.name)
               .addField("Password:", valuesforpm.password)
               .addField("You have to:", "Create Match");
 
-            client.users.get(sixMansArray[0].id).send(CreateMatchEmbed).catch(error => {
-              const errorEmbed = new Discord.RichEmbed()
+            const fetchedUser = await client.users.fetch(users.id)
+            fetchedUser.send(CreateMatchEmbed).catch(error => {
+              const errorEmbed = new Discord.MessageEmbed()
                 .setColor(EMBED_COLOR)
                 .setTitle(`:x: Couldn't sent message to ${sixMansArray[0].name}, please check if your DM'S aren't set to friends only.`);
 
@@ -1075,11 +1112,11 @@ const execute = async (message) => {
               console.error(error);
             });
 
-            message.guild.createChannel(`🔸Team-1-Game-${sixMansArray[6].gameID}`, {
+            message.guild.channels.create(`🔸Team-1-Game-${sixMansArray[6].gameID}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{
-                    id: message.guild.defaultRole,
+                    id: message.guild.id,
                     deny: "CONNECT"
                   },
                   {
@@ -1098,11 +1135,11 @@ const execute = async (message) => {
               })
               .catch(console.error)
 
-            message.guild.createChannel(`🔹Team-2-Game-${gameCount}`, {
+            message.guild.channels.create(`🔹Team-2-Game-${sixMansArray[6].gameID}`, {
                 type: 'voice',
                 parent: message.channel.parentID,
                 permissionOverwrites: [{
-                    id: message.guild.defaultRole,
+                    id: message.guild.id,
                     deny: "CONNECT"
                   },
                   {
@@ -1131,7 +1168,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c"],
+  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "mode"],
   description: '6man bot',
   execute
 };
