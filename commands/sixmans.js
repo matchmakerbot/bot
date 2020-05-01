@@ -197,9 +197,9 @@ const execute = async (message) => {
 
   if (storedGuilds.map(e => e.id).indexOf(message.guild.id) !== -1) {
     if (!storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(message.channel.id) && args(message) !== "whitelist") {
-      wrongEmbed.setTitle(":x: Please add this channel to the whitelist using !whitelist channelId.")
+      embed.setTitle(":x: Please add this channel to the whitelist using !whitelist channelId.")
 
-      return message.channel.send(wrongEmbed)
+      return message.channel.send(embed)
     }
   }
 
@@ -467,7 +467,7 @@ const execute = async (message) => {
 
               embed.addField("Winrate:", isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? "0%" : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%");
 
-              wrongEmbed.addField("MMR:", scoreDirectory.mmr)
+              embed.addField("MMR:", scoreDirectory.mmr)
 
               return message.channel.send(embed);
             }
