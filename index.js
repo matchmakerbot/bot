@@ -1,6 +1,6 @@
 "use strict";
 
-let storedGuilds;
+let storedGuilds, storedTeams;
 
 const fs = require('fs');
 
@@ -30,6 +30,8 @@ MongoDB.connectdb(async (err) => {
 
     const serversCollection = db.collection('guilds')
 
+    const teamsCollection = db.collection('teams')
+
     if (err) throw err
 
     for (const file of commandFiles) {
@@ -44,11 +46,11 @@ MongoDB.connectdb(async (err) => {
     }
 
     client.once('ready', async () => {
-        console.log(`Guilds: ${client.guilds.cache.map(a => a.name).join(" || ")}\nNumber of Guilds: ${client.guilds.cache.map(a => a.name).length}`)
+        console.log(`Guilds: ${client.guilds.cache.map(a => a.name).join(" || ")}\nNumber of Guilds: ${client.guilds.cache.map(a => a.name).length}`);
         console.log('Ready');
-        client.user.setActivity("Type !helpmatchmaking to get info")
+        client.user.setActivity("Type !helpmatchmaking to get info");
     });
-    //im aware this is horrible ive been busy ok
+
     client.on('message', async message => {
 
         const secondArg = message.content.split(" ")[1]
@@ -58,22 +60,6 @@ MongoDB.connectdb(async (err) => {
         const args = message.content.slice(prefix.length).split(/ +/);
 
         const command = args.shift().toLowerCase();
-
-        const serverInfo = {
-            id: message.guild.id,
-            game: "",
-            whitelist: [],
-            mode: "",
-            channels: {}
-        }
-
-        await serversCollection.find().toArray().then(dataDB => {
-            storedGuilds = dataDB
-        })
-
-        if (!storedGuilds.map(e => e.id).includes(message.guild.id)) {
-            await serversCollection.insert(serverInfo);
-        }
 
         if (!message.content.startsWith(prefix) || message.author.bot) return;
 
@@ -146,6 +132,11 @@ MongoDB.connectdb(async (err) => {
             whitelist: [],
             mode: "",
             channels: {}
+        }
+
+        const teamsInfo = {
+            id:guild.id,
+            teams: []
         }
 
         await serversCollection.find().toArray().then(dataDB => {
