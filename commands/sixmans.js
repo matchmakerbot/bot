@@ -1173,7 +1173,8 @@ const execute = async (message) => {
               .addField("Password:", valuesforpm.password)
               .addField("You have to:", "Create Match");
 
-            const fetchedUser = await client.users.fetch(users.id)
+            const fetchedUser = await client.users.fetch(sixMansArray[0].id)
+
             fetchedUser.send(CreateMatchEmbed).catch(error => {
               const errorEmbed = new Discord.MessageEmbed()
                 .setColor(EMBED_COLOR_WARNING)
