@@ -171,12 +171,6 @@ const execute = async (message) => {
         return tag.substring(3, tag.length - 1);
     }
 
-    const serverInfo = {
-        id: message.guild.id,
-        game: secondArg,
-        whitelist: []
-    }
-
     const teamsInsert = {
         name: messageArgs(message),
         channels: [],
@@ -248,20 +242,18 @@ const execute = async (message) => {
         return message.channel.send(wrongEmbed);
     }
 
-    if (storedGuilds.map(e => e.id).indexOf(message.guild.id) !== -1) {
-        if (!storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(message.channel.id) && args(message) !== "whitelist") {
-            wrongEmbed.setTitle(":x: Please add this channel to the whitelist using !whitelist channelId.");
-
-            return message.channel.send(wrongEmbed);
-        }
-    }
-
     switch (args(message)) {
 
         case "createteam": {
 
-            if (messageArgs(message).length > 32) {
+            if (messageArgs(message).length > 31) {
                 wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");
+
+                return message.channel.send(wrongEmbed);
+            }
+
+            if (messageArgs(message).length < 2) {
+                wrongEmbed.setTitle(":x: Name too short! Minimum characters allowed are 3.");
 
                 return message.channel.send(wrongEmbed);
             }
@@ -278,7 +270,7 @@ const execute = async (message) => {
                 return message.channel.send(wrongEmbed);
             }
 
-            if(message.guild.roles.cache.array().map(e => e.name).includes(messageArgs(message))) {
+            if (message.guild.roles.cache.array().map(e => e.name).includes(messageArgs(message))) {
                 wrongEmbed.setTitle(":x: You can't name yourself after roles that already exist!");
 
                 return message.channel.send(wrongEmbed);
@@ -508,15 +500,7 @@ const execute = async (message) => {
                 return message.channel.send(wrongEmbed);
             }
 
-            if (!storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
-
-                await serversCollection.insert(serverInfo);
-
-                correctEmbed.setTitle(":white_check_mark: Server added!");
-
-                return message.channel.send(correctEmbed);
-
-            } else if (storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
+            if (storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
 
                 await serversCollection.update({
                     id: message.guild.id
@@ -529,56 +513,6 @@ const execute = async (message) => {
 
                 return message.channel.send(correctEmbed);
             }
-        }
-
-        case "whitelist": {
-
-            if (isNaN(secondArg)) {
-                wrongEmbed.setTitle(":x: Please copy the actual discord id of the channel, more info can be found here \n https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
-
-                return message.channel.send(wrongEmbed);
-            }
-
-            if (!message.guild.channels.map(e => e.id).includes(secondArg)) {
-                wrongEmbed.setTitle(":x: This channel does not belong to this server.")
-
-                return message.channel.send(wrongEmbed);
-            }
-
-            if (!message.member.hasPermission("ADMINISTRATOR")) {
-
-                wrongEmbed.setTitle(":x: You do not have Administrator permission!");
-
-                return message.channel.send(wrongEmbed);
-            }
-
-            if (storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(secondArg)) {
-
-                await serversCollection.update({
-                    id: message.guild.id
-                }, {
-                    $pull: {
-                        whitelist: secondArg
-                    }
-                });
-
-                correctEmbed.setTitle(":white_check_mark: Channel removed from whitelist!")
-
-                return message.channel.send(correctEmbed)
-            }
-
-            await serversCollection.update({
-                id: message.guild.id
-            }, {
-                $push: {
-                    whitelist: secondArg
-                }
-            });
-
-            correctEmbed.setTitle(":white_check_mark: Channel Whitelisted!")
-
-            return message.channel.send(correctEmbed);
-
         }
 
         case "leave": {
@@ -754,7 +688,7 @@ const execute = async (message) => {
 
                 return message.channel.send(wrongEmbed);
             }
-            
+
             if (!teamsIngame().includes(teamsInfo().name) || ongoingGames.length === 0) {
 
                 wrongEmbed.setTitle(":x: You aren't in a game!");
@@ -879,7 +813,7 @@ const execute = async (message) => {
 
                         return b.channels[indexB].mmr - a.channels[indexA].mmr
                     })
-//maybe add something like get score channel on the channel that you are and on nother channels and, instead of just typing the id, type the name aka optimize
+                    //maybe add something like get score channel on the channel that you are and on nother channels and, instead of just typing the id, type the name aka optimize
                     if (!isNaN(fourthArg) && fourthArg > 0) {
                         let indexes = 20 * (fourthArg - 1);
                         for (indexes; indexes < 20 * fourthArg; indexes++) {
@@ -1290,7 +1224,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-    name: ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "whitelist", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer","mode"],
+    name: ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "whitelist", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer", "mode"],
     description: '6man bot',
     execute
 };

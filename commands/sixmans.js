@@ -183,17 +183,7 @@ const execute = async (message) => {
     date: new Date()
   };
 
-  const serverInfo = {
-    id: message.guild.id,
-    game: secondArg,
-    whitelist: []
-  }
-
   const index = sixMansArray.map(e => e.id).indexOf(userId);
-
-  if (!storedGuilds.map(e => e.id).includes(message.guild.id)) {
-    await serversCollection.insert(serverInfo);
-  }
 
   if (storedGuilds.map(e => e.id).indexOf(message.guild.id) !== -1) {
     if (!storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(message.channel.id) && args(message) !== "whitelist") {
@@ -204,6 +194,56 @@ const execute = async (message) => {
   }
 
   switch (args(message)) {
+
+    case "whitelist": {
+
+      if (isNaN(secondArg)) {
+        wrongEmbed.setTitle(":x: Please copy the actual discord id of the channel, more info can be found here \n https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      if (!message.guild.channels.cache.map(e => e.id).includes(secondArg)) {
+        wrongEmbed.setTitle(":x: This channel does not belong to this server.")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      if (!message.member.hasPermission("ADMINISTRATOR")) {
+
+        wrongEmbed.setTitle(":x: You do not have Administrator permission!")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      if (storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(secondArg)) {
+
+        await serversCollection.update({
+          id: message.guild.id
+        }, {
+          $pull: {
+            whitelist: secondArg
+          }
+        });
+
+        correctEmbed.setTitle(":white_check_mark: Channel removed from whitelist!")
+
+        return message.channel.send(correctEmbed)
+      }
+
+      await serversCollection.update({
+        id: message.guild.id
+      }, {
+        $push: {
+          whitelist: secondArg
+        }
+      });
+
+      correctEmbed.setTitle(":white_check_mark: Channel Whitelisted!")
+
+      return message.channel.send(correctEmbed)
+
+    }
 
     case "leave": {
 

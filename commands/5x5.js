@@ -158,12 +158,6 @@ const execute = async (message) => {
     date: new Date()
   };
 
-  const serverInfo = {
-    id: message.guild.id,
-    game: secondArg,
-    whitelist: []
-  }
-
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR)
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK)
@@ -211,14 +205,6 @@ const execute = async (message) => {
     return message.channel.send(wrongEmbed)
   }
 
-  if (storedGuilds.map(e => e.id).indexOf(message.guild.id) !== -1) {
-    if (!storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(message.channel.id) && args(message) !== "whitelist") {
-      wrongEmbed.setTitle(":x: Please add this channel to the whitelist using !whitelist channelId.")
-
-      return message.channel.send(wrongEmbed)
-    }
-  }
-
   switch (args(message)) {
 
     case "game": {
@@ -229,15 +215,7 @@ const execute = async (message) => {
         return message.channel.send(wrongEmbed)
       }
 
-      if (!storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
-
-        await serversCollection.insert(serverInfo);
-
-        correctEmbed.setTitle(":white_check_mark: Server added!")
-
-        return message.channel.send(correctEmbed)
-
-      } else if (storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
+      if (storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg)) {
 
         await serversCollection.update({
           id: message.guild.id
@@ -250,56 +228,6 @@ const execute = async (message) => {
 
         return message.channel.send(correctEmbed)
       }
-    }
-
-    case "whitelist": {
-
-      if (isNaN(secondArg)) {
-        wrongEmbed.setTitle(":x: Please copy the actual discord id of the channel, more info can be found here \n https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
-
-        return message.channel.send(wrongEmbed)
-      }
-
-      if (!message.guild.channels.cache.map(e => e.id).includes(secondArg)) {
-        wrongEmbed.setTitle(":x: This channel does not belong to this server.")
-
-        return message.channel.send(wrongEmbed)
-      }
-
-      if (!message.member.hasPermission("ADMINISTRATOR")) {
-
-        wrongEmbed.setTitle(":x: You do not have Administrator permission!")
-
-        return message.channel.send(wrongEmbed)
-      }
-
-      if (storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].whitelist.includes(secondArg)) {
-
-        await serversCollection.update({
-          id: message.guild.id
-        }, {
-          $pull: {
-            whitelist: secondArg
-          }
-        });
-
-        correctEmbed.setTitle(":white_check_mark: Channel removed from whitelist!")
-
-        return message.channel.send(correctEmbed)
-      }
-
-      await serversCollection.update({
-        id: message.guild.id
-      }, {
-        $push: {
-          whitelist: secondArg
-        }
-      });
-
-      correctEmbed.setTitle(":white_check_mark: Channel Whitelisted!")
-
-      return message.channel.send(correctEmbed)
-
     }
 
     case "leave": {
@@ -634,7 +562,7 @@ const execute = async (message) => {
             }
             message.channel.send(correctEmbed)
           }
-//maybe add something like get score channel on the channel that you are and on nother channels and, instead of just typing the id, type the name aka optimize
+          //maybe add something like get score channel on the channel that you are and on nother channels and, instead of just typing the id, type the name aka optimize
           return getScore(thirdArg)
         }
       }

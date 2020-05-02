@@ -1,5 +1,7 @@
 "use strict";
 
+let storedGuilds;
+
 const fs = require('fs');
 
 const Discord = require('discord.js')
@@ -10,7 +12,9 @@ const client = require("./client.js");
 
 const MongoDB = require("./mongodb");
 
-const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "whitelist", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer","mode"]
+const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "whitelist", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer", "mode", "channelmode"]
+
+const modes = ["3v3", "5v5"]
 
 client.commands = new Discord.Collection();
 
@@ -18,11 +22,13 @@ const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('
 
 MongoDB.connectdb(async (err) => {
 
-    const guild1Commands = require('./commands/sixmans.js');
+    const sixmanFile = require('./commands/sixmans.js');
 
-    const otherGuildCommands = require('./commands/5x5.js');
+    const teamsOrSingle = require('./commands/teamsOrSingle.js');
 
-    const teamsCommands = require('./commands/teams.js');
+    const db = MongoDB.getDB()
+
+    const serversCollection = db.collection('guilds')
 
     if (err) throw err
 
@@ -42,29 +48,113 @@ MongoDB.connectdb(async (err) => {
         console.log('Ready');
         client.user.setActivity("Type !helpmatchmaking to get info")
     });
+    //im aware this is horrible ive been busy ok
+    client.on('message', async message => {
 
-    client.on('message', message => {
+        const secondArg = message.content.split(" ")[1]
 
-        if (!message.content.startsWith(prefix) || message.author.bot) return;
+        const embed = new Discord.MessageEmbed().setColor('#F8534F')
 
         const args = message.content.slice(prefix.length).split(/ +/);
 
         const command = args.shift().toLowerCase();
 
+        const serverInfo = {
+            id: message.guild.id,
+            game: "",
+            whitelist: [],
+            mode: "",
+            channels: {}
+        }
+
+        await serversCollection.find().toArray().then(dataDB => {
+            storedGuilds = dataDB
+        })
+
+        if (!storedGuilds.map(e => e.id).includes(message.guild.id)) {
+            await serversCollection.insert(serverInfo);
+        }
+
+        if (!message.content.startsWith(prefix) || message.author.bot) return;
+
         if (!client.commands.has(command)) return;
-//make the database thingy here
-        if (queueCommands.includes(command)) {
-            if (message.guild.id == "580891269488705548" || message.guild.id == "537712402884591635") {
-                return guild1Commands.execute(message, args)
-            } else if (message.channel.id === "697856354194554881") {
-                return teamsCommands.execute(message, args)
+
+        if (command === "mode") {
+
+            if (!message.member.hasPermission("ADMINISTRATOR")) {
+
+                embed.setTitle(":x: You do not have Administrator permission!")
+
+                return message.channel.send(embed)
+            }
+
+            if (!modes.includes(secondArg)) {
+
+                embed.setTitle(":x: Invalid mode")
+
+                return message.channel.send(embed);
+
             } else {
-                return otherGuildCommands.execute(message, args)
+                await serversCollection.update({
+                    id: message.guild.id
+                }, {
+                    $set: {
+                        mode: secondArg
+                    }
+                });
+            }
+            embed.setTitle(":white_check_mark: Gotcha boss!")
+
+            return message.channel.send(embed);
+        }
+
+        if (queueCommands.includes(command)) {
+            await serversCollection.find().toArray().then(dataDB => {
+                storedGuilds = dataDB
+            })
+
+            if (!modes.includes(storedGuilds.find(e => e.id === message.guild.id).mode)) {
+
+                embed.setTitle(":x: You must first select your prefered gamemode using !mode 3v3 or 5v5")
+
+                return message.channel.send(embed);
+            }
+
+            if (storedGuilds.find(e => e.id === message.guild.id).mode === "3v3") {
+
+                return sixmanFile.execute(message, args)
+            } else if (storedGuilds.find(e => e.id === message.guild.id).mode === "5v5") {
+
+                return teamsOrSingle.execute(message, args)
+            } else {
+
+                embed.setTitle(":x: Wtf is going on? Message Tweeno #8687")
+
+                return message.channel.send(embed);
             }
         }
 
-
         client.commands.get(command).execute(message, args);
+
+    });
+
+    client.on("guildCreate", async (guild) => {
+
+        const serverInfo = {
+            id: guild.id,
+            game: "",
+            whitelist: [],
+            mode: "",
+            channels: {}
+        }
+
+        await serversCollection.find().toArray().then(dataDB => {
+            storedGuilds = dataDB
+        })
+
+        if (!storedGuilds.map(e => e.id).includes(guild.id)) {
+            await serversCollection.insert(serverInfo);
+        }
 
     });
 })
