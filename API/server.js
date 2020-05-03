@@ -12,8 +12,8 @@ app.use(BodyParser.urlencoded({ extended: true }));
 var database, collection5v5, collectionTeams;
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 2 
+    windowMs: 20 * 60 * 1000,
+    max: 20 
   });
  
 app.listen(3101, () => {
