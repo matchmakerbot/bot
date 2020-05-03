@@ -4,15 +4,29 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently --kill-others \"node ./api/server.js\" \"node .\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^11.4.2",
-    "mongoose": "^5.9.2",
+    "@fortawesome/fontawesome-svg-core": "^1.2.27",
+    "@fortawesome/free-solid-svg-icons": "^5.12.1",
+    "@fortawesome/react-fontawesome": "^0.1.9",
+    "cloc": "^2.5.1",
+    "concurrency": "^0.1.4",
+    "discord.js": "^12.2.0",
+    "i18n": "^0.8.6",
+    "jest-discord": "^0.1.0",
+    "mongod": "^2.0.0",
+    "mongoose": "^5.9.11",
     "node-fetch": "^2.6.0",
+    "nodemon": "^2.0.3",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7"
+  },
+  "devDependencies": {
+    "concurrently": "^5.2.0",
+    "jest-environment-discord": "^0.1.0"
   }
 }
