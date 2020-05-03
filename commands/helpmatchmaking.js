@@ -4,6 +4,7 @@ const discordEmbed = new Discord.MessageEmbed()
 
     .setAuthor("5X5 MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
     .setColor('#F8534F')
+    .setTitle("For teams matchmaking help, please type !helpteammatchmaking")
     .addField("!q", 'Sign up for the next queue (removes player after 45 minutes if no game has been made)')
     .addField("!leave", 'Leave the queue')
     .addField("!status", 'Check the queue status')
