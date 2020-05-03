@@ -31,7 +31,7 @@ app.listen(3101, () => {
 app.use(limiter)
 
 app.get("/5v5/channelId=:id", (request, response) => {
-  collection5v5.find({["servers.$.channelID"]:request.params.id}).toArray((error, result) => {
+  collection5v5.find({["servers.channelID"]:request.params.id}).toArray((error, result) => {
       if(error) {
           return response.status(500).send(error);
       }
@@ -39,7 +39,7 @@ app.get("/5v5/channelId=:id", (request, response) => {
   });
 });
 
-app.get("/5v5/id=:id", (request, response) => {
+app.get("/5v5/userID=:id", (request, response) => {
     collection5v5.find({id:request.params.id}).toArray((error, result) => {
         if(error) {
             return response.status(500).send(error);
