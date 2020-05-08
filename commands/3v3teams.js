@@ -975,7 +975,7 @@ const execute = async (message) => {
     case "q": {
 
       if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+        wrongEmbed.setTitle(":x: You are not the captain/dont belong to a team!");
 
         return message.channel.send(wrongEmbed);
       }
