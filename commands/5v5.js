@@ -702,14 +702,14 @@ const execute = async (message) => {
 
     case "q": {
 
-      /*for (let person of queueArray) {
+      for (let person of queueArray) {
         if (person.id === userId) {
 
           wrongEmbed.setTitle(":x: You're already in the queue!");
 
           return message.channel.send(wrongEmbed);
         }
-      };*/
+      };
 
       if (includesUserID(ongoingGames.flat())) {
 
