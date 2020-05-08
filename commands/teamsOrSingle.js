@@ -6,18 +6,18 @@ const db = MongoDB.getDB()
 
 const serversCollection = db.collection('guilds')
 
-let storedGuilds;
+const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F")
+
+const correctEmbed = new Discord.MessageEmbed().setColor("#77B255")
 
 const prefix = require("../config.json").prefix;
 
-const gamemode = ["5v5singles", "5v5teams", "3v3singles", "3v3teams"]
+const gamemode = ["5v5solos", "5v5teams", "3v3solos", "3v3teams"]
 
 module.exports = {
     name: 'channelmode',
     description: 'eh',
     async execute(message) {
-
-        let embed = new Discord.MessageEmbed().setColor('#F8534F')
 
         const args = message.content.slice(prefix.length).split(/ +/);
 
@@ -25,24 +25,20 @@ module.exports = {
 
         const secondArg = message.content.split(" ")[1]
 
-        await serversCollection.find().toArray().then(dataDB => {
-            storedGuilds = dataDB
-        })
-
         const a = `channels.${message.channel.id}`
 
         if (command === "channelmode") {
             if (!message.member.hasPermission("ADMINISTRATOR")) {
 
-                embed.setTitle(":x: You do not have Administrator permission!")
+                wrongEmbed.setTitle(":x: You do not have Administrator permission!")
 
-                return message.channel.send(embed)
+                return message.channel.send(wrongEmbed)
             }
 
             if (!gamemode.includes(secondArg)) {
-                embed.setTitle("Please choose between 5v5singles, 5v5teams, 3v3singles or 3v3teams")
+                wrongEmbed.setTitle("Please choose between 5v5solos, 5v5teams, 3v3solos or 3v3teams")
 
-                return message.channel.send(embed)
+                return message.channel.send(wrongEmbed)
             } else {
                 await serversCollection.update({
                     id: message.guild.id
@@ -53,9 +49,9 @@ module.exports = {
                     }
                 });
             }
-            embed.setTitle(":white_check_mark: Done! Have fun :)")
+            correctEmbed.setTitle(":white_check_mark: Done! Have fun :)")
 
-            return message.channel.send(embed)
+            return message.channel.send(correctEmbed)
         }
     }
 }

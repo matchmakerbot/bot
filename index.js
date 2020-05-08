@@ -72,16 +72,16 @@ MongoDB.connectdb(async (err) => {
 
             if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === undefined) {
 
-                embed.setTitle(":x: You must first select your prefered gamemode in this channel using !channelmode 3v3singles, 3v3teams, 5v5singles or 5v5teams")
+                embed.setTitle(":x: You must first select your prefered gamemode in this channel using !channelmode 3v3solos, 3v3teams, 5v5solos or 5v5teams")
 
                 return message.channel.send(embed);
-            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "5v5singles") {
+            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "5v5solos") {
 
                 return fivevfivesingles.execute(message, args)
             } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "5v5teams") {
 
                 return fivevfiveteams.execute(message, args)
-            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "3v3singles") {
+            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "3v3solos") {
 
                 return threevthreesingles.execute(message, args)
                 } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "3v3teams") {
@@ -128,7 +128,7 @@ MongoDB.connectdb(async (err) => {
         })
 
         if (!storedTeams.map(e => e.id).includes(guild.id)) {
-            await serversCollection.insert(teamsInfo);
+            await teamsCollection.insert(teamsInfo);
         }
     });
 })

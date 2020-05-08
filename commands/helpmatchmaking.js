@@ -12,8 +12,10 @@ const discordEmbed = new Discord.MessageEmbed()
     .addField("!r", 'Vote for random mode (random team)')
     .addField("!cancel", 'Cancel the game (Only use this after 15 minutes, in the case of someone not playing)')
     .addField("!report win/lose", 'Ends the game, giving the wining team one win and vice versa to the losing team')
-    .addField("!score me/channel", 'Checks your current score (score channel can only be used by an administrator, to prevent spam)')
+    .addField("!score me/channel", 'Checks your current score. Usage: !score channel to check score in the channel youre in, !score channel (channelid)to check the score in a specific channel, just add a number after it to select a page')
     .addField("!reset player/channel", `Resets the score of an individual player (!reset player <discordid>) or the whole channel where this command is inserted (!reset channel)`)
+    .addField("!ongoinggames", `Check the current games!`)
+    .addField("Commands to be added:", "!revertgame: allows an admin to revert or cancel a game that has been incorrectly reported as a win/lose")
 
 
 module.exports = {
