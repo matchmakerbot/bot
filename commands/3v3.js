@@ -28,8 +28,6 @@ const cancelQueue = {};
 
 let gameCount = 0;
 
-let storedUsers;
-
 let hasVoted = false;
 
 setInterval(async () => {
@@ -129,40 +127,39 @@ const execute = async (message) => {
 
   const thirdArg = message.content.split(" ")[2];
 
-  const fourthArg = message.content.split(" ")[3]
-
-  const requestStoredUsers = async () => {
-
-    await dbCollection.find().toArray().then(dataDB => {
-      storedUsers = dataDB
-    });
-  }
+  const fourthArg = message.content.split(" ")[3];
 
   const channel_ID = message.channel.id;
 
   const givewinLose = async (score) => {
 
-    for (let user of storedUsers) {
-      for (let games of ongoingGames) {
+    for (let games of ongoingGames) {
 
-        const channelPos = user.servers.map(e => e.channelID).indexOf(channel_ID);
+      if (!games.map(e => e.id).includes(userId)) {
+
+        continue
+      }
+
+      const userid = games[i].id
+
+      await dbCollection.find(userid).toArray().then(async storedUsers => {
+
+        const channelPos = storedUsers[0].servers.map(e => e.channelID).indexOf(channel_ID);
 
         const sort = `servers.${channelPos}.${score}`;
 
         const mmr = `servers.${channelPos}.mmr`;
 
-        if (user.id === games[i].id && games.map(e => e.id).includes(userId)) {
 
-          await dbCollection.update({
-            id: user.id
-          }, {
-            $set: {
-              [sort]: user.servers[channelPos][score] + 1,
-              [mmr]: score === "wins" ? user.servers[channelPos].mmr + 13 : user.servers[channelPos].mmr - 10
-            }
-          });
-        }
-      }
+        await dbCollection.update({
+          id: userid
+        }, {
+          $set: {
+            [sort]: storedUsers[0].servers[channelPos][score] + 1,
+            [mmr]: score === "wins" ? storedUsers[0].servers[channelPos].mmr + 13 : storedUsers[0].servers[channelPos].mmr - 10
+          }
+        });
+      })
     }
   }
 
@@ -253,11 +250,7 @@ const execute = async (message) => {
               continue;
             }
 
-            correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
-
             const indexplayer = games.map(e => e.id).indexOf(userId);
-
-            await requestStoredUsers()
 
             if (indexplayer === 0 || indexplayer === 1 || indexplayer === 2) {
               for (i = 0; i < 3; i++) {
@@ -293,6 +286,7 @@ const execute = async (message) => {
                 channel.delete()
               }
             }
+            correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
             return message.channel.send(correctEmbed);
           }
@@ -314,8 +308,6 @@ const execute = async (message) => {
               continue
             }
 
-            correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
-
             const indexplayer = games.map(e => e.id).indexOf(userId);
 
             if (indexplayer === 0 || indexplayer === 1 || indexplayer === 2) {
@@ -353,7 +345,8 @@ const execute = async (message) => {
                 channel.delete()
               }
             }
-
+            correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
+            
             return message.channel.send(correctEmbed);
           }
         }
@@ -432,104 +425,108 @@ const execute = async (message) => {
     }
 
     case "score": {
-
-      await requestStoredUsers()
-
       switch (secondArg) {
         case "me": {
-          if (!includesUserID(storedUsers)) {
-
-            wrongEmbed.setTitle(":x: You haven't played any games yet!");
-
-            return message.channel.send(wrongEmbed);
-          }
-
-          for (let j = 0; j < storedUsers.length; j++) {
-            if (storedUsers[j].id === userId) {
-
-              const scoreDirectory = storedUsers[j].servers[storedUsers[j].servers.map(e => e.channelID).indexOf(message.channel.id)]
-
-              if (scoreDirectory === undefined) {
-
-                correctEmbed.setTitle(":x: You haven't played any games in here yet!");
-
-                return message.channel.send(wrongEmbed);
+          await dbCollection.find({
+            id: userId,
+            servers: {
+              $elemMatch: {
+                channelID: channel_ID
               }
-
-              correctEmbed.addField("Wins:", scoreDirectory.wins);
-
-              correctEmbed.addField("Losses:", scoreDirectory.losses);
-
-              correctEmbed.addField("Winrate:", isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? "0%" : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%");
-
-              correctEmbed.addField("MMR:", scoreDirectory.mmr)
-
-              return message.channel.send(correctEmbed);
             }
-          }
+          }).toArray().then(storedUsers => {
+            if (storedUsers.length === 0) {
+
+              wrongEmbed.setTitle(":x: You haven't played any games yet!");
+
+              return message.channel.send(wrongEmbed);
+            }
+
+            const scoreDirectory = storedUsers[0].servers[storedUsers[0].servers.map(e => e.channelID).indexOf(message.channel.id)]
+
+            correctEmbed.addField("Wins:", scoreDirectory.wins);
+
+            correctEmbed.addField("Losses:", scoreDirectory.losses);
+
+            correctEmbed.addField("Winrate:", isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? "0%" : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%");
+
+            correctEmbed.addField("MMR:", scoreDirectory.mmr)
+
+          })
+          return message.channel.send(correctEmbed);
         }
         case "channel": {
 
           const getScore = async (id, arg) => {
 
-            storedUsers = storedUsers.filter(a => a.servers.map(e => e.channelID).indexOf(id) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(id)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(id)].losses !== 0)
+            await dbCollection.find({
+              servers: {
+                $elemMatch: {
+                  channelID: id
+                }
+              }
+            }).toArray().then(async storedUsers => {
 
-            if (!message.guild.channels.cache.array().map(e => e.id).includes(id)) {
-              wrongEmbed.setTitle(":x: This channel does not belong to this server!");
+              storedUsers = storedUsers.filter(a => a.servers.map(e => e.channelID).indexOf(id) !== -1 && a.servers[a.servers.map(e => e.channelID).indexOf(id)].wins + a.servers[a.servers.map(e => e.channelID).indexOf(id)].losses !== 0)
 
-              return message.channel.send(wrongEmbed);
-            }
+              if (!message.guild.channels.cache.array().map(e => e.id).includes(id)) {
+                wrongEmbed.setTitle(":x: This channel does not belong to this server!");
 
-            if (storedUsers.length === 0) {
-              wrongEmbed.setTitle(":x: No games have been played in here!");
+                return message.channel.send(wrongEmbed);
+              }
 
-              return message.channel.send(wrongEmbed);
-            }
+              if (storedUsers.length === 0) {
+                wrongEmbed.setTitle(":x: No games have been played in here!");
 
-            storedUsers.sort((a, b) => {
-              const indexA = a.servers.map(e => e.channelID).indexOf(id);
+                return message.channel.send(wrongEmbed);
+              }
 
-              const indexB = b.servers.map(e => e.channelID).indexOf(id);
+              storedUsers.sort((a, b) => {
+                const indexA = a.servers.map(e => e.channelID).indexOf(id);
 
-              return b.servers[indexB].mmr - a.servers[indexA].mmr
+                const indexB = b.servers.map(e => e.channelID).indexOf(id);
+
+                return b.servers[indexB].mmr - a.servers[indexA].mmr
+              })
+
+              if (!isNaN(arg) && arg > 0) {
+                let indexes = 20 * (arg - 1);
+                for (indexes; indexes < 20 * arg; indexes++) {
+                  if (storedUsers[indexes] == undefined) {
+
+                    correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
+
+                    break
+                  }
+                  for (let servers of storedUsers[indexes].servers) {
+                    if (servers.channelID === id) {
+
+                      correctEmbed.addField((await fetchFromID(storedUsers[indexes].id)).username, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)) ? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}% | MMR: ${servers.mmr}`)
+
+                      correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(storedUsers.length / 20)}`);
+                    }
+                  }
+                }
+              } else {
+                for (i = 0; i < 20; i++) {
+                  if (storedUsers[i] == undefined) {
+                    correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
+                    break
+                  }
+                  for (let servers of storedUsers[i].servers) {
+                    if (servers.channelID === id) {
+
+                      correctEmbed.addField((await fetchFromID(storedUsers[i].id)).username, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}% | MMR: ${servers.mmr}`)
+
+                      correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(storedUsers.length / 20)}`);
+                    }
+                  }
+                }
+              }
+              return message.channel.send(correctEmbed)
             })
-
-            if (!isNaN(arg) && arg > 0) {
-              let indexes = 20 * (arg - 1);
-              for (indexes; indexes < 20 * arg; indexes++) {
-                if (storedUsers[indexes] == undefined) {
-
-                  correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
-
-                  break
-                }
-                for (let servers of storedUsers[indexes].servers) {
-                  if (servers.channelID === id) {
-
-                    correctEmbed.addField((await fetchFromID(storedUsers[indexes].id)).username, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}% | MMR: ${servers.mmr}`)
-
-                    correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(storedUsers.length / 20)}`);
-                  }
-                }
-              }
-            } else {
-              for (i = 0; i < 20; i++) {
-                if (storedUsers[i] == undefined) {
-                  correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
-                  break
-                }
-                for (let servers of storedUsers[i].servers) {
-                  if (servers.channelID === id) {
-
-                    correctEmbed.addField((await fetchFromID(storedUsers[i].id)).username, `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${isNaN(Math.floor((servers.wins/(servers.wins + servers.losses)) * 100))? "0" : Math.floor((servers.wins/(servers.wins + servers.losses)) * 100)}% | MMR: ${servers.mmr}`)
-
-                    correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(storedUsers.length / 20)}`);
-                  }
-                }
-              }
-            }
-            return message.channel.send(correctEmbed)
           }
+
           if (!isNaN(thirdArg) && parseInt(thirdArg) > 10000) {
             return getScore(thirdArg, fourthArg)
           } else {
@@ -585,36 +582,59 @@ const execute = async (message) => {
 
       switch (secondArg) {
         case "channel": {
+
+          if(ongoingGames.flat().map(e => e.channelID).includes(channel_ID)) {
+            wrongEmbed.setTitle(":x: There are users in game!")
+
+            return message.channel.send(wrongEmbed)
+          }
+
           if (message.content.split(" ").length !== 2) {
 
             wrongEmbed.setTitle(":x: Invalid Parameters!")
 
             return message.channel.send(wrongEmbed)
           }
-          await requestStoredUsers()
-          for (let user of storedUsers) {
 
-            const channelPos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
-
-            if (channelPos !== -1) {
-
-              await dbCollection.update({
-                id: user.id
-              }, {
-                $pull: {
-                  servers: {
-                    channelID: channel_ID
-                  }
-                }
-              });
+          await dbCollection.find({
+            servers: {
+              $elemMatch: {
+                channelID: channel_ID
+              }
             }
-          }
+          }).toArray().then(async storedUsers => {
 
-          correctEmbed.setTitle(":white_check_mark: Player's score reset!")
+            for (let user of storedUsers) {
+
+              const channelPos = user.servers.map(e => e).map(e => e.channelID).indexOf(channel_ID)
+
+              if (channelPos !== -1) {
+
+                await dbCollection.update({
+                  id: user.id
+                }, {
+                  $pull: {
+                    servers: {
+                      channelID: channel_ID
+                    }
+                  }
+                });
+              }
+            }
+
+          })
+          correctEmbed.setTitle(":white_check_mark: Channel score reset!")
 
           return message.channel.send(correctEmbed)
         }
         case "player": {
+
+          if(ongoingGames.flat().map(e => e.id).includes(userId)) {
+            wrongEmbed.setTitle(":x: User is in the middle of a game!")
+
+            return message.channel.send(wrongEmbed)
+          }
+
           if (message.content.split(" ").length !== 3) {
 
             wrongEmbed.setTitle(":x: Invalid Parameters!")
@@ -622,15 +642,16 @@ const execute = async (message) => {
             return message.channel.send(wrongEmbed)
 
           }
-          await requestStoredUsers()
-          const channelPos = storedUsers[storedUsers.map(e => e.id).indexOf(thirdArg)].servers.map(e => e.channelID).indexOf(channel_ID)
+          await dbCollection.find({
+            id: thirdArg
+          }).toArray().then(async storedUsers => {
+            if (storedUsers.length === 0) {
 
-          if (channelPos == -1) {
+              wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!")
 
-            wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!")
+              return message.channel.send(wrongEmbed)
+            }
 
-            return message.channel.send(wrongEmbed)
-          } else {
             await dbCollection.update({
               id: thirdArg
             }, {
@@ -640,8 +661,7 @@ const execute = async (message) => {
                 }
               }
             });
-          }
-
+          })
           correctEmbed.setTitle(":white_check_mark: Player's score reset!")
 
           return message.channel.send(correctEmbed)
@@ -656,8 +676,6 @@ const execute = async (message) => {
 
     case "q": {
 
-      await requestStoredUsers()
-
       for (let person of queueArray) {
         if (person.id === userId) {
 
@@ -666,7 +684,7 @@ const execute = async (message) => {
           return message.channel.send(wrongEmbed);
         }
       };
-
+      
       if (includesUserID(ongoingGames.flat())) {
 
         wrongEmbed.setTitle(":x: You are in the middle of a game!");
@@ -687,45 +705,58 @@ const execute = async (message) => {
 
       message.channel.send(correctEmbed);
 
-      await requestStoredUsers()
-
       if (queueArray.length === 6) {
         for (let user of queueArray) {
+          await dbCollection.find({
+            id: user.id
+          }).toArray().then(async storedUsers => {
+            const newUser = {
+              id: user.id,
+              name: user.name,
+              servers: []
+            };
 
-          const newUser = {
-            id: user.id,
-            name: user.name,
-            servers: []
-          };
+            if (storedUsers.length === 0) {
 
-          if (!storedUsers.map(e => e.id).includes(user.id)) {
+              await dbCollection.insert(newUser);
 
-            await dbCollection.insert(newUser);
-
-            await requestStoredUsers()
-          };
-
-          if (!storedUsers[storedUsers.map(e => e.id).indexOf(user.id)].servers.map(e => e.channelID).includes(channel_ID)) {
-
-            await dbCollection.update({
-              id: user.id
-            }, {
-              $push: {
-                servers: {
-                  channelID: channel_ID,
-                  wins: 0,
-                  losses: 0,
-                  mmr: 1000
+              await dbCollection.update({
+                id: user.id
+              }, {
+                $push: {
+                  servers: {
+                    channelID: channel_ID,
+                    wins: 0,
+                    losses: 0,
+                    mmr: 1000
+                  }
                 }
-              }
-            });
-          };
+              });
+
+            } else if (!storedUsers[0].servers.map(e => e.channelID).includes(channel_ID)) {
+
+              await dbCollection.update({
+                id: user.id
+              }, {
+                $push: {
+                  servers: {
+                    channelID: channel_ID,
+                    wins: 0,
+                    losses: 0,
+                    mmr: 1000
+                  }
+                }
+              });
+            }
+          })
         };
 
         const valuesforpm = {
           name: Math.floor(Math.random() * 99999),
           password: Math.floor(Math.random() * 99999)
         };
+
+        await message.channel.send(`<@${queueArray[0].id}>, <@${queueArray[1].id}>, <@${queueArray[2].id}>, <@${queueArray[3].id}>, <@${queueArray[4].id}>, <@${queueArray[5].id}>`)
 
         correctEmbed.setTitle("a game has been made! Please select your preferred gamemode: Captains (c) or Random (r) ")
 
@@ -787,8 +818,6 @@ const execute = async (message) => {
 
         } else if (getOccurrence(rorcArray.map(e => e.param), "c") > getOccurrence(rorcArray.map(e => e.param), "r")) {
 
-          //yes this code is horrible no shit sherlock
-
           queueArray.push({
             gameID: gameCount,
             time: new Date(),
@@ -834,7 +863,7 @@ const execute = async (message) => {
 
             const Captain1st = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR_WARNING)
-              .setTitle("Choose one( you have 20 seconds):")
+              .setTitle("Choose one ( you have 20 seconds):")
               .addField(`1 :`, tempObjectLoop[0].name)
               .addField(`2 :`, tempObjectLoop[1].name)
               .addField(`3 :`, tempObjectLoop[2].name)

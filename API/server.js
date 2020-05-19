@@ -1,7 +1,7 @@
 const Express = require("express");
 const BodyParser = require("body-parser");
 const MongoClient = require("mongodb").MongoClient;
-const CONNECTION_URL = process.env.mongodb;
+const CONNECTION_URL = require("../mongodb.js").url;
 const DATABASE_NAME = "sixman";
 const rateLimit = require("express-rate-limit");
  
@@ -44,7 +44,7 @@ app.get("/5v5/userID=:id", (request, response) => {
         if(error) {
             return response.status(500).send(error);
         }
-        response.send(result);
+        response.send(result[0]);
     });
   });
 
@@ -53,15 +53,6 @@ app.get("/teams", (request, response) => {
       if(error) {
           return response.status(500).send(error);
       }
-      response.send(result);
+      response.send(result[0]);
   });
 });
-
-app.get("/teams/teamname=:id", (request, response) => {
-    collectionTeams.find({["teams.name"]:request.params.id,},{id:"641229728564379658"}).toArray((error, result) => {
-        if(error) {
-            return response.status(500).send(error);
-        }
-        response.send(result);
-    });
-  });

@@ -6,11 +6,13 @@ const MongoDB = require("../mongodb");
 
 const db = MongoDB.getDB();
 
+const teamsCollection = db.collection('teams')
+
 const serversCollection = db.collection('guilds');
 
-const teamsCollection = db.collection('teams');
-
 const CSGOMaps = ["Cache", "Dust II", "Inferno", "Mirage", "Train"]
+
+const R6Maps = ["Bank","House","Club","Consulate","Kafe","Coastline"]
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -24,17 +26,15 @@ const channelQueues = {};
 
 const cancelQueue = {};
 
-const avaiableGames = ["valorant", "csgo", "leagueoflegends"]
+const avaiableGames = ["valorant", "csgo", "leagueoflegends", "r6"]
+
+const invites = {};
 
 let gameCount = 0;
 
-let storedTeams;
+let gameName;
 
-let storedGuilds;
-
-let teamsInQueue = [];
-
-const invites = {};
+let teamsInGameVar = [];
 
 let userIDsPM = [];
 
@@ -151,19 +151,21 @@ const execute = async (message) => {
     channelQueues[channel_ID] = [];
   }
 
-  await serversCollection.find().toArray().then(dataDB => {
-    storedGuilds = dataDB;
-  })
-
-  await teamsCollection.find().toArray().then(dataDB => {
-    storedTeams = dataDB;
-  })
-
   const secondArg = message.content.split(" ")[1];
 
   const thirdArg = message.content.split(" ")[2];
 
-  const gameName = storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game;
+  await serversCollection.find(message.guild.id).toArray().then(async storedGuilds => {
+
+    gameName = storedGuilds[0].game;
+
+    if (storedGuilds[0].game === "" && args(message) !== "game") {
+
+      wrongEmbed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(", ")}`)
+
+      return message.channel.send(wrongEmbed)
+    }
+  })
 
   const teamsArray = channelQueues[channel_ID];
 
@@ -185,7 +187,11 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK)
 
-  const findGuildTeams = storedTeams.find(e => e.id === message.guild.id).teams
+  const findGuildTeams = await teamsCollection.find({
+    id: message.guild.id
+  }).toArray().then(async storedTeams => {
+    return storedTeams[0].teams
+  })
 
   const isCaptain = () => {
     for (let team of findGuildTeams) {
@@ -203,42 +209,46 @@ const execute = async (message) => {
     }
   }
 
-  const membersInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.members`
+  const teamsInfoSpecific = (id) => {
+    for (let team of findGuildTeams) {
+      if (team.members.includes(id)) {
+        return team;
+      }
+    }
+  }
 
-  const teamNameInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.name`
+  const membersInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.members`
 
   const channelsInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.channels`
 
-  const membersJoinInDatabase = `teams.${findGuildTeams.indexOf(findGuildTeams.find(e => e.name ===messageArgs(message)))}.members`
-
-  const teamNameJoinInDatabase = `teams.${findGuildTeams.indexOf(findGuildTeams.find(e => e.name ===messageArgs(message)))}.name`
+  const membersJoinInDatabase = `teams.${findGuildTeams.indexOf(findGuildTeams.find(e => e.name === messageArgs(message)))}.members`
 
   const teamsIngame = () => {
-    teamsInQueue = [];
+    teamsInGameVar = [];
     for (let game of ongoingGames) {
       for (let stats of game) {
         if (typeof stats[0] == "string") {
-          teamsInQueue.push(stats[0]);
+          teamsInGameVar.push(stats[0]);
         }
       }
     }
-    return teamsInQueue;
+    return teamsInGameVar;
   }
 
   const givewinLose = async (score, pos) => {
 
-    const channelPos = teamsInfo().channels.map(e => e.channelID).indexOf(channel_ID);
-
-    const sort = `teams.${findGuildTeams.indexOf(teamsInfo())}.channels.${channelPos}.${score}`;
-
-    const mmr = `teams.${findGuildTeams.indexOf(teamsInfo())}.channels.${channelPos}.mmr`
-
     for (let games of ongoingGames) {
       for (let team of findGuildTeams) {
 
-        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name))
+        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name)) {
+
+          const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
+
+          const sort = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.${score}`;
+
+          const mmr = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.mmr`
+
           await teamsCollection.update({
-            [teamNameInDatabase]: games[pos][0],
             id: message.guild.id
           }, {
             $set: {
@@ -246,15 +256,9 @@ const execute = async (message) => {
               [mmr]: score === "wins" ? team.channels[channelPos].mmr + 13 : team.channels[channelPos].mmr - 10
             }
           });
+        }
       }
     }
-  }
-
-  if (storedGuilds.find(e => e.id === message.guild.id).game === "" && args(message) !== "game") {
-
-    wrongEmbed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(", ")}`);
-
-    return message.channel.send(wrongEmbed);
   }
 
   switch (args(message)) {
@@ -301,15 +305,30 @@ const execute = async (message) => {
 
       correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Created!`);
 
+      if (!message.guild.roles.cache.array().map(e => e.name).includes("Team Captain")) {
+
+        await message.guild.roles.create({
+          data: {
+            hoist: false,
+            name: "Team Captain",
+            color: 'GREY',
+          },
+          reason: 'Matchmaker Bot',
+        }).catch(e => console.error(e))
+      }
+
       await message.guild.roles.create({
         data: {
           name: messageArgs(message),
+          hoist: false,
           color: 'BLUE',
         },
         reason: 'idk lol',
       }).catch(e => console.error(e))
 
       await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e))
+
+      await message.member.roles.add(getroleID("Team Captain")).catch(e => message.channel.send("Could not add role Team captain, make sure that the role exists and if not, ask an admin to create it"))
 
       return message.channel.send(correctEmbed);
     }
@@ -318,23 +337,66 @@ const execute = async (message) => {
 
       if (messageArgs(message) !== "" && message.member.hasPermission("ADMINISTRATOR")) {
 
+        for (let a of teamsArray) {
+          if (a[0] === messageArgs(message)) {
+
+            teamsArray.splice(0, teamsArray.length)
+          }
+        }
+
+        for (let games of ongoingGames) {
+          if (games[0][0] === messageArgs(message) || games[1][0] === messageArgs(message)) {
+
+            wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+
+            return message.channel.send(wrongEmbed);
+          };
+        }
+
         if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
 
           wrongEmbed.setTitle(`:x: Team does not exist!`);
 
           return message.channel.send(wrongEmbed);
-        }
+        }    
+            
+        await (await message.guild.members.fetch(findGuildTeams.find(e => e.name === messageArgs(message)).members[0])).roles.remove(getroleID("Team Captain")).catch(e => message.channel.send("Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it"))
+
+        message.guild.roles.cache.find(role => role.name === messageArgs(message)).delete();
 
         await teamsCollection.update({
-          [teamNameInDatabase]: messageArgs(message),
           id: message.guild.id
         }, {
           $pull: {
-            teams: messageArgs(message)
+            teams: {
+              name: messageArgs(message)
+            }
           }
         });
+
+        correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Deleted!`);
+
+        return message.channel.send(correctEmbed);
+
       }
 
+      for (let a of teamsArray) {
+        if (a[0] === teamsInfo().name) {
+
+          wrongEmbed.setTitle(":x: Please leave the queue first!");
+
+          return message.channel.send(wrongEmbed);
+        }
+      }
+
+      for (let games of ongoingGames) {
+        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+
+          wrongEmbed.setTitle(":x: You are in the middle of a game!");
+
+          return message.channel.send(wrongEmbed);
+        };
+      }
 
       if (teamsInfo() == undefined) {
         wrongEmbed.setTitle(`:x: You do not belong to a team!`);
@@ -353,9 +415,10 @@ const execute = async (message) => {
 
           message.guild.roles.cache.find(role => role.name === team.name).delete();
 
+          message.member.roles.remove(getroleID("Team Captain")).catch(e => message.channel.send("Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it"))
+
           await teamsCollection.update({
             id: message.guild.id,
-            [teamNameInDatabase]: teamsInfo().name,
           }, {
             $pull: {
               teams: teamsInfo()
@@ -367,6 +430,66 @@ const execute = async (message) => {
           return message.channel.send(correctEmbed);
         }
       }
+    }
+
+    case "giveownership": {
+
+      for (let a of teamsArray) {
+        if (a[0] === teamsInfo().name) {
+
+          wrongEmbed.setTitle(":x: Please leave the queue first!");
+
+          return message.channel.send(wrongEmbed);
+        }
+      }
+
+      for (let games of ongoingGames) {
+        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+
+          wrongEmbed.setTitle(":x: You are in the middle of a game!");
+
+          return message.channel.send(wrongEmbed);
+        };
+      }
+
+      if (!isCaptain()) {
+        wrongEmbed.setTitle(":x: You are not the captain!");
+
+        return message.channel.send(wrongEmbed);
+      }
+
+      if (!teamsInfo().members.includes(getIDByTag(secondArg))) {
+        wrongEmbed.setTitle(":x: User does not belong to your team!");
+
+        return message.channel.send(wrongEmbed);
+      }
+
+      await message.member.roles.remove(getroleID("Team Captain"))
+
+      await (await message.guild.members.fetch(getIDByTag(secondArg))).roles.add(getroleID("Team Captain"))
+
+      await teamsCollection.update({
+        id: message.guild.id,
+      }, {
+        $pull: {
+          [membersInDatabase]: getIDByTag(secondArg)
+        }
+      });
+
+      await teamsCollection.update({
+        id: message.guild.id,
+      }, {
+        $push: {
+          [membersInDatabase]: {
+            $each: [getIDByTag(secondArg)],
+            $position: 0
+          }
+        }
+      });
+
+      correctEmbed.setTitle(`:white_check_mark: Given ownership to ${(await fetchFromID(getIDByTag(secondArg))).username}`);
+
+      return message.channel.send(correctEmbed);
     }
 
     case "leaveteam": {
@@ -388,7 +511,6 @@ const execute = async (message) => {
       await message.member.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e))
 
       await teamsCollection.update({
-        [teamNameInDatabase]: leftTeam,
         id: message.guild.id
       }, {
         $pull: {
@@ -409,6 +531,18 @@ const execute = async (message) => {
         return message.channel.send(wrongEmbed);
       }
 
+      if (!teamsInfo().members.includes(getIDByTag(secondArg))) {
+        wrongEmbed.setTitle(":x: User does not belong to your team!");
+
+        return message.channel.send(wrongEmbed);
+      }
+
+      if (getIDByTag(secondArg) === message.author.id) {
+        wrongEmbed.setTitle(":x: You cannot kick yourself dummy!");
+
+        return message.channel.send(wrongEmbed);
+      }
+
       const leftTeam = teamsInfo().name;
 
       await message.guild.members.fetch(getIDByTag(secondArg)).then(e => {
@@ -416,7 +550,6 @@ const execute = async (message) => {
       })
 
       await teamsCollection.update({
-        [teamNameInDatabase]: leftTeam,
         id: message.guild.id
       }, {
         $pull: {
@@ -518,7 +651,6 @@ const execute = async (message) => {
       }
 
       await teamsCollection.update({
-        [teamNameJoinInDatabase]: messageArgs(message),
         id: message.guild.id
       }, {
         $push: {
@@ -540,21 +672,21 @@ const execute = async (message) => {
 
         wrongEmbed.setTitle(":x: Invalid argument")
 
-        return message.channel.send(wrongEmbed);
+        return message.channel.send(wrongEmbed)
       }
 
-      if (storedGuilds.map(e => e.id).includes(message.guild.id) && message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg.toLowerCase())) {
+      if (message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg.toLowerCase())) {
 
         await serversCollection.update({
           id: message.guild.id
         }, {
           $set: {
-            game: secondArg
+            game: secondArg.toLowerCase()
           }
         });
         correctEmbed.setTitle(":white_check_mark: Game updated!")
 
-        return message.channel.send(correctEmbed);
+        return message.channel.send(correctEmbed)
       }
     }
 
@@ -593,11 +725,17 @@ const execute = async (message) => {
 
     case "status": {
 
-      wrongEmbed.setTitle(`Team in queue: ${teamsArray[0][0]}`);
+      if (teamsArray.length === 0) {
+        wrongEmbed.setTitle(":x: No players in queue!")
 
-      wrongEmbed.addField(`Players:`, `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>, <@${teamsArray[0][4]}>, <@${teamsArray[0][5]}>`);
+        return message.channel.send(wrongEmbed)
+      }
 
-      return message.channel.send(wrongEmbed);
+      correctEmbed.setTitle(`Team in queue: ${teamsArray[0][0]}`);
+
+      correctEmbed.addField(`Players:`, `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>`);
+
+      return message.channel.send(correctEmbed);
     }
 
     case "pendinginvites": {
@@ -643,7 +781,7 @@ const execute = async (message) => {
 
             correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
-            if (teamsInQueue.indexOf(teamsInfo().name) % 2 === 0) {
+            if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
 
               givewinLose("wins", 0);
 
@@ -685,8 +823,8 @@ const execute = async (message) => {
             }
 
             correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
-
-            if (teamsInQueue.indexOf(teamsInfo().name) % 2 === 0) {
+            
+            if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
 
               givewinLose("wins", 1);
 
@@ -834,15 +972,16 @@ const execute = async (message) => {
 
         case "channel": {
           const getScore = (id, arg) => {
-            findGuildTeams = findGuildTeams.filter(a => a.channels.map(e => e.channelID).indexOf(id) !== -1 && a.channels[a.channels.map(e => e.channelID).indexOf(id)].wins + a.channels[a.channels.map(e => e.channelID).indexOf(id)].losses !== 0)
+            let a;
+            a = findGuildTeams.filter(a => a.channels.map(e => e.channelID).indexOf(id) !== -1 && a.channels[a.channels.map(e => e.channelID).indexOf(id)].wins + a.channels[a.channels.map(e => e.channelID).indexOf(id)].losses !== 0)
 
-            if (findGuildTeams.length === 0) {
+            if (a.length === 0) {
               wrongEmbed.setTitle(":x: No games have been played in here!");
 
               return message.channel.send(wrongEmbed);
             }
 
-            findGuildTeams.sort((a, b) => {
+            a.sort((a, b) => {
               const indexA = a.channels.map(e => e.channelID).indexOf(id);
 
               const indexB = b.channels.map(e => e.channelID).indexOf(id);
@@ -853,18 +992,18 @@ const execute = async (message) => {
             if (!isNaN(arg) && arg > 0) {
               let indexes = 20 * (arg - 1);
               for (indexes; indexes < 20 * arg; indexes++) {
-                if (findGuildTeams[indexes] == undefined) {
+                if (a[indexes] == undefined) {
 
                   correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
 
                   break
                 }
-                for (let channels of findGuildTeams[indexes].channels) {
+                for (let channels of a[indexes].channels) {
                   if (channels.channelID === id) {
 
-                    correctEmbed.addField(findGuildTeams[indexes].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins/(channels.wins + channels.losses)) * 100))? "0" : Math.floor((channels.wins/(channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`)
+                    correctEmbed.addField(a[indexes].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins/(channels.wins + channels.losses)) * 100))? "0" : Math.floor((channels.wins/(channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`)
 
-                    correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(findGuildTeams.length / 20)}`);
+                    correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(a.length / 20)}`);
                   }
                 }
               }
@@ -949,6 +1088,15 @@ const execute = async (message) => {
 
             return message.channel.send(wrongEmbed)
           }
+          
+          for (let games of ongoingGames) {
+            if (games[2].channel === channel_ID) {
+
+              wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+
+              return message.channel.send(wrongEmbed);
+            };
+          }
 
           for (let team of findGuildTeams) {
 
@@ -956,7 +1104,6 @@ const execute = async (message) => {
 
             if (channelPos !== -1) {
               await teamsCollection.update({
-                [teamNameInDatabase]: team.name,
                 id: message.guild.id
               }, {
                 $pull: {
@@ -974,6 +1121,16 @@ const execute = async (message) => {
           return message.channel.send(correctEmbed);
         }
         case "team": {
+
+          for (let games of ongoingGames) {
+            if (games[0][0] === thirdArg || games[1][0] === thirdArg) {
+
+              wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+
+              return message.channel.send(wrongEmbed);
+            };
+          }
+
           if (message.content.split(" ").length !== 3) {
 
             wrongEmbed.setTitle(":x: Invalid Parameters!");
@@ -990,8 +1147,10 @@ const execute = async (message) => {
 
             return message.channel.send(wrongEmbed)
           } else {
+
+            const channelsInDatabase = `teams.${findGuildTeams.map(e=> e.name).indexOf(thirdArg)}.channels`
+
             await teamsCollection.update({
-              [teamNameInDatabase]: thirdArg,
               id: message.guild.id
             }, {
               $pull: {
@@ -1029,11 +1188,10 @@ const execute = async (message) => {
 
           return message.channel.send(wrongEmbed);
         }
-
       }
 
       for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name && games[1][0] === teamsInfo().name) {
+        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
 
           wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
@@ -1105,15 +1263,20 @@ const execute = async (message) => {
         })
 
         for (let team of teamsArray) {
-          if (!storedTeams[storedTeams.map(e => e.name).indexOf(team[0])].servers.map(e => e.channelID).includes(channel_ID)) {
+          if (team.gameNumber !== undefined) {
+
+            break
+          }
+          const channelsInDatabaseSpecific = `teams.${findGuildTeams.indexOf(teamsInfoSpecific(team[1]))}.channels`
+
+          if (!findGuildTeams[findGuildTeams.map(e => e.name).indexOf(team[0])].channels.map(e => e.channelID).includes(channel_ID)) {
 
             (async function () {
               await teamsCollection.update({
-                [teamNameInDatabase]: team[0],
                 id: message.guild.id
               }, {
                 $push: {
-                  [channelsInDatabase]: {
+                  [channelsInDatabaseSpecific]: {
                     channelID: channel_ID,
                     wins: 0,
                     losses: 0,
@@ -1137,7 +1300,7 @@ const execute = async (message) => {
 
         if (gameName !== "leagueoflegends") {
 
-          discordEmbed1.addField(`Map: ${gameName === "valorant" ? "veto(each team bans a map, with the first team choosing the first ban)": gameName === "valorant" ? CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)]: "You got this"}`, "Please organize a match with your teammates and opponents. Team 1 attacks and Team 2 defends. Good luck!")
+          discordEmbed1.addField(`Map: ${gameName === "valorant" ? "veto(each team bans a map, with the first team choosing the first ban)": gameName === "valorant" ? CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)]: gameName === "r6" ? R6Maps[Math.floor(Math.random() * R6Maps.length)]: "You got this"}`, "Please organize a match with your teammates and opponents. Team 1 attacks and Team 2 defends. Good luck!")
         }
 
         message.channel.send(discordEmbed1);
@@ -1149,7 +1312,7 @@ const execute = async (message) => {
             .setColor(EMBED_COLOR_CHECK)
             .addField("Name:", valuesforpm.name)
             .addField("Password:", valuesforpm.password)
-            .addField("You have to:", `Join match(Created by ${fetchFromID(teamsArray[0][1])})`);
+            .addField("You have to:", `Join match(Created by ${(await fetchFromID(teamsArray[0][1])).username})`);
 
           for (let user of userIDsPM) {
             if (user !== userIDsPM[0]) {

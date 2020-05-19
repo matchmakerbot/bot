@@ -1,7 +1,5 @@
 "use strict";
 
-let storedGuilds, storedTeams;
-
 const fs = require('fs');
 
 const Discord = require('discord.js')
@@ -14,123 +12,126 @@ const MongoDB = require("./mongodb");
 
 const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer"]
 
-client.commands = new Discord.Collection();
-
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
-MongoDB.connectdb(async (err) => {
+client.commands = new Discord.Collection();
 
-    const fivevfivesingles = require('./commands/5v5.js');
+MongoDB.connectdb(err => {
 
-    const fivevfiveteams = require('./commands/5v5teams.js');
+  const fivevfivesingles = require('./commands/5v5.js');
 
-    const threevthreesingles = require('./commands/3v3.js');
+  const fivevfiveteams = require('./commands/5v5teams.js');
 
-    const threevthreeteams = require('./commands/3v3teams.js')
+  const threevthreesingles = require('./commands/3v3.js');
 
-    const db = MongoDB.getDB()
+  const threevthreeteams = require('./commands/3v3teams.js')
 
-    const serversCollection = db.collection('guilds')
+  const db = MongoDB.getDB()
 
-    const teamsCollection = db.collection('teams')
+  const serversCollection = db.collection('guilds')
 
-    if (err) throw err
+  const teamsCollection = db.collection('teams')
 
-    for (const file of commandFiles) {
-        const command = require(`./commands/${file}`);
-        if (typeof command.name === "string") {
-            client.commands.set(command.name, command);
-        } else if (command.name instanceof Array) {
-            for (let a of command.name) {
-                client.commands.set(a, command);
-            }
+  if (err) {
+    throw err
+  }
+
+  for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    if (typeof command.name === "string") {
+      client.commands.set(command.name, command);
+    } else if (command.name instanceof Array) {
+      for (let a of command.name) {
+        client.commands.set(a, command);
+      }
+    }
+  }
+
+  client.once('ready', async () => {
+    console.log(`Guilds: ${client.guilds.cache.map(a => a.name).join(" || ")}\nNumber of Guilds: ${client.guilds.cache.map(a => a.name).length}`);
+    console.log('Ready');
+    client.user.setActivity("Type !helpsolosmatchmaking to get info");
+  });
+
+  client.on('message', async message => {
+
+    const embed = new Discord.MessageEmbed().setColor('#F8534F')
+
+    const args = message.content.slice(prefix.length).split(/ +/);
+
+    const command = args.shift().toLowerCase();
+
+    if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+    if (!client.commands.has(command)) return;
+
+    if (queueCommands.includes(command)) {
+      await serversCollection.find({
+        id: message.guild.id
+      }).toArray().then(dataDB => {
+        switch (dataDB[0].channels[message.channel.id]) {
+
+          case undefined: {
+            embed.setTitle(":x: You must first select your prefered gamemode in this channel using !channelmode 3v3solos, 3v3teams, 5v5solos or 5v5teams")
+
+            return message.channel.send(embed);
+          }
+
+          case ("5v5solos"): {
+
+            return fivevfivesingles.execute(message, args)
+          }
+          case ("5v5teams"): {
+
+            return fivevfiveteams.execute(message, args)
+          }
+          case ("3v3solos"): {
+
+            return threevthreesingles.execute(message, args)
+          }
+          case ("3v3teams"): {
+
+            return threevthreeteams.execute(message, args)
+          }
+          default: {
+            embed.setTitle(":x: Wtf is going on? Message Tweeno #8687")
+
+            return message.channel.send(embed)
+          }
         }
+      })
+      return
     }
 
-    client.once('ready', async () => {
-        console.log(`Guilds: ${client.guilds.cache.map(a => a.name).join(" || ")}\nNumber of Guilds: ${client.guilds.cache.map(a => a.name).length}`);
-        console.log('Ready');
-        client.user.setActivity("Type !helpmatchmaking to get info");
-    });
+    client.commands.get(command).execute(message, args);
 
-    client.on('message', async message => {
+  });
 
-        const embed = new Discord.MessageEmbed().setColor('#F8534F')
+  client.on("guildCreate", async (guild) => {
 
-        const args = message.content.slice(prefix.length).split(/ +/);
+    const serverInfo = {
+      id: guild.id,
+      game: "",
+      whitelist: [],
+      channels: {}
+    }
 
-        const command = args.shift().toLowerCase();
+    const teamsInfo = {
+      id: guild.id,
+      teams: []
+    }
 
-        if (!message.content.startsWith(prefix) || message.author.bot) return;
+    console.log(`Joined ${guild.name}`)
 
-        if (!client.commands.has(command)) return;
-
-        if (queueCommands.includes(command)) {
-            await serversCollection.find().toArray().then(dataDB => {
-                storedGuilds = dataDB
-            })
-
-            if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === undefined) {
-
-                embed.setTitle(":x: You must first select your prefered gamemode in this channel using !channelmode 3v3solos, 3v3teams, 5v5solos or 5v5teams")
-
-                return message.channel.send(embed);
-            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "5v5solos") {
-
-                return fivevfivesingles.execute(message, args)
-            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "5v5teams") {
-
-                return fivevfiveteams.execute(message, args)
-            } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "3v3solos") {
-
-                return threevthreesingles.execute(message, args)
-                } else if (storedGuilds.find(e => e.id === message.guild.id).channels[message.channel.id] === "3v3teams") {
-    
-                return threevthreeteams.execute(message, args)
-            } else {
-                embed.setTitle(":x: Wtf is going on? Message Tweeno #8687")
-
-                return message.channel.send(embed)
-            }
-
-        }
-
-        client.commands.get(command).execute(message, args);
-
-    });
-
-    client.on("guildCreate", async (guild) => {
-
-        console.log(`Joined ${guild.name}`)
-
-        const serverInfo = {
-            id: guild.id,
-            game: "",
-            whitelist: [],
-            channels: {}
-        }
-
-        const teamsInfo = {
-            id: guild.id,
-            teams: []
-        }
-
-        await serversCollection.find().toArray().then(dataDB => {
-            storedGuilds = dataDB
-        })
-
-        if (!storedGuilds.map(e => e.id).includes(guild.id)) {
-            await serversCollection.insert(serverInfo);
-        }
-
-        await teamsCollection.find().toArray().then(dataDB => {
-            storedTeams = dataDB
-        })
-
-        if (!storedTeams.map(e => e.id).includes(guild.id)) {
-            await teamsCollection.insert(teamsInfo);
-        }
-    });
+    await serversCollection.find({
+      id: guild.id
+    }).toArray().then(async dataDB => {
+      if (dataDB.length === 0) {
+        await serversCollection.insert(serverInfo);
+        await teamsCollection.insert(teamsInfo)
+      }
+    })
+  });
 })
 
 client.login(process.env.token);
