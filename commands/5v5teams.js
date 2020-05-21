@@ -156,6 +156,9 @@ const execute = async (message) => {
   const thirdArg = message.content.split(" ")[2];
 
   await serversCollection.find(message.guild.id).toArray().then(async storedGuilds => {
+    await serversCollection.find({
+      id: message.guild.id
+    }).toArray().then(async storedGuilds => {
 
     gameName = storedGuilds[0].game;
 

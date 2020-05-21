@@ -204,7 +204,9 @@ const execute = async (message) => {
   const index = queueArray.map(e => e.id).indexOf(userId);
 
 
-  await serversCollection.find(message.guild.id).toArray().then(async storedGuilds => {
+    await serversCollection.find({
+      id: message.guild.id
+    }).toArray().then(async storedGuilds => {
 
     gameName = storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game
 
