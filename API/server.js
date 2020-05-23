@@ -1,7 +1,7 @@
 const Express = require("express");
 const BodyParser = require("body-parser");
 const MongoClient = require("mongodb").MongoClient;
-const CONNECTION_URL = require("../mongodb.js").url;
+const CONNECTION_URL = process.env.mongodb;
 const DATABASE_NAME = "sixman";
 const rateLimit = require("express-rate-limit");
  
