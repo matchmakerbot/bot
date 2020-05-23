@@ -142,8 +142,9 @@ const execute = async (message) => {
 
       const userid = games[i].id
 
-      await dbCollection.find(userid).toArray().then(async storedUsers => {
-
+      await dbCollection.find({
+        id: userid
+      }).toArray().then(async storedUsers => {
         const channelPos = storedUsers[0].servers.map(e => e.channelID).indexOf(channel_ID);
 
         const sort = `servers.${channelPos}.${score}`;
