@@ -12,7 +12,7 @@
 # limitations under the License.
 
 # [START gae_flex_quickstart_yaml]
-runtime: nodejs
+runtime: nodejs12
 env: standard
 
 # This sample incurs costs to run on the App Engine flexible environment.
