@@ -10,7 +10,7 @@ const client = require("./client.js");
 
 const MongoDB = require("./mongodb");
 
-const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer"]
+const queueCommands = ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer","r","c"]
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 
