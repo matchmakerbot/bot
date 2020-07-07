@@ -200,12 +200,12 @@ const execute = async (message) => {
   const channelsInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.channels`
 
   const membersJoinInDatabase = `teams.${findGuildTeams.indexOf(findGuildTeams.find(e => e.name === messageArgs(message)))}.members`
-
+//test 
   const teamsIngame = () => {
     teamsInGameVar = [];
     for (let game of ongoingGames) {
       for (let stats of game) {
-        if (typeof stats[0] == "string") {
+        if (typeof stats[0] == "string" && game[2].guild === message.guild.id) {
           teamsInGameVar.push(stats[0]);
         }
       }
@@ -218,7 +218,7 @@ const execute = async (message) => {
     for (let games of ongoingGames) {
       for (let team of findGuildTeams) {
 
-        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name)) {
+        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
 
           const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
@@ -323,7 +323,7 @@ const execute = async (message) => {
         }
 
         for (let games of ongoingGames) {
-          if (games[0][0] === messageArgs(message) || games[1][0] === messageArgs(message)) {
+          if ((games[0][0] === messageArgs(message) || games[1][0] === messageArgs(message)) && games[2].guild === message.guild.id) {
 
             wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
@@ -368,7 +368,7 @@ const execute = async (message) => {
       }
 
       for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name && games[2].guild === message.guild.id) {
 
           wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
@@ -422,7 +422,7 @@ const execute = async (message) => {
       }
 
       for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name && games[2].guild === message.guild.id) {
 
           wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
@@ -729,7 +729,7 @@ const execute = async (message) => {
 
           for (let games of ongoingGames) {
 
-            if (!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) {
+            if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
               continue;
             }
@@ -772,7 +772,7 @@ const execute = async (message) => {
 
           for (let games of ongoingGames) {
 
-            if (!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) {
+            if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
               continue;
             }
@@ -824,7 +824,7 @@ const execute = async (message) => {
 
         return message.channel.send(wrongEmbed);
       }
-
+//fix these
       if (!teamsIngame().includes(teamsInfo().name) || ongoingGames.length === 0) {
 
         wrongEmbed.setTitle(":x: You aren't in a game!");
@@ -834,7 +834,7 @@ const execute = async (message) => {
 
       for (let games of ongoingGames) {
 
-        if (!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) {
+        if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
           continue
         }
@@ -1078,7 +1078,7 @@ const execute = async (message) => {
         case "team": {
 
           for (let games of ongoingGames) {
-            if (games[0][0] === thirdArg || games[1][0] === thirdArg) {
+            if ((games[0][0] === thirdArg || games[1][0] === thirdArg) && games[2].guild === message.guild.id) {
 
               wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
@@ -1146,7 +1146,7 @@ const execute = async (message) => {
       }
 
       for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name && games[2].guild === message.guild.id) {
 
           wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
@@ -1214,6 +1214,7 @@ const execute = async (message) => {
         teamsArray.push({
           gameNumber: gameCount,
           channel: channel_ID,
+          guild:message.guild.id,
           date: new Date()
         })
         //this shit is all fucked

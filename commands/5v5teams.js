@@ -30,9 +30,9 @@ const avaiableGames = ["valorant", "csgo", "leagueoflegends", "r6"]
 
 const invites = {};
 
-let gameCount = 0;
+const storedGames = {}
 
-let gameName;
+let gameCount = 0;
 
 let teamsInGameVar = [];
 
@@ -151,23 +151,32 @@ const execute = async (message) => {
     channelQueues[channel_ID] = [];
   }
 
+  if (!Object.keys(storedGames).includes(message.guild.id)) {
+
+    storedGames[message.guild.id] = "";
+  }
+
   const secondArg = message.content.split(" ")[1];
 
   const thirdArg = message.content.split(" ")[2];
 
+  if (storedGames[message.guild.id] === "") {
     await serversCollection.find({
       id: message.guild.id
     }).toArray().then(async storedGuilds => {
 
-    gameName = storedGuilds[0].game;
+      storedGames[message.guild.id] = storedGuilds[0].game
 
-    if (storedGuilds[0].game === "" && args(message) !== "game") {
+    })
+    if (storedGames[message.guild.id] === "" && args(message) !== "game") {
 
       wrongEmbed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(", ")}`)
 
       return message.channel.send(wrongEmbed)
     }
-  })
+  }
+
+  const gameName = storedGames[message.guild.id];
 
   const teamsArray = channelQueues[channel_ID];
 
@@ -241,8 +250,8 @@ const execute = async (message) => {
 
     for (let games of ongoingGames) {
       for (let team of findGuildTeams) {
-
-        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name)) {
+//i think second param can leave
+        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
 
           const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
@@ -1436,7 +1445,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer"],
+  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer","revertgame"],
   description: '6man bot',
   execute
 };

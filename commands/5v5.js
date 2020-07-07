@@ -16,7 +16,7 @@ const rc = ["r", "c"];
 
 const valorantMaps = ["Haven", "Bind", "Split"];
 
-const R6Maps = ["Bank","House","Club","Consulate","Kafe","Coastline"]
+const R6Maps = ["Bank", "House", "Club", "Consulate", "Kafe", "Coastline"]
 
 const CSGOMaps = ["Cache", "Dust II", "Inferno", "Mirage", "Train"];
 
@@ -32,15 +32,17 @@ const channelQueues = {};
 
 const cancelQueue = {};
 
-const avaiableGames = ["valorant", "csgo", "leagueoflegends","r6"];
+const avaiableGames = ["valorant", "csgo", "leagueoflegends", "r6"];
+
+const storedGames = {}
 
 let gameCount = 0;
 
 let hasVoted = false;
 
-let gameName;
-
 let usedNums = [];
+
+let finishedGames = [];
 
 setInterval(async () => {
 
@@ -178,10 +180,69 @@ const execute = async (message) => {
     }
   }
 
+  const revertgame = async status => {
+    for (let games of finishedGames) {
+
+      if (!games[6].gameID === secondArg) {
+
+        continue
+      }
+
+      const userid = games[i].id
+
+      await dbCollection.find({
+        id: userid
+      }).toArray().then(async storedUsers => {
+
+        const channelPos = storedUsers[0].servers.map(e => e.channelID).indexOf(channel_ID);
+
+        const win = `servers.${channelPos}.wins`;
+
+        const lose = `servers.${channelPos}.losses`;
+
+        const sort = `servers.${channelPos}.${status}`;
+
+        const mmr = `servers.${channelPos}.mmr`;
+
+        if (thirdArg === "revert") {
+          await dbCollection.update({
+            id: userid
+          }, {
+            $set: {
+              [win]: status === "wins" ? storedUsers[0].servers[channelPos].wins + 1 : storedUsers[0].servers[channelPos].wins - 1,
+
+              [lose]: status === "losses" ? storedUsers[0].servers[channelPos].losses + 1 : storedUsers[0].servers[channelPos].losses - 1,
+
+              [mmr]: status === "wins" ? storedUsers[0].servers[channelPos].mmr + 23 : storedUsers[0].servers[channelPos].mmr - 23
+            }
+          });
+        }
+
+        if (thirdArg === "cancel") {
+          await dbCollection.update({
+            id: userid
+          }, {
+            $set: {
+              [sort]: storedUsers[0].servers[channelPos][status] - 1,
+
+              [mmr]: status === "wins" ? storedUsers[0].servers[channelPos].mmr - 13 : storedUsers[0].servers[channelPos].mmr + 10
+            }
+          });
+        }
+      })
+    }
+  }
+
   if (!Object.keys(channelQueues).includes(channel_ID)) {
 
     channelQueues[channel_ID] = [];
   }
+
+  if (!Object.keys(storedGames).includes(message.guild.id)) {
+
+    storedGames[message.guild.id] = "";
+  }
+
 
   const fetchFromID = async (id) => {
     return (await client.users.fetch(id).catch(error => {
@@ -205,20 +266,23 @@ const execute = async (message) => {
 
   const index = queueArray.map(e => e.id).indexOf(userId);
 
-
+  if (storedGames[message.guild.id] === "") {
     await serversCollection.find({
       id: message.guild.id
     }).toArray().then(async storedGuilds => {
 
-    gameName = storedGuilds[storedGuilds.map(e => e.id).indexOf(message.guild.id)].game
+      storedGames[message.guild.id] = storedGuilds[0].game
 
-    if (storedGuilds[0].game === "" && args(message) !== "game") {
+    })
+    if (storedGames[message.guild.id] === "" && args(message) !== "game") {
 
       wrongEmbed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(", ")}`)
 
       return message.channel.send(wrongEmbed)
     }
-  })
+  }
+
+  const gameName = storedGames[message.guild.id];
 
   switch (args(message)) {
 
@@ -239,6 +303,9 @@ const execute = async (message) => {
             game: secondArg.toLowerCase()
           }
         });
+
+        storedGames[message.guild.id] = secondArg.toLowerCase()
+
         correctEmbed.setTitle(":white_check_mark: Game updated!")
 
         return message.channel.send(correctEmbed)
@@ -398,7 +465,7 @@ const execute = async (message) => {
               }
             }
             correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
-            
+
             return message.channel.send(correctEmbed);
           }
         }
@@ -407,6 +474,92 @@ const execute = async (message) => {
           return message.channel.send(wrongEmbed);
         }
       }
+    }
+
+    case "revertgame": {
+
+      if (message.content.split(" ").length == 1 || message.content.split(" ").length == 2) {
+
+        wrongEmbed.setTitle(":x: Invalid Parameters!")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      if (!message.member.hasPermission("ADMINISTRATOR")) {
+
+        wrongEmbed.setTitle(":x: You do not have Administrator permission!")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      if (!finishedGames.map(e => e[10].gameID).includes(parseInt(secondArg))) {
+        wrongEmbed.setTitle(":x: No game with that ID has been played")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      const selectedGame = finishedGames.find(e => e[10].gameID === parseInt(secondArg))
+
+      if (selectedGame[10].channelID !== channel_ID) {
+        wrongEmbed.setTitle(":x: That game hasn't been played in this channel")
+
+        return message.channel.send(wrongEmbed)
+      }
+
+      if (thirdArg === "revert") {
+
+        if (selectedGame[10].winningTeam === 0) {
+
+          for (i = 0; i < 3; i++) {
+            revertgame("losses");
+          }
+          for (i = 3; i < 6; i++) {
+            revertgame("wins");
+          }
+        } else {
+
+          for (i = 3; i < 6; i++) {
+            revertgame("losses");
+          }
+          for (i = 0; i < 3; i++) {
+            revertgame("wins");
+
+          }
+        }
+      } else if (thirdArg === "cancel") {
+
+        if (selectedGame[10].winningTeam === 0) {
+
+          for (i = 0; i < 3; i++) {
+            revertgame("wins");
+          }
+          for (i = 3; i < 6; i++) {
+            revertgame("losses");
+          }
+        } else {
+
+          for (i = 3; i < 6; i++) {
+            revertgame("wins");
+          }
+          for (i = 0; i < 3; i++) {
+            revertgame("losses");
+          }
+        }
+
+      } else {
+          wrongEmbed.setTitle(":x: Invalid Parameters!")
+
+          return message.channel.send(wrongEmbed)
+      }
+
+      let index = finishedGames.indexOf(selectedGame);
+
+      finishedGames.splice(index, 1);
+
+      correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === "revert" ? "reverted" : "cancelled"}!`);
+
+      return message.channel.send(correctEmbed);
+
     }
 
     case "cancel": {
@@ -635,12 +788,12 @@ const execute = async (message) => {
       switch (secondArg) {
         case "channel": {
 
-          if(ongoingGames.flat().map(e => e.channelID).includes(channel_ID)) {
+          if (ongoingGames.flat().map(e => e.channelID).includes(channel_ID)) {
             wrongEmbed.setTitle(":x: There are users in game!")
 
             return message.channel.send(wrongEmbed)
           }
-          
+
           if (message.content.split(" ").length !== 2) {
 
             wrongEmbed.setTitle(":x: Invalid Parameters!")
@@ -681,12 +834,12 @@ const execute = async (message) => {
         }
         case "player": {
 
-          if(ongoingGames.flat().map(e => e.id).includes(userId)) {
+          if (ongoingGames.flat().map(e => e.id).includes(userId)) {
             wrongEmbed.setTitle(":x: User is in the middle of a game!")
 
             return message.channel.send(wrongEmbed)
           }
-          
+
           if (message.content.split(" ").length !== 3) {
 
             wrongEmbed.setTitle(":x: Invalid Parameters!")
@@ -1422,7 +1575,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game", "ongoinggames", "mode"],
+  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "r", "c", "game", "ongoinggames", "mode","revertgame"],
   description: '6man bot',
   execute
 };
