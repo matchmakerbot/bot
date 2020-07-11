@@ -15,7 +15,7 @@ const discordEmbed = new Discord.MessageEmbed()
     .addField("!score me/channel", 'Checks your current score. Usage: !score channel to check score in the channel youre in, !score channel (channelid)to check the score in a specific channel, just add a number after it to select a page')
     .addField("!reset player/channel", `Resets the score of an individual player (!reset player <discordid>) or the whole channel where this command is inserted (!reset channel)`)
     .addField("!ongoinggames", `Check the current games!`)
-    .addField("Commands to be added:", "!revertgame: allows an admin to revert or cancel a game that has been incorrectly reported as a win/lose")
+    .addField("!revertgame", `Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores`)
     
 module.exports = {
     name: 'helpsolosmatchmaking',

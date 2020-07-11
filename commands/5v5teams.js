@@ -1,24 +1,28 @@
-const Discord = require("discord.js");
+const Discord = require('discord.js');
 
-const client = require("../client.js");
+const client = require('../client.js');
 
-const MongoDB = require("../mongodb");
+const MongoDB = require('../mongodb');
 
 const db = MongoDB.getDB();
 
-const teamsCollection = db.collection('teams')
+const teamsCollection = db.collection('teams');
 
 const serversCollection = db.collection('guilds');
 
-const CSGOMaps = ["Cache", "Dust II", "Inferno", "Mirage", "Train"]
+const valorantMaps = ['Haven', 'Bind', 'Split'];
 
-const R6Maps = ["Bank","House","Club","Consulate","Kafe","Coastline"]
+const R6Maps = ['Bank', 'House', 'Club', 'Consulate', 'Kafe', 'Coastline'];
 
-const EMBED_COLOR_ERROR = "#F8534F";
+const CSGOMaps = ['Cache', 'Dust II', 'Inferno', 'Mirage', 'Train'];
 
-const EMBED_COLOR_CHECK = "#77B255";
+const avaiableGames = ['valorant', 'csgo', 'leagueoflegends', 'r6'];
 
-const EMBED_COLOR_WARNING = "#77B255";
+const EMBED_COLOR_ERROR = '#F8534F';
+
+const EMBED_COLOR_CHECK = '#77B255';
+
+const EMBED_COLOR_WARNING = '#77B255';
 
 const ongoingGames = [];
 
@@ -26,11 +30,11 @@ const channelQueues = {};
 
 const cancelQueue = {};
 
-const avaiableGames = ["valorant", "csgo", "leagueoflegends", "r6"]
-
 const invites = {};
 
-const storedGames = {}
+const finishedGames = [];
+
+const storedGames = {};
 
 let gameCount = 0;
 
@@ -40,1412 +44,1559 @@ let userIDsPM = [];
 
 setInterval(async () => {
 
-  let embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING)
+	let embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 
-  if (Object.entries(channelQueues).length !== 0) {
-    for (let channel of Object.values(channelQueues)) {
-      for (let team of channel) {
-        if ((Date.now() - team[7]) > 45 * 60 * 1000) {
+	if (Object.entries(channelQueues).length !== 0) {
+		for (const channel of Object.values(channelQueues)) {
+			for (const team of channel) {
+				if ((Date.now() - team[7]) > 45 * 60 * 1000) {
 
-          const actualChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel))
+					const actualChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel));
 
-          embedRemove.setTitle(`You were removed from the queue after no game has been made in 45 minutes!`)
+					embedRemove.setTitle('You were removed from the queue after no game has been made in 45 minutes!');
 
-          await actualChannel.send(`<@${team[1]}>`)
+					await actualChannel.send(`<@${team[1]}>`);
 
-          actualChannel.send(embedRemove)
+					actualChannel.send(embedRemove);
 
-          embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING)
+					embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 
-          channelQueues = []
-        }
-      }
-    }
-  }
+					channelQueues = [];
+				}
+			}
+		}
+	}
 
-  if (ongoingGames.length !== 0) {
-    for (let games of ongoingGames) {
-      if ((Date.now() - games[2].date) > 3 * 60 * 60 * 1000) {
-        for (let channel of await client.channels.fetch(games[2].channel).then(e => e.guild.channels.cache.array())) {
+	if (ongoingGames.length !== 0) {
+		for (const games of ongoingGames) {
+			if ((Date.now() - games[2].date) > 3 * 60 * 60 * 1000) {
+				for (const channel of await client.channels.fetch(games[2].channel).then(e => e.guild.channels.cache.array())) {
 
-          if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameNumber}`) {
+					if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
 
-            channel.delete();
-          }
+						channel.delete();
+					}
 
-          if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameNumber}`) {
+					if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
 
-            channel.delete();
-          }
-        }
+						channel.delete();
+					}
+				}
 
-        embedRemove.setTitle(`:white_check_mark: Game ${games[2].gameNumber} Cancelled due to not being finished in 3 Hours!`)
+				embedRemove.setTitle(`:white_check_mark: Game ${games[2].gameID} Cancelled due to not being finished in 3 Hours!`);
 
-        let index = ongoingGames.indexOf(games);
+				const index = ongoingGames.indexOf(games);
 
-        const a = await client.channels.fetch(games[2].channel)
+				const a = await client.channels.fetch(games[2].channel);
 
-        a.send(embedRemove)
+				a.send(embedRemove);
 
-        ongoingGames.splice(index, 1)
+				ongoingGames.splice(index, 1);
 
-        embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING)
-      }
-    }
-  }
-}, 60 * 1000)
+				embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
+			}
+		}
+	}
+}, 60 * 1000);
 
 const shuffle = function (array) {
 
-  let currentIndex = array.length;
-  let temporaryValue, randomIndex;
+	let currentIndex = array.length;
+	let temporaryValue, randomIndex;
 
-  while (0 !== currentIndex) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
+	while (currentIndex !== 0) {
+		randomIndex = Math.floor(Math.random() * currentIndex);
 
-    currentIndex--;
+		currentIndex--;
 
-    temporaryValue = array[currentIndex];
+		temporaryValue = array[currentIndex];
 
-    array[currentIndex] = array[randomIndex];
+		array[currentIndex] = array[randomIndex];
 
-    array[randomIndex] = temporaryValue;
-  }
+		array[randomIndex] = temporaryValue;
+	}
 
-  return array;
+	return array;
 };
 
 function messageEndswith(message) {
 
-  const split = message.content.split(" ");
-  return split[split.length - 1];
-};
+	const split = message.content.split(' ');
+	return split[split.length - 1];
+}
 
 const args = message => {
-  const arraywords = message.content.split(" ");
-  return arraywords[0].substring(1);
-}
+	const arraywords = message.content.split(' ');
+	return arraywords[0].substring(1);
+};
 
 const messageArgs = message => {
-  return message.content.split(" ").slice(1).join(" ");
-}
+	return message.content.split(' ').slice(1).join(' ');
+};
 
 const execute = async (message) => {
 
-  const getroleID = (name) => {
-    return message.guild.roles.cache.find(e => e.name === name).id
-  }
+	const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
-  const fetchFromID = async (id) => {
-    return (await client.users.fetch(id).catch(error => {
-      wrongEmbed.setTitle("Please tag the user");
-      console.log(error)
-      message.channel.send(wrongEmbed);
-    }))
-  }
+	const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const channel_ID = message.channel.id;
-
-  if (!Object.keys(channelQueues).includes(channel_ID)) {
+	const getroleID = (name) => {
+		return message.guild.roles.cache.find(e => e.name === name).id;
+	};
 
-    channelQueues[channel_ID] = [];
-  }
+	const fetchFromID = async (id) => {
+		return (await client.users.fetch(id).catch(error => {
+			wrongEmbed.setTitle('Please tag the user');
+			console.log(error);
+			message.channel.send(wrongEmbed);
+		}));
+	};
 
-  if (!Object.keys(storedGames).includes(message.guild.id)) {
+	const channel_ID = message.channel.id;
 
-    storedGames[message.guild.id] = "";
-  }
+	if (!Object.keys(channelQueues).includes(channel_ID)) {
 
-  const secondArg = message.content.split(" ")[1];
+		channelQueues[channel_ID] = [];
+	}
 
-  const thirdArg = message.content.split(" ")[2];
+	if (!Object.keys(storedGames).includes(message.guild.id)) {
 
-  if (storedGames[message.guild.id] === "") {
-    await serversCollection.find({
-      id: message.guild.id
-    }).toArray().then(async storedGuilds => {
+		storedGames[message.guild.id] = '';
+	}
 
-      storedGames[message.guild.id] = storedGuilds[0].game
+	const secondArg = message.content.split(' ')[1];
 
-    })
-    if (storedGames[message.guild.id] === "" && args(message) !== "game") {
-
-      wrongEmbed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(", ")}`)
-
-      return message.channel.send(wrongEmbed)
-    }
-  }
+	const thirdArg = message.content.split(' ')[2];
 
-  const gameName = storedGames[message.guild.id];
+	if (storedGames[message.guild.id] === '') {
+		await serversCollection.find({
+			id: message.guild.id,
+		}).toArray().then(async storedGuilds => {
 
-  const teamsArray = channelQueues[channel_ID];
+			storedGames[message.guild.id] = storedGuilds[0].game;
 
-  const userId = message.author.id;
+		});
+		if (storedGames[message.guild.id] === '' && args(message) !== 'game') {
 
-  const getIDByTag = (tag) => {
-    return tag.substring(3, tag.length - 1);
-  }
+			wrongEmbed.setTitle(`:x: You haven't set your game yet! Please ask an Admin to do !game ${avaiableGames.join(', ')}`);
 
-  const teamsInsert = {
-    name: messageArgs(message),
-    channels: [],
-    members: [
-      userId
-    ]
-  }
+			return message.channel.send(wrongEmbed);
+		}
+	}
 
-  const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR)
+	const gameName = storedGames[message.guild.id];
 
-  const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK)
+	const teamsArray = channelQueues[channel_ID];
 
-  const findGuildTeams = await teamsCollection.find({
-    id: message.guild.id
-  }).toArray().then(async storedTeams => {
-    return storedTeams[0].teams
-  })
+	const userId = message.author.id;
 
-  const isCaptain = () => {
-    for (let team of findGuildTeams) {
-      if (team.members.indexOf(userId) === 0) {
-        return true;
-      }
-    }
-  }
+	const getIDByTag = (tag) => {
+		return tag.substring(3, tag.length - 1);
+	};
 
-  const teamsInfo = () => {
-    for (let team of findGuildTeams) {
-      if (team.members.includes(userId)) {
-        return team;
-      }
-    }
-  }
+	const teamsInsert = {
+		name: messageArgs(message),
+		channels: [],
+		members: [
+			userId,
+		],
+	};
 
-  const teamsInfoSpecific = (id) => {
-    for (let team of findGuildTeams) {
-      if (team.members.includes(id)) {
-        return team;
-      }
-    }
-  }
+	const findGuildTeams = await teamsCollection.find({
+		id: message.guild.id,
+	}).toArray().then(async storedTeams => {
+		return storedTeams[0].teams;
+	});
 
-  const membersInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.members`
+	const isCaptain = () => {
+		for (const team of findGuildTeams) {
+			if (team.members.indexOf(userId) === 0) {
+				return true;
+			}
+		}
+	};
 
-  const channelsInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.channels`
+	const teamsInfo = () => {
+		for (const team of findGuildTeams) {
+			if (team.members.includes(userId)) {
+				return team;
+			}
+		}
+	};
 
-  const membersJoinInDatabase = `teams.${findGuildTeams.indexOf(findGuildTeams.find(e => e.name === messageArgs(message)))}.members`
-
-  const teamsIngame = () => {
-    teamsInGameVar = [];
-    for (let game of ongoingGames) {
-      for (let stats of game) {
-        if (typeof stats[0] == "string") {
-          teamsInGameVar.push(stats[0]);
-        }
-      }
-    }
-    return teamsInGameVar;
-  }
-
-  const givewinLose = async (score, pos) => {
+	const teamsInfoSpecific = (id) => {
+		for (const team of findGuildTeams) {
+			if (team.members.includes(id)) {
+				return team;
+			}
+		}
+	};
 
-    for (let games of ongoingGames) {
-      for (let team of findGuildTeams) {
-//i think second param can leave
-        if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
+	const membersInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.members`;
 
-          const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
+	const membersJoinInDatabase = `teams.${findGuildTeams.indexOf(findGuildTeams.find(e => e.name === messageArgs(message)))}.members`;
 
-          const sort = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.${score}`;
+	const teamsIngame = () => {
+		teamsInGameVar = [];
+		for (const game of ongoingGames) {
+			for (const stats of game) {
+				if (typeof stats[0] == 'string' && game[2].guild === message.guild.id) {
+					teamsInGameVar.push(stats[0]);
+				}
+			}
+		}
+		return teamsInGameVar;
+	};
 
-          const mmr = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.mmr`
+	const givewinLose = async (score, pos) => {
 
-          await teamsCollection.update({
-            id: message.guild.id
-          }, {
-            $set: {
-              [sort]: team.channels[channelPos][score] + 1,
-              [mmr]: score === "wins" ? team.channels[channelPos].mmr + 13 : team.channels[channelPos].mmr - 10
-            }
-          });
-        }
-      }
-    }
-  }
+		for (const games of ongoingGames) {
+			for (const team of findGuildTeams) {
 
-  switch (args(message)) {
+				if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
 
-    case "createteam": {
+					const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
-      if (messageArgs(message).length > 31) {
-        wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");
+					const sort = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.${score}`;
 
-        return message.channel.send(wrongEmbed);
-      }
+					const mmr = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.mmr`;
 
-      if (messageArgs(message).length < 2) {
-        wrongEmbed.setTitle(":x: Name too short! Minimum characters allowed are 3.");
+					await teamsCollection.update({
+						id: message.guild.id,
+					}, {
+						$set: {
+							[sort]: team.channels[channelPos][score] + 1,
+							[mmr]: score === 'wins' ? team.channels[channelPos].mmr + 13 : team.channels[channelPos].mmr - 10,
+						},
+					});
+				}
+			}
+		}
+	};
 
-        return message.channel.send(wrongEmbed);
-      }
+	const revertgame = async (status, pos) => {
+		for (const games of finishedGames) {
 
-      if (findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: Name already in use");
+			if (!games[2].gameID === secondArg) {
 
-        return message.channel.send(wrongEmbed);
-      }
+				continue;
+			}
+			for (const team of findGuildTeams) {
 
-      if (findGuildTeams.map(e => e.members).flat().includes(userId)) {
-        wrongEmbed.setTitle(":x: You already belong to a team!");
+				if (games[pos][0] === team.name && games[2].guild === message.guild.id) {
 
-        return message.channel.send(wrongEmbed);
-      }
+					const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
-      if (message.guild.roles.cache.array().map(e => e.name).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: You can't name yourself after roles that already exist!");
+					const win = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.wins`;
 
-        return message.channel.send(wrongEmbed);
-      }
+					const lose = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.losses`;
 
-      await teamsCollection.update({
-        id: message.guild.id
-      }, {
-        $push: {
-          teams: teamsInsert
-        }
-      });
+					const sort = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.${status}`;
 
-      correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Created!`);
+					const mmr = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.mmr`;
 
-      if (!message.guild.roles.cache.array().map(e => e.name).includes("Team Captain")) {
+					if (thirdArg === 'revert') {
+						await teamsCollection.update({
+							id: message.guild.id,
+						}, {
+							$set: {
+								[win]: status === 'wins' ? team.channels[channelPos].wins + 1 : team.channels[channelPos].wins - 1,
 
-        await message.guild.roles.create({
-          data: {
-            hoist: false,
-            name: "Team Captain",
-            color: 'GREY',
-          },
-          reason: 'Matchmaker Bot',
-        }).catch(e => console.error(e))
-      }
+								[lose]: status === 'losses' ? team.channels[channelPos].losses + 1 : team.channels[channelPos].losses - 1,
 
-      await message.guild.roles.create({
-        data: {
-          name: messageArgs(message),
-          hoist: false,
-          color: 'BLUE',
-        },
-        reason: 'idk lol',
-      }).catch(e => console.error(e))
+								[mmr]: status === 'wins' ? team.channels[channelPos].mmr + 23 : team.channels[channelPos].mmr - 23,
+							},
+						});
+					}
 
-      await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e))
+					if (thirdArg === 'cancel') {
+						await teamsCollection.update({
+							id: message.guild.id,
+						}, {
+							$set: {
+								[sort]: team.channels[channelPos][status] - 1,
 
-      await message.member.roles.add(getroleID("Team Captain")).catch(e => message.channel.send("Could not add role Team captain, make sure that the role exists and if not, ask an admin to create it"))
+								[mmr]: status === 'wins' ? team.channels[channelPos].mmr - 13 : team.channels[channelPos].mmr + 10,
+							},
+						});
+					}
+				}
+			}
+		}
+	};
 
-      return message.channel.send(correctEmbed);
-    }
+	switch (args(message)) {
 
-    case "disband": {
+	case 'createteam': {
 
-      if (messageArgs(message) !== "" && message.member.hasPermission("ADMINISTRATOR")) {
+		if (messageArgs(message).length > 31) {
+			wrongEmbed.setTitle(':x: Name too big! Maximum characters allowed are 32.');
 
-        for (let a of teamsArray) {
-          if (a[0] === messageArgs(message)) {
+			return message.channel.send(wrongEmbed);
+		}
 
-            teamsArray.splice(0, teamsArray.length)
-          }
-        }
+		if (messageArgs(message).length < 2) {
+			wrongEmbed.setTitle(':x: Name too short! Minimum characters allowed are 3.');
 
-        for (let games of ongoingGames) {
-          if (games[0][0] === messageArgs(message) || games[1][0] === messageArgs(message)) {
+			return message.channel.send(wrongEmbed);
+		}
 
-            wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+		if (findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
+			wrongEmbed.setTitle(':x: Name already in use');
 
-            return message.channel.send(wrongEmbed);
-          };
-        }
+			return message.channel.send(wrongEmbed);
+		}
 
-        if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
+		if (findGuildTeams.map(e => e.members).flat().includes(userId)) {
+			wrongEmbed.setTitle(':x: You already belong to a team!');
 
-          wrongEmbed.setTitle(`:x: Team does not exist!`);
+			return message.channel.send(wrongEmbed);
+		}
 
-          return message.channel.send(wrongEmbed);
-        }    
-            
-        await (await message.guild.members.fetch(findGuildTeams.find(e => e.name === messageArgs(message)).members[0])).roles.remove(getroleID("Team Captain")).catch(e => message.channel.send("Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it"))
+		if (message.guild.roles.cache.array().map(e => e.name).includes(messageArgs(message))) {
+			wrongEmbed.setTitle(':x: You can\'t name yourself after roles that already exist!');
 
-        message.guild.roles.cache.find(role => role.name === messageArgs(message)).delete();
+			return message.channel.send(wrongEmbed);
+		}
 
-        await teamsCollection.update({
-          id: message.guild.id
-        }, {
-          $pull: {
-            teams: {
-              name: messageArgs(message)
-            }
-          }
-        });
+		await teamsCollection.update({
+			id: message.guild.id,
+		}, {
+			$push: {
+				teams: teamsInsert,
+			},
+		});
 
-        correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Deleted!`);
+		correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Created!`);
 
-        return message.channel.send(correctEmbed);
+		if (!message.guild.roles.cache.array().map(e => e.name).includes('Team Captain')) {
 
-      }
+			await message.guild.roles.create({
+				data: {
+					hoist: false,
+					name: 'Team Captain',
+					color: 'GREY',
+				},
+				reason: 'Matchmaker Bot',
+			}).catch(e => console.error(e));
+		}
 
-      for (let a of teamsArray) {
-        if (a[0] === teamsInfo().name) {
+		await message.guild.roles.create({
+			data: {
+				name: messageArgs(message),
+				hoist: false,
+				color: 'BLUE',
+			},
+			reason: 'idk lol',
+		}).catch(e => console.error(e));
 
-          wrongEmbed.setTitle(":x: Please leave the queue first!");
+		await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e));
 
-          return message.channel.send(wrongEmbed);
-        }
-      }
+		await message.member.roles.add(getroleID('Team Captain')).catch(e => message.channel.send('Could not add role Team captain, make sure that the role exists and if not, ask an admin to create it'));
 
-      for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+		return message.channel.send(correctEmbed);
+	}
 
-          wrongEmbed.setTitle(":x: You are in the middle of a game!");
+	case 'disband': {
 
-          return message.channel.send(wrongEmbed);
-        };
-      }
+		if (messageArgs(message) !== '' && message.member.hasPermission('ADMINISTRATOR')) {
 
-      if (teamsInfo() == undefined) {
-        wrongEmbed.setTitle(`:x: You do not belong to a team!`);
+			for (const a of teamsArray) {
+				if (a[0] === messageArgs(message)) {
 
-        return message.channel.send(wrongEmbed);
-      }
+					teamsArray.splice(0, teamsArray.length);
+				}
+			}
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+			for (const games of ongoingGames) {
+				if ((games[0][0] === messageArgs(message) || games[1][0] === messageArgs(message)) && games[2].guild === message.guild.id) {
 
-        return message.channel.send(wrongEmbed);
-      }
+					wrongEmbed.setTitle(':x: Team is in the middle of a game!');
 
-      for (let team of findGuildTeams) {
-        if (team.members.indexOf(userId) === 0) {
+					return message.channel.send(wrongEmbed);
+				}
+			}
 
-          message.guild.roles.cache.find(role => role.name === team.name).delete();
+			if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
 
-          message.member.roles.remove(getroleID("Team Captain")).catch(e => message.channel.send("Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it"))
+				wrongEmbed.setTitle(':x: Team does not exist!');
 
-          await teamsCollection.update({
-            id: message.guild.id,
-          }, {
-            $pull: {
-              teams: teamsInfo()
-            }
-          });
+				return message.channel.send(wrongEmbed);
+			}
 
-          correctEmbed.setTitle(`:white_check_mark: ${team.name} Deleted!`);
+			await (await message.guild.members.fetch(findGuildTeams.find(e => e.name === messageArgs(message)).members[0])).roles.remove(getroleID('Team Captain')).catch(e => message.channel.send('Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it'));
 
-          return message.channel.send(correctEmbed);
-        }
-      }
-    }
+			message.guild.roles.cache.find(role => role.name === messageArgs(message)).delete();
 
-    case "giveownership": {
+			await teamsCollection.update({
+				id: message.guild.id,
+			}, {
+				$pull: {
+					teams: {
+						name: messageArgs(message),
+					},
+				},
+			});
 
-      for (let a of teamsArray) {
-        if (a[0] === teamsInfo().name) {
+			correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Deleted!`);
 
-          wrongEmbed.setTitle(":x: Please leave the queue first!");
+			return message.channel.send(correctEmbed);
 
-          return message.channel.send(wrongEmbed);
-        }
-      }
+		}
 
-      for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+		for (const a of teamsArray) {
+			if (a[0] === teamsInfo().name) {
 
-          wrongEmbed.setTitle(":x: You are in the middle of a game!");
+				wrongEmbed.setTitle(':x: Please leave the queue first!');
 
-          return message.channel.send(wrongEmbed);
-        };
-      }
+				return message.channel.send(wrongEmbed);
+			}
+		}
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+		for (const games of ongoingGames) {
+			if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
 
-        return message.channel.send(wrongEmbed);
-      }
+				wrongEmbed.setTitle(':x: You are in the middle of a game!');
 
-      if (!teamsInfo().members.includes(getIDByTag(secondArg))) {
-        wrongEmbed.setTitle(":x: User does not belong to your team!");
+				return message.channel.send(wrongEmbed);
+			}
+		}
 
-        return message.channel.send(wrongEmbed);
-      }
+		if (teamsInfo() == undefined) {
+			wrongEmbed.setTitle(':x: You do not belong to a team!');
 
-      await message.member.roles.remove(getroleID("Team Captain"))
+			return message.channel.send(wrongEmbed);
+		}
 
-      await (await message.guild.members.fetch(getIDByTag(secondArg))).roles.add(getroleID("Team Captain"))
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-      await teamsCollection.update({
-        id: message.guild.id,
-      }, {
-        $pull: {
-          [membersInDatabase]: getIDByTag(secondArg)
-        }
-      });
+			return message.channel.send(wrongEmbed);
+		}
 
-      await teamsCollection.update({
-        id: message.guild.id,
-      }, {
-        $push: {
-          [membersInDatabase]: {
-            $each: [getIDByTag(secondArg)],
-            $position: 0
-          }
-        }
-      });
+		for (const team of findGuildTeams) {
+			if (team.members.indexOf(userId) === 0) {
 
-      correctEmbed.setTitle(`:white_check_mark: Given ownership to ${(await fetchFromID(getIDByTag(secondArg))).username}`);
+				message.guild.roles.cache.find(role => role.name === team.name).delete();
 
-      return message.channel.send(correctEmbed);
-    }
+				message.member.roles.remove(getroleID('Team Captain')).catch(e => message.channel.send('Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it'));
 
-    case "leaveteam": {
+				await teamsCollection.update({
+					id: message.guild.id,
+				}, {
+					$pull: {
+						teams: teamsInfo(),
+					},
+				});
 
-      if (!findGuildTeams.map(e => e.members).flat().includes(userId)) {
-        wrongEmbed.setTitle(":x: You do not belong to a team");
+				correctEmbed.setTitle(`:white_check_mark: ${team.name} Deleted!`);
 
-        return message.channel.send(wrongEmbed);
-      }
+				return message.channel.send(correctEmbed);
+			}
+		}
+	}
 
-      if (isCaptain()) {
-        wrongEmbed.setTitle(":x: You are the captain, to delete the team do !disband");
+	case 'giveownership': {
 
-        return message.channel.send(wrongEmbed);
-      }
+		for (const a of teamsArray) {
+			if (a[0] === teamsInfo().name) {
 
-      const leftTeam = teamsInfo().name;
+				wrongEmbed.setTitle(':x: Please leave the queue first!');
 
-      await message.member.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e))
+				return message.channel.send(wrongEmbed);
+			}
+		}
 
-      await teamsCollection.update({
-        id: message.guild.id
-      }, {
-        $pull: {
-          [membersInDatabase]: userId
-        }
-      });
+		for (const games of ongoingGames) {
+			if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
 
-      correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just left ${leftTeam}`);
+				wrongEmbed.setTitle(':x: You are in the middle of a game!');
 
-      return message.channel.send(correctEmbed);
-    }
+				return message.channel.send(wrongEmbed);
+			}
+		}
 
-    case "kickplayer": {
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+			return message.channel.send(wrongEmbed);
+		}
 
-        return message.channel.send(wrongEmbed);
-      }
+		if (!teamsInfo().members.includes(getIDByTag(secondArg))) {
+			wrongEmbed.setTitle(':x: User does not belong to your team!');
 
-      if (!teamsInfo().members.includes(getIDByTag(secondArg))) {
-        wrongEmbed.setTitle(":x: User does not belong to your team!");
+			return message.channel.send(wrongEmbed);
+		}
 
-        return message.channel.send(wrongEmbed);
-      }
+		await message.member.roles.remove(getroleID('Team Captain'));
 
-      if (getIDByTag(secondArg) === message.author.id) {
-        wrongEmbed.setTitle(":x: You cannot kick yourself dummy!");
+		await (await message.guild.members.fetch(getIDByTag(secondArg))).roles.add(getroleID('Team Captain'));
 
-        return message.channel.send(wrongEmbed);
-      }
+		await teamsCollection.update({
+			id: message.guild.id,
+		}, {
+			$pull: {
+				[membersInDatabase]: getIDByTag(secondArg),
+			},
+		});
 
-      const leftTeam = teamsInfo().name;
+		await teamsCollection.update({
+			id: message.guild.id,
+		}, {
+			$push: {
+				[membersInDatabase]: {
+					$each: [getIDByTag(secondArg)],
+					$position: 0,
+				},
+			},
+		});
 
-      await message.guild.members.fetch(getIDByTag(secondArg)).then(e => {
-        e.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e))
-      })
+		correctEmbed.setTitle(`:white_check_mark: Given ownership to ${(await fetchFromID(getIDByTag(secondArg))).username}`);
 
-      await teamsCollection.update({
-        id: message.guild.id
-      }, {
-        $pull: {
-          [membersInDatabase]: getIDByTag(secondArg)
-        }
-      });
+		return message.channel.send(correctEmbed);
+	}
 
-      correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just kicked ${(await fetchFromID(getIDByTag(secondArg))).username} from ${leftTeam}`);
+	case 'leaveteam': {
 
-      return message.channel.send(correctEmbed);
-    }
+		if (!findGuildTeams.map(e => e.members).flat().includes(userId)) {
+			wrongEmbed.setTitle(':x: You do not belong to a team');
 
-    case "whois": {
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (messageArgs(message) == undefined) {
-        wrongEmbed.setTitle(":x: Please specify the team.");
+		if (isCaptain()) {
+			wrongEmbed.setTitle(':x: You are the captain, to delete the team do !disband');
 
-        return message.channel.send(wrongEmbed);
-      }
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: This team doesn't exist")
+		const leftTeam = teamsInfo().name;
 
-        return message.channel.send(wrongEmbed);
-      }
+		await message.member.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e));
 
-      wrongEmbed.setTitle(findGuildTeams[findGuildTeams.map(e => e.name).indexOf(messageArgs(message))].name)
+		await teamsCollection.update({
+			id: message.guild.id,
+		}, {
+			$pull: {
+				[membersInDatabase]: userId,
+			},
+		});
 
-      let memberNames = [];
+		correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just left ${leftTeam}`);
 
-      for (let id of findGuildTeams[findGuildTeams.map(e => e.name).indexOf(messageArgs(message))].members) {
+		return message.channel.send(correctEmbed);
+	}
 
-        memberNames.push((await fetchFromID(id)).username);
-      }
+	case 'kickplayer': {
 
-      wrongEmbed.addField("Members:", memberNames.join(", "))
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-      memberNames = [];
+			return message.channel.send(wrongEmbed);
+		}
 
-      return message.channel.send(wrongEmbed);
-    }
+		if (!teamsInfo().members.includes(getIDByTag(secondArg))) {
+			wrongEmbed.setTitle(':x: User does not belong to your team!');
 
-    case "invite": {
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+		if (getIDByTag(secondArg) === message.author.id) {
+			wrongEmbed.setTitle(':x: You cannot kick yourself dummy!');
 
-        return message.channel.send(wrongEmbed);
-      }
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (!Object.keys(invites).includes(teamsInfo().name)) {
+		const leftTeam = teamsInfo().name;
 
-        invites[teamsInfo().name] = []
-      }
+		await message.guild.members.fetch(getIDByTag(secondArg)).then(e => {
+			e.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e));
+		});
 
-      if (invites[teamsInfo().name].includes(getIDByTag(secondArg))) {
-        wrongEmbed.setTitle(`:x: ${ (await fetchFromID(getIDByTag(secondArg))).username} was already invited`);
+		await teamsCollection.update({
+			id: message.guild.id,
+		}, {
+			$pull: {
+				[membersInDatabase]: getIDByTag(secondArg),
+			},
+		});
 
-        return message.channel.send(wrongEmbed);
-      }
+		correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just kicked ${(await fetchFromID(getIDByTag(secondArg))).username} from ${leftTeam}`);
 
-      if (findGuildTeams.map(e => e.members).flat().includes(getIDByTag(secondArg))) {
-        wrongEmbed.setTitle(":x: User already belongs to a team!");
+		return message.channel.send(correctEmbed);
+	}
 
-        return message.channel.send(wrongEmbed);
-      }
+	case 'whois': {
 
-      correctEmbed.setTitle(`:white_check_mark: Invited ${ (await fetchFromID(getIDByTag(secondArg))).username} to ${teamsInfo().name}!`);
+		if (messageArgs(message) == undefined) {
+			wrongEmbed.setTitle(':x: Please specify the team.');
 
-      invites[teamsInfo().name].push(getIDByTag(secondArg));
+			return message.channel.send(wrongEmbed);
+		}
 
-      return message.channel.send(correctEmbed);
-    }
+		if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
+			wrongEmbed.setTitle(':x: This team doesn\'t exist');
 
-    case "jointeam": {
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (findGuildTeams.map(e => e.members).flat().includes(userId)) {
-        wrongEmbed.setTitle(":x: You already belong to a team!")
+		wrongEmbed.setTitle(findGuildTeams[findGuildTeams.map(e => e.name).indexOf(messageArgs(message))].name);
 
-        return message.channel.send(wrongEmbed);
-      }
+		let memberNames = [];
 
-      if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: This team doesn't exist")
+		for (const id of findGuildTeams[findGuildTeams.map(e => e.name).indexOf(messageArgs(message))].members) {
 
-        return message.channel.send(wrongEmbed);
-      }
+			memberNames.push((await fetchFromID(id)).username);
+		}
 
-      if (!Object.keys(invites).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: This team didn't invite anyone!")
+		wrongEmbed.addField('Members:', memberNames.join(', '));
 
-        return message.channel.send(wrongEmbed);
-      }
+		memberNames = [];
 
-      if (!invites[messageArgs(message)].includes(userId)) {
-        wrongEmbed.setTitle(":x: This team didn't invite you!");
+		return message.channel.send(wrongEmbed);
+	}
 
-        return message.channel.send(wrongEmbed)
-      }
+	case 'invite': {
 
-      await teamsCollection.update({
-        id: message.guild.id
-      }, {
-        $push: {
-          [membersJoinInDatabase]: userId
-        }
-      });
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-      invites[messageArgs(message)].splice(invites[messageArgs(message)].indexOf(userId), 1)
+			return message.channel.send(wrongEmbed);
+		}
 
-      await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e))
+		if (!Object.keys(invites).includes(teamsInfo().name)) {
 
-      correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${messageArgs(message)}!`)
+			invites[teamsInfo().name] = [];
+		}
 
-      return message.channel.send(correctEmbed);
-    }
+		if (invites[teamsInfo().name].includes(getIDByTag(secondArg))) {
+			wrongEmbed.setTitle(`:x: ${ (await fetchFromID(getIDByTag(secondArg))).username} was already invited`);
 
-    case "game": {
-      if (!avaiableGames.includes(secondArg.toLowerCase())) {
+			return message.channel.send(wrongEmbed);
+		}
 
-        wrongEmbed.setTitle(":x: Invalid argument")
+		if (findGuildTeams.map(e => e.members).flat().includes(getIDByTag(secondArg))) {
+			wrongEmbed.setTitle(':x: User already belongs to a team!');
 
-        return message.channel.send(wrongEmbed)
-      }
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (message.member.hasPermission("ADMINISTRATOR") && avaiableGames.includes(secondArg.toLowerCase())) {
+		correctEmbed.setTitle(`:white_check_mark: Invited ${ (await fetchFromID(getIDByTag(secondArg))).username} to ${teamsInfo().name}!`);
 
-        await serversCollection.update({
-          id: message.guild.id
-        }, {
-          $set: {
-            game: secondArg.toLowerCase()
-          }
-        });
-        correctEmbed.setTitle(":white_check_mark: Game updated!")
+		invites[teamsInfo().name].push(getIDByTag(secondArg));
 
-        return message.channel.send(correctEmbed)
-      }
-    }
+		return message.channel.send(correctEmbed);
+	}
 
-    case "leave": {
+	case 'jointeam': {
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+		if (findGuildTeams.map(e => e.members).flat().includes(userId)) {
+			wrongEmbed.setTitle(':x: You already belong to a team!');
 
-        return message.channel.send(wrongEmbed);
-      }
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (teamsArray.length === 2) {
+		if (!findGuildTeams.map(e => e.name).includes(messageArgs(message))) {
+			wrongEmbed.setTitle(':x: This team doesn\'t exist');
 
-        wrongEmbed.setTitle(":x: You can't leave now!");
+			return message.channel.send(wrongEmbed);
+		}
 
-        return message.channel.send(wrongEmbed);
-      }
+		if (!Object.keys(invites).includes(messageArgs(message))) {
+			wrongEmbed.setTitle(':x: This team didn\'t invite anyone!');
 
-      if (teamsArray.length === 0) {
+			return message.channel.send(wrongEmbed);
+		}
 
-        wrongEmbed.setTitle(":x: You aren't in the queue!");
+		if (!invites[messageArgs(message)].includes(userId)) {
+			wrongEmbed.setTitle(':x: This team didn\'t invite you!');
 
-        return message.channel.send(wrongEmbed);
+			return message.channel.send(wrongEmbed);
+		}
 
-      };
+		await teamsCollection.update({
+			id: message.guild.id,
+		}, {
+			$push: {
+				[membersJoinInDatabase]: userId,
+			},
+		});
 
-      if (teamsArray[0][0] === teamsInfo().name) {
+		invites[messageArgs(message)].splice(invites[messageArgs(message)].indexOf(userId), 1);
 
-        teamsArray.splice(0, teamsArray.length);
+		await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e));
 
-        correctEmbed.setTitle(`:white_check_mark: ${teamsInfo().name} left the queue! ${teamsArray.length}/2`);
+		correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${messageArgs(message)}!`);
 
-        return message.channel.send(correctEmbed);
-      };
-    }
+		return message.channel.send(correctEmbed);
+	}
 
-    case "status": {
+	case 'game': {
+		if (!avaiableGames.includes(secondArg.toLowerCase())) {
 
-      if (teamsArray.length === 0) {
-        wrongEmbed.setTitle(":x: No players in queue!")
+			wrongEmbed.setTitle(':x: Invalid argument');
 
-        return message.channel.send(wrongEmbed)
-      }
+			return message.channel.send(wrongEmbed);
+		}
 
-      correctEmbed.setTitle(`Team in queue: ${teamsArray[0][0]}`);
+		if (message.member.hasPermission('ADMINISTRATOR') && avaiableGames.includes(secondArg.toLowerCase())) {
 
-      correctEmbed.addField(`Players:`, `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>`);
+			await serversCollection.update({
+				id: message.guild.id,
+			}, {
+				$set: {
+					game: secondArg.toLowerCase(),
+				},
+			});
 
-      return message.channel.send(correctEmbed);
-    }
+			storedGames[message.guild.id] = secondArg.toLowerCase();
 
-    case "pendinginvites": {
+			correctEmbed.setTitle(':white_check_mark: Game updated!');
 
-      if (Object.keys(invites).filter(e => invites[e].includes(userId)).length === 0) {
+			return message.channel.send(correctEmbed);
+		}
+	}
 
-        wrongEmbed.setTitle(`:x: You have no pending invites.`);
+	case 'leave': {
 
-        return message.channel.send(wrongEmbed);
-      }
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-      wrongEmbed.setTitle(`Pending Invites:`);
+			return message.channel.send(wrongEmbed);
+		}
 
-      wrongEmbed.setDescription(Object.keys(invites).filter(e => invites[e].includes(userId)).join(", "), "Show what you can do in order to get more invites!");
+		if (teamsArray.length === 2) {
 
-      return message.channel.send(wrongEmbed);
-    }
+			wrongEmbed.setTitle(':x: You can\'t leave now!');
 
-    case "report": {
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+		if (teamsArray.length === 0) {
 
-        return message.channel.send(wrongEmbed);
-      }
+			wrongEmbed.setTitle(':x: You aren\'t in the queue!');
 
-      if (!teamsIngame().includes(teamsInfo().name) || ongoingGames.length === 0) {
+			return message.channel.send(wrongEmbed);
 
-        wrongEmbed.setTitle(":x: You aren't in a game!");
+		}
 
-        return message.channel.send(wrongEmbed);
-      }
+		if (teamsArray[0][0] === teamsInfo().name) {
 
-      switch (messageEndswith(message)) {
-        case "win": {
+			teamsArray.splice(0, teamsArray.length);
 
-          for (let games of ongoingGames) {
+			correctEmbed.setTitle(`:white_check_mark: ${teamsInfo().name} left the queue! ${teamsArray.length}/2`);
 
-            if (!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) {
+			return message.channel.send(correctEmbed);
+		}
+	}
 
-              continue;
-            }
+	case 'status': {
 
-            correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
+		if (teamsArray.length === 0) {
+			wrongEmbed.setTitle(':x: No players in queue!');
 
-            if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
+			return message.channel.send(wrongEmbed);
+		}
 
-              givewinLose("wins", 0);
+		correctEmbed.setTitle(`Team in queue: ${teamsArray[0][0]}`);
 
-              givewinLose("losses", 1);
-            } else {
-              givewinLose("wins", 1);
+		correctEmbed.addField('Players:', `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>`);
 
-              givewinLose("losses", 0);
-            }
+		return message.channel.send(correctEmbed);
+	}
 
-            let index = ongoingGames.indexOf(games);
+	case 'pendinginvites': {
 
-            ongoingGames.splice(index, 1);
+		if (Object.keys(invites).filter(e => invites[e].includes(userId)).length === 0) {
 
-            for (let channel of message.guild.channels.cache.array()) {
+			wrongEmbed.setTitle(':x: You have no pending invites.');
 
-              if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameNumber}`) {
+			return message.channel.send(wrongEmbed);
+		}
 
-                channel.delete();
-              }
+		wrongEmbed.setTitle('Pending Invites:');
 
-              if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameNumber}`) {
+		wrongEmbed.setDescription(Object.keys(invites).filter(e => invites[e].includes(userId)).join(', '), 'Show what you can do in order to get more invites!');
 
-                channel.delete();
-              }
-            }
+		return message.channel.send(wrongEmbed);
+	}
 
-            return message.channel.send(correctEmbed);
-          }
-        }
+	case 'report': {
 
-        case "lose": {
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-          for (let games of ongoingGames) {
+			return message.channel.send(wrongEmbed);
+		}
 
-            if (!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) {
+		if (!teamsIngame().includes(teamsInfo().name) || ongoingGames.length === 0) {
 
-              continue;
-            }
+			wrongEmbed.setTitle(':x: You aren\'t in a game!');
 
-            correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
-            
-            if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
+			return message.channel.send(wrongEmbed);
+		}
 
-              givewinLose("wins", 1);
+		switch (messageEndswith(message)) {
+		case 'win': {
 
-              givewinLose("losses", 0);
-            } else {
-              givewinLose("wins", 0);
+			for (const games of ongoingGames) {
 
-              givewinLose("losses", 1);
-            }
+				if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
-            let index = ongoingGames.indexOf(games);
+					continue;
+				}
 
-            ongoingGames.splice(index, 1);
+				correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
 
-            for (let channel of message.guild.channels.cache.array()) {
+				if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
 
-              if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameNumber}`) {
+					givewinLose('wins', 0);
 
-                channel.delete();
-              }
+					givewinLose('losses', 1);
+				} else {
+					givewinLose('wins', 1);
 
-              if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameNumber}`) {
+					givewinLose('losses', 0);
+				}
 
-                channel.delete();
-              }
-            }
+				const index = ongoingGames.indexOf(games);
 
-            return message.channel.send(correctEmbed);
-          }
-        }
-        default: {
-          wrongEmbed.setTitle(":x: Invalid Parameters!")
-          return message.channel.send(wrongEmbed);
-        }
-      }
-    }
+				ongoingGames.splice(index, 1);
 
-    case "cancel": {
+				for (const channel of message.guild.channels.cache.array()) {
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain!");
+					if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
 
-        return message.channel.send(wrongEmbed);
-      }
+						channel.delete();
+					}
 
-      if (!teamsIngame().includes(teamsInfo().name) || ongoingGames.length === 0) {
+					if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
 
-        wrongEmbed.setTitle(":x: You aren't in a game!");
+						channel.delete();
+					}
+				}
 
-        return message.channel.send(wrongEmbed);
-      }
+				games[2].winningTeam = (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) ? 0 : 1;
 
-      for (let games of ongoingGames) {
+				finishedGames.push(games);
 
-        if (!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) {
+				return message.channel.send(correctEmbed);
+			}
+		}
 
-          continue
-        }
+		case 'lose': {
 
-        const IDGame = games[2].gameNumber.toString();
+			for (const games of ongoingGames) {
 
-        if (!Object.keys(cancelQueue).includes(IDGame)) {
+if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
-          cancelQueue[IDGame] = [];
-        }
+					continue;
+				}
 
-        const cancelqueuearray = cancelQueue[IDGame]
+				correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
 
-        if (cancelqueuearray.includes(teamsInfo().name)) {
-          wrongEmbed.setTitle(":x: You've already voted to cancel!");
+				if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
 
-          return message.channel.send(wrongEmbed);
-        }
+					givewinLose('wins', 1);
 
-        cancelqueuearray.push(teamsInfo().name);
+					givewinLose('losses', 0);
+				} else {
+					givewinLose('wins', 0);
 
-        wrongEmbed.setTitle(`:exclamation: ${teamsInfo().name} wants to cancel game ${IDGame}. (${cancelqueuearray.length}/2)`);
+					givewinLose('losses', 1);
+				}
 
-        message.channel.send(wrongEmbed);
+				const index = ongoingGames.indexOf(games);
 
-        if (cancelqueuearray.length === 2) {
+				ongoingGames.splice(index, 1);
 
-          for (let channel of message.guild.channels.cache.array()) {
+				for (const channel of message.guild.channels.cache.array()) {
 
-            if (channel.name === `🔸Team-${games[0][0]}-Game-${IDGame}`) {
+					if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
 
-              channel.delete();
-            }
+						channel.delete();
+					}
 
-            if (channel.name === `🔹Team-${games[1][0]}-Game-${IDGame}`) {
+					if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
 
-              channel.delete();
-            }
-          }
+						channel.delete();
+					}
+				}
 
-          correctEmbed.setTitle(`:white_check_mark: Game ${IDGame} Cancelled!`);
+				games[2].winningTeam = (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) ? 1 : 0;
 
-          let index = ongoingGames.indexOf(games);
+				finishedGames.push(games);
 
-          cancelQueue[IDGame] = [];
+				return message.channel.send(correctEmbed);
+			}
+		}
+		default: {
+			wrongEmbed.setTitle(':x: Invalid Parameters!');
+			return message.channel.send(wrongEmbed);
+		}
+		}
+	}
 
-          ongoingGames.splice(index, 1);
+	case 'revertgame': {
 
-          return message.channel.send(correctEmbed);
-        }
+		if (message.content.split(' ').length == 1 || message.content.split(' ').length == 2) {
 
-      }
-    }
+			wrongEmbed.setTitle(':x: Invalid Parameters!');
 
-    case "score": {
-      switch (secondArg) {
-        case "me": {
-          if (!findGuildTeams.map(e => e.name).includes(teamsInfo().name)) {
+			return message.channel.send(wrongEmbed);
+		}
 
-            wrongEmbed.setTitle(":x: You haven't played any games yet!");
+		if (!message.member.hasPermission('ADMINISTRATOR')) {
 
-            return message.channel.send(wrongEmbed);
-          }
+			wrongEmbed.setTitle(':x: You do not have Administrator permission!');
 
-          for (let j = 0; j < findGuildTeams.length; j++) {
+			return message.channel.send(wrongEmbed);
+		}
 
-            if (findGuildTeams[j].name === teamsInfo().name) {
+		if (!finishedGames.map(e => e[2].gameID).includes(parseInt(secondArg))) {
+			wrongEmbed.setTitle(':x: No game with that ID has been played');
 
-              const scoreDirectory = findGuildTeams[j].channels[findGuildTeams[j].channels.map(e => e.channelID).indexOf(message.channel.id)]
+			return message.channel.send(wrongEmbed);
+		}
 
-              if (scoreDirectory === undefined) {
+		const selectedGame = finishedGames.find(e => e[2].gameID === parseInt(secondArg));
 
-                wrongEmbed.setTitle(":x: You haven't played any games in here yet!");
+		if (selectedGame[2].guild !== message.guild.id) {
+			wrongEmbed.setTitle(':x: That game hasn\'t been played in this server');
 
-                return message.channel.send(wrongEmbed);
-              }
+			return message.channel.send(wrongEmbed);
+		}
 
-              correctEmbed.addField("Wins:", scoreDirectory.wins);
+		if (thirdArg === 'revert') {
 
-              correctEmbed.addField("Losses:", scoreDirectory.losses);
+			if (selectedGame[2].winningTeam === 0) {
 
-              correctEmbed.addField("Winrate:", isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? "0%" : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%");
+				revertgame('losses', 0);
 
-              correctEmbed.addField("MMR:", scoreDirectory.mmr)
+				revertgame('wins', 1);
+			} else {
 
-              return message.channel.send(correctEmbed);
-            }
-          }
-        }
+				revertgame('losses', 1);
 
-        case "channel": {
-          const getScore = (id, arg) => {
-            let a;
-            a = findGuildTeams.filter(a => a.channels.map(e => e.channelID).indexOf(id) !== -1 && a.channels[a.channels.map(e => e.channelID).indexOf(id)].wins + a.channels[a.channels.map(e => e.channelID).indexOf(id)].losses !== 0)
+				revertgame('wins', 0);
+			}
+		} else if (thirdArg === 'cancel') {
 
-            if (a.length === 0) {
-              wrongEmbed.setTitle(":x: No games have been played in here!");
+			if (selectedGame[2].winningTeam === 0) {
 
-              return message.channel.send(wrongEmbed);
-            }
+				for (i = 0; i < 3; i++) {
+					revertgame('wins', 0);
+				}
+				for (i = 3; i < 6; i++) {
+					revertgame('losses', 1);
+				}
+			} else {
 
-            a.sort((a, b) => {
-              const indexA = a.channels.map(e => e.channelID).indexOf(id);
+				for (i = 3; i < 6; i++) {
+					revertgame('wins', 1);
+				}
+				for (i = 0; i < 3; i++) {
+					revertgame('losses', 0);
+				}
+			}
 
-              const indexB = b.channels.map(e => e.channelID).indexOf(id);
+		} else {
+			wrongEmbed.setTitle(':x: Invalid Parameters!');
 
-              return b.channels[indexB].mmr - a.channels[indexA].mmr
-            })
+			return message.channel.send(wrongEmbed);
+		}
 
-            if (!isNaN(arg) && arg > 0) {
-              let indexes = 20 * (arg - 1);
-              for (indexes; indexes < 20 * arg; indexes++) {
-                if (a[indexes] == undefined) {
+		const index = finishedGames.indexOf(selectedGame);
 
-                  correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
+		finishedGames.splice(index, 1);
 
-                  break
-                }
-                for (let channels of a[indexes].channels) {
-                  if (channels.channelID === id) {
+		correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === 'revert' ? 'reverted' : 'cancelled'}!`);
 
-                    correctEmbed.addField(a[indexes].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins/(channels.wins + channels.losses)) * 100))? "0" : Math.floor((channels.wins/(channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`)
+		return message.channel.send(correctEmbed);
 
-                    correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(a.length / 20)}`);
-                  }
-                }
-              }
-            } else {
-              for (i = 0; i < 20; i++) {
-                if (findGuildTeams[i] == undefined) {
-                  correctEmbed.addField(`No more members to list in this page!`, "Encourage your friends to play!");
-                  break
-                }
-                for (let channels of findGuildTeams[i].channels) {
-                  if (channels.channelID === id) {
+	}
 
-                    correctEmbed.addField(findGuildTeams[i].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins/(channels.wins + channels.losses)) * 100))? "0" : Math.floor((channels.wins/(channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr} `)
+	case 'cancel': {
 
-                    correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(findGuildTeams.length / 20)}`);
-                  }
-                }
-              }
-            }
-            message.channel.send(correctEmbed)
-          }
-          if (!isNaN(thirdArg) && parseInt(thirdArg) > 10000) {
-            return getScore(thirdArg, fourthArg)
-          } else {
-            return getScore(channel_ID, thirdArg)
-          }
-        }
-      }
-      break;
-    }
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain!');
 
-    case "ongoinggames": {
+			return message.channel.send(wrongEmbed);
+		}
 
-      if (ongoingGames.length === 0) {
-        wrongEmbed.setTitle(":x: No games are currently having place!");
+		if (!teamsIngame().includes(teamsInfo().name) || ongoingGames.length === 0) {
 
-        return message.channel.send(wrongEmbed);
-      }
+			wrongEmbed.setTitle(':x: You aren\'t in a game!');
 
-      for (i = 0; i < 20; i++) {
+			return message.channel.send(wrongEmbed);
+		}
 
-        const game = ongoingGames[i]
+		for (const games of ongoingGames) {
 
-        if (game == undefined) {
-          wrongEmbed.addField(`No more games to list `, "Encourage your friends to play!");
-          break
-        }
+			if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
-        if (game[2].channel === channel_ID) {
+				continue;
+			}
 
-          wrongEmbed.addField(`Game :`, game[2].gameNumber)
+			const IDGame = games[2].gameID.toString();
 
-          wrongEmbed.addField(`🔸 Team: ${game[0][0]}`, `<@${game[0][1]}>, <@${game[0][2]}>, <@${game[0][3]}>, <@${game[0][4]}>, <@${game[0][5]}>`);
-          wrongEmbed.addField(`🔹 Team: ${game[1][0]}`, `<@${game[1][1]}>, <@${game[1][2]}>, <@${game[1][3]}>, <@${game[1][4]}>, <@${game[1][5]}>`);
+			if (!Object.keys(cancelQueue).includes(IDGame)) {
 
-          wrongEmbed.setFooter(`Showing page ${1}/${Math.ceil(ongoingGames.length / 20)}`);
-        }
-      }
-      return message.channel.send(wrongEmbed);
-    }
+				cancelQueue[IDGame] = [];
+			}
 
-    case "reset": {
-      if (message.content.split(" ").length === 1) {
+			const cancelqueuearray = cancelQueue[IDGame];
 
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
+			if (cancelqueuearray.includes(teamsInfo().name)) {
+				wrongEmbed.setTitle(':x: You\'ve already voted to cancel!');
 
-        return message.channel.send(wrongEmbed);
-      }
+				return message.channel.send(wrongEmbed);
+			}
 
-      if (!message.member.hasPermission("ADMINISTRATOR")) {
+			cancelqueuearray.push(teamsInfo().name);
 
-        wrongEmbed.setTitle(":x: You do not have Administrator permission!");
+			wrongEmbed.setTitle(`:exclamation: ${teamsInfo().name} wants to cancel game ${IDGame}. (${cancelqueuearray.length}/2)`);
 
-        return message.channel.send(wrongEmbed);
-      }
+			message.channel.send(wrongEmbed);
 
-      switch (secondArg) {
-        case "channel": {
-          if (message.content.split(" ").length !== 2) {
+			if (cancelqueuearray.length === 2) {
 
-            wrongEmbed.setTitle(":x: Invalid Parameters!")
+				for (const channel of message.guild.channels.cache.array()) {
 
-            return message.channel.send(wrongEmbed)
-          }
-          
-          for (let games of ongoingGames) {
-            if (games[2].channel === channel_ID) {
+					if (channel.name === `🔸Team-${games[0][0]}-Game-${IDGame}`) {
 
-              wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+						channel.delete();
+					}
 
-              return message.channel.send(wrongEmbed);
-            };
-          }
+					if (channel.name === `🔹Team-${games[1][0]}-Game-${IDGame}`) {
 
-          for (let team of findGuildTeams) {
+						channel.delete();
+					}
+				}
 
-            const channelPos = team.channels.map(e => e).map(e => e.channelID).indexOf(channel_ID);
+				correctEmbed.setTitle(`:white_check_mark: Game ${IDGame} Cancelled!`);
 
-            if (channelPos !== -1) {
-              await teamsCollection.update({
-                id: message.guild.id
-              }, {
-                $pull: {
-                  [channelsInDatabase]: {
-                    channelID: channel_ID
-                  }
-                }
-              });
-            };
+				const index = ongoingGames.indexOf(games);
 
-          };
+				cancelQueue[IDGame] = [];
 
-          correctEmbed.setTitle(":white_check_mark: Player's score reset!");
+				ongoingGames.splice(index, 1);
 
-          return message.channel.send(correctEmbed);
-        }
-        case "team": {
+				return message.channel.send(correctEmbed);
+			}
 
-          for (let games of ongoingGames) {
-            if (games[0][0] === thirdArg || games[1][0] === thirdArg) {
+		}
+	}
 
-              wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+	case 'score': {
+		switch (secondArg) {
+		case 'me': {
+			if (!findGuildTeams.map(e => e.name).includes(teamsInfo().name)) {
 
-              return message.channel.send(wrongEmbed);
-            };
-          }
+				wrongEmbed.setTitle(':x: You haven\'t played any games yet!');
 
-          if (message.content.split(" ").length !== 3) {
+				return message.channel.send(wrongEmbed);
+			}
 
-            wrongEmbed.setTitle(":x: Invalid Parameters!");
+			for (let j = 0; j < findGuildTeams.length; j++) {
 
-            return message.channel.send(wrongEmbed)
+				if (findGuildTeams[j].name === teamsInfo().name) {
 
-          }
+					const scoreDirectory = findGuildTeams[j].channels[findGuildTeams[j].channels.map(e => e.channelID).indexOf(message.channel.id)];
 
-          const channelPos = findGuildTeams[findGuildTeams.map(e => e.name).indexOf(thirdArg)].channels.map(e => e.channelID).indexOf(channel_ID)
+					if (scoreDirectory === undefined) {
 
-          if (channelPos == -1) {
+						wrongEmbed.setTitle(':x: You haven\'t played any games in here yet!');
 
-            wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!")
+						return message.channel.send(wrongEmbed);
+					}
 
-            return message.channel.send(wrongEmbed)
-          } else {
+					correctEmbed.addField('Wins:', scoreDirectory.wins);
 
-            const channelsInDatabase = `teams.${findGuildTeams.map(e=> e.name).indexOf(thirdArg)}.channels`
+					correctEmbed.addField('Losses:', scoreDirectory.losses);
 
-            await teamsCollection.update({
-              id: message.guild.id
-            }, {
-              $pull: {
-                [channelsInDatabase]: {
-                  channelID: channel_ID
-                }
-              }
-            });
-          }
+					correctEmbed.addField('Winrate:', isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ? '0%' : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + '%');
 
-          correctEmbed.setTitle(":white_check_mark: Player's score reset!");
+					correctEmbed.addField('MMR:', scoreDirectory.mmr);
 
-          return message.channel.send(correctEmbed);
-        }
-        default: {
-          wrongEmbed.setTitle(":x: Invalid Parameters!");
+					return message.channel.send(correctEmbed);
+				}
+			}
+		}
 
-          return message.channel.send(wrongEmbed);
-        }
-      }
-    }
+		case 'channel': {
+			const getScore = (id, arg) => {
+				let a;
+				a = findGuildTeams.filter(a => a.channels.map(e => e.channelID).indexOf(id) !== -1 && a.channels[a.channels.map(e => e.channelID).indexOf(id)].wins + a.channels[a.channels.map(e => e.channelID).indexOf(id)].losses !== 0);
 
-    case "q": {
+				if (a.length === 0) {
+					wrongEmbed.setTitle(':x: No games have been played in here!');
 
-      if (!isCaptain()) {
-        wrongEmbed.setTitle(":x: You are not the captain/dont belong to a team!");
+					return message.channel.send(wrongEmbed);
+				}
 
-        return message.channel.send(wrongEmbed);
-      }
+				a.sort((a, b) => {
+					const indexA = a.channels.map(e => e.channelID).indexOf(id);
 
-      for (let a of teamsArray) {
-        if (a[0] === teamsInfo().name) {
+					const indexB = b.channels.map(e => e.channelID).indexOf(id);
 
-          wrongEmbed.setTitle(":x: You're already in the queue!");
+					return b.channels[indexB].mmr - a.channels[indexA].mmr;
+				});
 
-          return message.channel.send(wrongEmbed);
-        }
-      }
+				if (!isNaN(arg) && arg > 0) {
+					let indexes = 20 * (arg - 1);
+					for (indexes; indexes < 20 * arg; indexes++) {
+						if (a[indexes] == undefined) {
 
-      for (let games of ongoingGames) {
-        if (games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) {
+							correctEmbed.addField('No more members to list in this page!', 'Encourage your friends to play!');
 
-          wrongEmbed.setTitle(":x: You are in the middle of a game!");
+							break;
+						}
+						for (const channels of a[indexes].channels) {
+							if (channels.channelID === id) {
 
-          return message.channel.send(wrongEmbed);
-        };
-      }
+								correctEmbed.addField(a[indexes].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)) ? '0' : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`);
 
-      if (teamsInfo().members.length < 5) {
+								correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(a.length / 20)}`);
+							}
+						}
+					}
+				} else {
+					for (i = 0; i < 20; i++) {
+						if (findGuildTeams[i] == undefined) {
+							correctEmbed.addField('No more members to list in this page!', 'Encourage your friends to play!');
+							break;
+						}
+						for (const channels of findGuildTeams[i].channels) {
+							if (channels.channelID === id) {
 
-        wrongEmbed.setTitle(":x: You need at least 5 members on your team to join the queue (including you)");
+								correctEmbed.addField(findGuildTeams[i].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)) ? '0' : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr} `);
 
-        return message.channel.send(wrongEmbed);
-      }
+								correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(findGuildTeams.length / 20)}`);
+							}
+						}
+					}
+				}
+				message.channel.send(correctEmbed);
+			};
+			if (!isNaN(thirdArg) && parseInt(thirdArg) > 10000) {
+				return getScore(thirdArg, fourthArg);
+			} else {
+				return getScore(channel_ID, thirdArg);
+			}
+		}
+		}
+		break;
+	}
 
-      if (message.content.split(" ").length !== 5) {
+	case 'ongoinggames': {
 
-        wrongEmbed.setTitle(":x: Please tag 4 teammates that you want to play with");
+		if (ongoingGames.length === 0) {
+			wrongEmbed.setTitle(':x: No games are currently having place!');
 
-        return message.channel.send(wrongEmbed);
-      }
+			return message.channel.send(wrongEmbed);
+		}
 
-      for (let user of message.content.split(" ").splice(1, 4)) {
-        if (!teamsInfo().members.includes(getIDByTag(user))) {
-          wrongEmbed.setTitle(`:x: ${(await fetchFromID(getIDByTag(user))).username} is not in your team!`);
+		for (i = 0; i < 20; i++) {
 
-          return message.channel.send(wrongEmbed);
-        }
-      }
+			const game = ongoingGames[i];
 
-      if (message.content.split(" ").length > 5) {
-        wrongEmbed.setTitle(":x: Please tag your 4 other teammates");
+			if (game == undefined) {
+				wrongEmbed.addField('No more games to list ', 'Encourage your friends to play!');
+				break;
+			}
 
-        return message.channel.send(wrongEmbed);
-      }
+			if (game[2].channel === channel_ID) {
 
-      teamsArray.push([teamsInfo().name, userId]);
+				wrongEmbed.addField('Game :', game[2].gameID);
 
-      for (let user of message.content.split(" ").splice(1, 4)) {
-        if (teamsArray.length === 1) {
-          teamsArray[0].push(getIDByTag(user));
-        } else {
-          teamsArray[1].push(getIDByTag(user));
-        }
+				wrongEmbed.addField(`🔸 Team: ${game[0][0]}`, `<@${game[0][1]}>, <@${game[0][2]}>, <@${game[0][3]}>, <@${game[0][4]}>, <@${game[0][5]}>`);
+				wrongEmbed.addField(`🔹 Team: ${game[1][0]}`, `<@${game[1][1]}>, <@${game[1][2]}>, <@${game[1][3]}>, <@${game[1][4]}>, <@${game[1][5]}>`);
 
-      }
-      if (teamsArray.length === 1) {
-        teamsArray[0].push(new Date());
-      } else {
-        teamsArray[1].push(new Date());
-      }
+				wrongEmbed.setFooter(`Showing page ${1}/${Math.ceil(ongoingGames.length / 20)}`);
+			}
+		}
+		return message.channel.send(wrongEmbed);
+	}
 
-      correctEmbed.setTitle(`:white_check_mark: Added to queue! ${teamsArray.length}/2`);
+	case 'reset': {
+		if (message.content.split(' ').length === 1) {
 
-      message.channel.send(correctEmbed);
+			wrongEmbed.setTitle(':x: Invalid Parameters!');
 
-      if (teamsArray.length === 2) {
+			return message.channel.send(wrongEmbed);
+		}
 
-        const valuesforpm = {
-          name: Math.floor(Math.random() * 99999),
-          password: Math.floor(Math.random() * 99999)
-        };
+		if (!message.member.hasPermission('ADMINISTRATOR')) {
 
-        shuffle(teamsArray)
+			wrongEmbed.setTitle(':x: You do not have Administrator permission!');
 
-        teamsArray.push({
-          gameNumber: gameCount,
-          channel: channel_ID,
-          date: new Date()
-        })
+			return message.channel.send(wrongEmbed);
+		}
 
-        for (let team of teamsArray) {
-          if (team.gameNumber !== undefined) {
+		switch (secondArg) {
+		case 'channel': {
+			if (message.content.split(' ').length !== 2) {
 
-            break
-          }
-          const channelsInDatabaseSpecific = `teams.${findGuildTeams.indexOf(teamsInfoSpecific(team[1]))}.channels`
+				wrongEmbed.setTitle(':x: Invalid Parameters!');
 
-          if (!findGuildTeams[findGuildTeams.map(e => e.name).indexOf(team[0])].channels.map(e => e.channelID).includes(channel_ID)) {
+				return message.channel.send(wrongEmbed);
+			}
 
-            (async function () {
-              await teamsCollection.update({
-                id: message.guild.id
-              }, {
-                $push: {
-                  [channelsInDatabaseSpecific]: {
-                    channelID: channel_ID,
-                    wins: 0,
-                    losses: 0,
-                    mmr: 1000
-                  }
-                }
-              });
-            })()
-          };
-        }
+			for (const games of ongoingGames) {
+				if (games[2].channel === channel_ID) {
 
-        message.channel.send(`<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>, <@${teamsArray[0][4]}>, <@${teamsArray[0][5]}>, <@${teamsArray[1][1]}>, <@${teamsArray[1][2]}>, <@${teamsArray[1][3]}>, <@${teamsArray[1][4]}>, <@${teamsArray[1][5]}>`)
+					wrongEmbed.setTitle(':x: Team is in the middle of a game!');
 
-        ongoingGames.push([...teamsArray]);
+					return message.channel.send(wrongEmbed);
+				}
+			}
 
-        const discordEmbed1 = new Discord.MessageEmbed()
-          .setColor(EMBED_COLOR_CHECK)
-          .addField("Game is ready:", `Game ID is: ${gameCount}`)
-          .addField(`:small_orange_diamond: Team ${teamsArray[0][0]}`, `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>, <@${teamsArray[0][4]}>, <@${teamsArray[0][5]}>,`)
-          .addField(`:small_blue_diamond: Team ${teamsArray[1][0]}`, `<@${teamsArray[1][1]}>, <@${teamsArray[1][2]}>, <@${teamsArray[1][3]}>, <@${teamsArray[1][4]}>, <@${teamsArray[1][5]}>`);
+			for (const team of findGuildTeams) {
 
-        if (gameName !== "leagueoflegends") {
+				const channelPos = team.channels.map(e => e).map(e => e.channelID).indexOf(channel_ID);
 
-          discordEmbed1.addField(`Map: ${gameName === "valorant" ? "veto(each team bans a map, with the first team choosing the first ban)": gameName === "valorant" ? CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)]: gameName === "r6" ? R6Maps[Math.floor(Math.random() * R6Maps.length)]: "You got this"}`, "Please organize a match with your teammates and opponents. Team 1 attacks and Team 2 defends. Good luck!")
-        }
+				if (channelPos !== -1) {
+					await teamsCollection.update({
+						id: message.guild.id,
+					}, {
+						$pull: {
+							[`teams.${findGuildTeams.indexOf(team)}.channels`]: {
+								channelID: channel_ID,
+							},
+						},
+					});
+				}
 
-        message.channel.send(discordEmbed1);
+			}
 
-        if (gameName === "leagueoflegends") {
-          userIDsPM.push(teamsArray[0][1], teamsArray[0][2], teamsArray[0][3], teamsArray[0][4], teamsArray[0][5], teamsArray[1][1], teamsArray[1][2], teamsArray[1][3], teamsArray[1][4], teamsArray[1][5])
+			for (const game of finishedGames) {
+				if (game[2].channel === channel_ID) {
 
-          const JoinMatchEmbed = new Discord.MessageEmbed()
-            .setColor(EMBED_COLOR_CHECK)
-            .addField("Name:", valuesforpm.name)
-            .addField("Password:", valuesforpm.password)
-            .addField("You have to:", `Join match(Created by ${(await fetchFromID(teamsArray[0][1])).username})`);
+					finishedGames.splice(finishedGames.indexOf(game), 1);
+				}
+			}
 
-          for (let user of userIDsPM) {
-            if (user !== userIDsPM[0]) {
+			correctEmbed.setTitle(':white_check_mark: Player\'s score reset!');
 
-              const create0 = await client.users.fetch(user)
-              create0.send(JoinMatchEmbed).catch(error => {
-                const errorEmbed = new Discord.MessageEmbed()
-                  .setColor(EMBED_COLOR_ERROR)
-                  .setTitle(`:x: Couldn't sent message to ${users}, please check if your DM'S aren't set to friends only.`);
+			return message.channel.send(correctEmbed);
+		}
+		case 'team': {
 
-                console.error(error);
+			for (const games of ongoingGames) {
+				if ((games[0][0] === thirdArg || games[1][0] === thirdArg) && games[2].guild === message.guild.id) {
 
-                message.channel.send(errorEmbed)
-              });
-            };
-          };
+					wrongEmbed.setTitle(':x: Team is in the middle of a game!');
 
-          userIDsPM = []
+					return message.channel.send(wrongEmbed);
+				}
+			}
 
-          const CreateMatchEmbed = new Discord.MessageEmbed()
-            .setColor(EMBED_COLOR_CHECK)
-            .addField("Name:", valuesforpm.name)
-            .addField("Password:", valuesforpm.password)
-            .addField("You have to:", "Create Custom Match");
+			if (message.content.split(' ').length !== 3) {
 
-          const create1 = await client.users.fetch(teamsArray[0][1])
-          create1.send(CreateMatchEmbed).catch(error => {
-            const errorEmbed = new Discord.MessageEmbed()
-              .setColor(EMBED_COLOR_ERROR)
-              .setTitle(`:x: Couldn't sent message to ${fetchFromID(teamsArray[0][1])}, please check if your DM'S aren't set to friends only.`);
+				wrongEmbed.setTitle(':x: Invalid Parameters!');
 
-            message.channel.send(errorEmbed)
-            console.error(error);
-          });
-        }
+				return message.channel.send(wrongEmbed);
 
-        message.guild.channels.create(`🔸Team-${teamsArray[0][0]}-Game-${gameCount}`, {
-            type: 'voice',
-            parent: message.channel.parentID,
-            permissionOverwrites: [{
-                id: message.guild.id,
-                deny: "CONNECT"
-              },
-              {
-                id: teamsArray[0][1],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[0][2],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[0][3],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[0][4],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[0][5],
-                allow: "CONNECT"
-              }
-            ]
-          })
-          .catch(error => {
-            const errorEmbed = new Discord.MessageEmbed()
-              .setColor(EMBED_COLOR_ERROR)
-              .setTitle(`:x: You shouldn't be getting this message, if you do tag tweeno`);
+			}
 
-            message.channel.send(errorEmbed)
-            console.error(error);
-          })
+			const channelPos = findGuildTeams[findGuildTeams.map(e => e.name).indexOf(thirdArg)].channels.map(e => e.channelID).indexOf(channel_ID);
 
-        message.guild.channels.create(`🔹Team-${teamsArray[1][0]}-Game-${gameCount}`, {
-            type: 'voice',
-            parent: message.channel.parentID,
-            permissionOverwrites: [{
-                id: message.guild.id,
-                deny: "CONNECT"
-              },
-              {
-                id: teamsArray[1][1],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[1][2],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[1][3],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[1][4],
-                allow: "CONNECT"
-              },
-              {
-                id: teamsArray[1][5],
-                allow: "CONNECT"
-              }
-            ]
-          })
-          .catch(error => {
-            const errorEmbed = new Discord.MessageEmbed()
-              .setColor(EMBED_COLOR_ERROR)
-              .setTitle(`:x: You shouldn't be getting this message, if you do tag tweeno`);
+			if (channelPos == -1) {
 
-            message.channel.send(errorEmbed)
-            console.error(error);
-          })
+				wrongEmbed.setTitle(':x: This user hasn\'t played any games in this channel!');
 
-        teamsArray.splice(0, teamsArray.length);
+				return message.channel.send(wrongEmbed);
+			} else {
 
-        gameCount++
-      };
-    };
-  };
+				const channelsInDatabase = `teams.${findGuildTeams.map(e=> e.name).indexOf(thirdArg)}.channels`;
+
+				await teamsCollection.update({
+					id: message.guild.id,
+				}, {
+					$pull: {
+						[channelsInDatabase]: {
+							channelID: channel_ID,
+						},
+					},
+				});
+			}
+
+			correctEmbed.setTitle(':white_check_mark: Player\'s score reset!');
+
+			return message.channel.send(correctEmbed);
+		}
+		default: {
+			wrongEmbed.setTitle(':x: Invalid Parameters!');
+
+			return message.channel.send(wrongEmbed);
+		}
+		}
+	}
+
+	case 'q': {
+
+		if (!isCaptain()) {
+			wrongEmbed.setTitle(':x: You are not the captain/dont belong to a team!');
+
+			return message.channel.send(wrongEmbed);
+		}
+
+		for (const a of teamsArray) {
+			if (a[0] === teamsInfo().name) {
+
+				wrongEmbed.setTitle(':x: You\'re already in the queue!');
+
+				return message.channel.send(wrongEmbed);
+			}
+		}
+
+		for (const games of ongoingGames) {
+			if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
+
+				wrongEmbed.setTitle(':x: You are in the middle of a game!');
+
+				return message.channel.send(wrongEmbed);
+			}
+		}
+
+		if (teamsInfo().members.length < 5) {
+
+			wrongEmbed.setTitle(':x: You need at least 5 members on your team to join the queue (including you)');
+
+			return message.channel.send(wrongEmbed);
+		}
+
+		if (message.content.split(' ').length !== 5) {
+
+			wrongEmbed.setTitle(':x: Please tag 4 teammates that you want to play with');
+
+			return message.channel.send(wrongEmbed);
+		}
+
+		for (const user of message.content.split(' ').splice(1, 4)) {
+			if (!teamsInfo().members.includes(getIDByTag(user))) {
+				wrongEmbed.setTitle(`:x: ${(await fetchFromID(getIDByTag(user))).username} is not in your team!`);
+
+				return message.channel.send(wrongEmbed);
+			}
+		}
+
+		if (message.content.split(' ').length > 5) {
+			wrongEmbed.setTitle(':x: Please tag your 4 other teammates');
+
+			return message.channel.send(wrongEmbed);
+		}
+
+		teamsArray.push([teamsInfo().name, userId]);
+
+		for (const user of message.content.split(' ').splice(1, 4)) {
+			if (teamsArray.length === 1) {
+				teamsArray[0].push(getIDByTag(user));
+			} else {
+				teamsArray[1].push(getIDByTag(user));
+			}
+
+		}
+		if (teamsArray.length === 1) {
+			teamsArray[0].push(new Date());
+		} else {
+			teamsArray[1].push(new Date());
+		}
+
+		correctEmbed.setTitle(`:white_check_mark: Added to queue! ${teamsArray.length}/2`);
+
+		message.channel.send(correctEmbed);
+
+		if (teamsArray.length === 2) {
+
+			const valuesforpm = {
+				name: Math.floor(Math.random() * 99999),
+				password: Math.floor(Math.random() * 99999),
+			};
+
+			shuffle(teamsArray);
+
+			teamsArray.push({
+				gameID: gameCount,
+				channel: channel_ID,
+				guild: message.guild.id,
+				date: new Date(),
+			});
+
+			for (const team of teamsArray) {
+				if (team.gameID !== undefined) {
+
+					break;
+				}
+				const channelsInDatabaseSpecific = `teams.${findGuildTeams.indexOf(teamsInfoSpecific(team[1]))}.channels`;
+
+				if (!findGuildTeams[findGuildTeams.map(e => e.name).indexOf(team[0])].channels.map(e => e.channelID).includes(channel_ID)) {
+
+					(async function () {
+						await teamsCollection.update({
+							id: message.guild.id,
+						}, {
+							$push: {
+								[channelsInDatabaseSpecific]: {
+									channelID: channel_ID,
+									wins: 0,
+									losses: 0,
+									mmr: 1000,
+								},
+							},
+						});
+					})();
+				}
+			}
+
+			message.channel.send(`<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>, <@${teamsArray[0][4]}>, <@${teamsArray[0][5]}>, <@${teamsArray[1][1]}>, <@${teamsArray[1][2]}>, <@${teamsArray[1][3]}>, <@${teamsArray[1][4]}>, <@${teamsArray[1][5]}>`);
+
+			ongoingGames.push([...teamsArray]);
+
+			const discordEmbed1 = new Discord.MessageEmbed()
+				.setColor(EMBED_COLOR_CHECK)
+				.addField('Game is ready:', `Game ID is: ${gameCount}`)
+				.addField(`:small_orange_diamond: Team ${teamsArray[0][0]}`, `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>, <@${teamsArray[0][4]}>, <@${teamsArray[0][5]}>,`)
+				.addField(`:small_blue_diamond: Team ${teamsArray[1][0]}`, `<@${teamsArray[1][1]}>, <@${teamsArray[1][2]}>, <@${teamsArray[1][3]}>, <@${teamsArray[1][4]}>, <@${teamsArray[1][5]}>`);
+
+			if (gameName !== 'leagueoflegends') {
+
+				discordEmbed1.addField(`Map: ${gameName === 'valorant' ? valorantMaps[Math.floor(Math.random() * valorantMaps.length) ] : gameName === 'valorant' ? CSGOMaps[Math.floor(Math.random() * CSGOMaps.length)] : gameName === 'r6' ? R6Maps[Math.floor(Math.random() * R6Maps.length)] : 'You got this'}`, 'Please organize a match with your teammates and opponents. Team 1 attacks and Team 2 defends. Good luck!');
+			}
+
+			message.channel.send(discordEmbed1);
+
+			if (gameName === 'leagueoflegends') {
+				userIDsPM.push(teamsArray[0][1], teamsArray[0][2], teamsArray[0][3], teamsArray[0][4], teamsArray[0][5], teamsArray[1][1], teamsArray[1][2], teamsArray[1][3], teamsArray[1][4], teamsArray[1][5]);
+
+				const JoinMatchEmbed = new Discord.MessageEmbed()
+					.setColor(EMBED_COLOR_CHECK)
+					.addField('Name:', valuesforpm.name)
+					.addField('Password:', valuesforpm.password)
+					.addField('You have to:', `Join match(Created by ${(await fetchFromID(teamsArray[0][1])).username})`);
+
+				for (const user of userIDsPM) {
+					if (user !== userIDsPM[0]) {
+
+						const create0 = await client.users.fetch(user);
+						create0.send(JoinMatchEmbed).catch(error => {
+							const errorEmbed = new Discord.MessageEmbed()
+								.setColor(EMBED_COLOR_ERROR)
+								.setTitle(`:x: Couldn't sent message to ${users}, please check if your DM'S aren't set to friends only.`);
+
+							console.error(error);
+
+							message.channel.send(errorEmbed);
+						});
+					}
+				}
+
+				userIDsPM = [];
+
+				const CreateMatchEmbed = new Discord.MessageEmbed()
+					.setColor(EMBED_COLOR_CHECK)
+					.addField('Name:', valuesforpm.name)
+					.addField('Password:', valuesforpm.password)
+					.addField('You have to:', 'Create Custom Match');
+
+				const create1 = await client.users.fetch(teamsArray[0][1]);
+				create1.send(CreateMatchEmbed).catch(error => {
+					const errorEmbed = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_ERROR)
+						.setTitle(`:x: Couldn't sent message to ${fetchFromID(teamsArray[0][1])}, please check if your DM'S aren't set to friends only.`);
+
+					message.channel.send(errorEmbed);
+					console.error(error);
+				});
+			}
+
+			message.guild.channels.create(`🔸Team-${teamsArray[0][0]}-Game-${gameCount}`, {
+				type: 'voice',
+				parent: message.channel.parentID,
+				permissionOverwrites: [{
+					id: message.guild.id,
+					deny: 'CONNECT',
+				},
+				{
+					id: teamsArray[0][1],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[0][2],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[0][3],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[0][4],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[0][5],
+					allow: 'CONNECT',
+				},
+				],
+			})
+				.catch(error => {
+					const errorEmbed = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_ERROR)
+						.setTitle(':x: You shouldn\'t be getting this message, if you do tag tweeno');
+
+					message.channel.send(errorEmbed);
+					console.error(error);
+				});
+
+			message.guild.channels.create(`🔹Team-${teamsArray[1][0]}-Game-${gameCount}`, {
+				type: 'voice',
+				parent: message.channel.parentID,
+				permissionOverwrites: [{
+					id: message.guild.id,
+					deny: 'CONNECT',
+				},
+				{
+					id: teamsArray[1][1],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[1][2],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[1][3],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[1][4],
+					allow: 'CONNECT',
+				},
+				{
+					id: teamsArray[1][5],
+					allow: 'CONNECT',
+				},
+				],
+			})
+				.catch(error => {
+					const errorEmbed = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_ERROR)
+						.setTitle(':x: You shouldn\'t be getting this message, if you do tag tweeno');
+
+					message.channel.send(errorEmbed);
+					console.error(error);
+				});
+
+			teamsArray.splice(0, teamsArray.length);
+
+			gameCount++;
+		}
+	}
+	}
 };
 
 module.exports = {
-  name: ['q', "status", "leave", "report", "score", "cancel", "reset", "game", "ongoinggames", "createteam", "invite", "disband", "jointeam", "pendinginvites", "leaveteam", "whois", "kickplayer","revertgame"],
-  description: '6man bot',
-  execute
+	name: ['q', 'status', 'leave', 'report', 'score', 'cancel', 'reset', 'game', 'ongoinggames', 'createteam', 'invite', 'disband', 'jointeam', 'pendinginvites', 'leaveteam', 'whois', 'kickplayer', 'revertgame', 'giveownership'],
+	description: '6man bot',
+	execute,
 };
