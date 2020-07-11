@@ -10,6 +10,7 @@ const discordEmbed = new Discord.MessageEmbed()
     .addField("!jointeam", "Join a team that invited you, usage: !jointeam Maniacs")
     .addField("!pendinginvites", "Check who invited you!")
     .addField("!leaveteam", "Leave your team")
+    .addField("!giveownership", "Gives team ownership to a specific user. Usage: !giveownership @dany")
     .addField("!kickplayer", "Kicks a player from your team, usage:!kickplayer @dany")
     .addField("!whois", "Check for a team members, usage: !whois Maniacs")
     .addField("!disband", "Deletes your team, admins can also delete a team by typing !disband teamname")
@@ -22,6 +23,7 @@ const discordEmbed = new Discord.MessageEmbed()
     .addField("!score me/channel", 'Checks your current score. Usage: !score channel to check score in the channel youre in, !score channel (channelid)to check the score in a specific channel, just add a number after it to select a page')
     .addField("!reset player/channel", `Resets the score of an individual player (!reset player <discordid>) or the whole channel where this command is inserted (!reset channel)`)
     .addField("!ongoinggames", `Check the current games!`)
+    .addField("!revertgame", `Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores`)
 
 module.exports = {
     name: 'helpteammatchmaking',
