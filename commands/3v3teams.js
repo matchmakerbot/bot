@@ -240,54 +240,51 @@ const execute = async (message) => {
 	};
 
 	const revertgame = async (status, pos) => {
-		for (const games of finishedGames) {
 
-			if (!games[2].gameID === secondArg) {
+		const games = finishedGames.find(game => game[2].gameID === parseInt(secondArg))
 
-				continue;
-			}
-			for (const team of findGuildTeams) {
+		for (const team of findGuildTeams) {
 
-				if (games[pos][0] === team.name && games[2].guild === message.guild.id) {
+			if (games[pos][0] === team.name && games[2].guild === message.guild.id) {
 
-					const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
+				const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
-					const win = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.wins`;
+				const win = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.wins`;
 
-					const lose = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.losses`;
+				const lose = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.losses`;
 
-					const sort = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.${status}`;
+				const sort = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.${status}`;
 
-					const mmr = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.mmr`;
+				const mmr = `teams.${findGuildTeams.indexOf(team)}.channels.${channelPos}.mmr`;
 
-					if (thirdArg === 'revert') {
-						await teamsCollection.update({
-							id: message.guild.id,
-						}, {
-							$set: {
-								[win]: status === 'wins' ? team.channels[channelPos].wins + 1 : team.channels[channelPos].wins - 1,
+				if (thirdArg === 'revert') {
+					await teamsCollection.update({
+						id: message.guild.id,
+					}, {
+						$set: {
+							[win]: status === 'wins' ? team.channels[channelPos].wins + 1 : team.channels[channelPos].wins - 1,
 
-								[lose]: status === 'losses' ? team.channels[channelPos].losses + 1 : team.channels[channelPos].losses - 1,
+							[lose]: status === 'losses' ? team.channels[channelPos].losses + 1 : team.channels[channelPos].losses - 1,
 
-								[mmr]: status === 'wins' ? team.channels[channelPos].mmr + 23 : team.channels[channelPos].mmr - 23,
-							},
-						});
-					}
+							[mmr]: status === 'wins' ? team.channels[channelPos].mmr + 23 : team.channels[channelPos].mmr - 23,
+						},
+					});
+				}
 
-					if (thirdArg === 'cancel') {
-						await teamsCollection.update({
-							id: message.guild.id,
-						}, {
-							$set: {
-								[sort]: team.channels[channelPos][status] - 1,
+				if (thirdArg === 'cancel') {
+					await teamsCollection.update({
+						id: message.guild.id,
+					}, {
+						$set: {
+							[sort]: team.channels[channelPos][status] - 1,
 
-								[mmr]: status === 'wins' ? team.channels[channelPos].mmr - 13 : team.channels[channelPos].mmr + 10,
-							},
-						});
-					}
+							[mmr]: status === 'wins' ? team.channels[channelPos].mmr - 13 : team.channels[channelPos].mmr + 10,
+						},
+					});
 				}
 			}
 		}
+
 	};
 
 	switch (args(message)) {
