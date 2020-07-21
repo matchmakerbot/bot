@@ -52,6 +52,9 @@ setInterval(async () => {
 		for (const channel of Object.values(channelQueues)) {
 			for (const user of channel) {
 				if ((Date.now() - user.date) > 45 * 60 * 1000) {
+					if (channel.length > 5) {
+						continue
+					}
 
 					const actualChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel));
 
@@ -970,7 +973,7 @@ const execute = async (message) => {
 
 				message.channel.send(`<@${queueArray[0].id}>, <@${queueArray[1].id}>, <@${queueArray[2].id}>, <@${queueArray[3].id}>, <@${queueArray[4].id}>, <@${queueArray[5].id}>, <@${queueArray[6].id}>, <@${queueArray[7].id}>, <@${queueArray[8].id}>, <@${queueArray[9].id}>`);
 
-				correctEmbed.setTitle('a game has been made! Please select your preferred gamemode: Captains (c) or Random (r) ');
+				correctEmbed.setTitle('a game has been made! Please select your preferred gamemode: Captains (!c) (Currently broke) or Random (!r) ');
 
 				gameCount++;
 
@@ -1046,414 +1049,411 @@ const execute = async (message) => {
 
 					tempobjectArray.push([...queueArray]);
 
-					for (const tempObjectLoop of tempobjectArray) {
-						if (!includesUserID(tempObjectLoop)) {
-							continue;
-						}
+					const tempObjectLoop = tempobjectArray.find(object => includesUserID(object))
 
-						const tempvar = tempObjectLoop[10];
+					const tempvar = tempObjectLoop[10];
 
-						shuffle(tempObjectLoop);
+					shuffle(tempObjectLoop);
 
-						tempObjectLoop.splice(tempObjectLoop.findIndex(o => o.gameID === tempvar.gameID), 1);
+					tempObjectLoop.splice(tempObjectLoop.findIndex(o => o.gameID === tempvar.gameID), 1);
 
-						tempObjectLoop.push(tempvar);
+					tempObjectLoop.push(tempvar);
 
-						queueArray[0] = tempObjectLoop[0];
+					queueArray[0] = tempObjectLoop[0];
 
-						queueArray[5] = tempObjectLoop[1];
+					queueArray[5] = tempObjectLoop[1];
 
-						const CaptainsEmbed = new Discord.MessageEmbed()
+					const CaptainsEmbed = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_WARNING)
+						.setTitle(`Game ID: ${tempObjectLoop[10].gameID}`)
+						.addField('Captain for team 1', tempObjectLoop[0].name)
+						.addField('Captain for team 2', tempObjectLoop[1].name);
+
+					message.channel.send(CaptainsEmbed);
+
+					const privatedm0 = await client.users.fetch(tempObjectLoop[0].id);
+
+					const privatedm1 = await client.users.fetch(tempObjectLoop[1].id);
+
+					tempObjectLoop.shift();
+
+					tempObjectLoop.shift();
+
+					const Captain1st = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_WARNING)
+						.setTitle('Choose one ( you have 20 seconds):')
+						.addField('1 :', tempObjectLoop[0].name)
+						.addField('2 :', tempObjectLoop[1].name)
+						.addField('3 :', tempObjectLoop[2].name)
+						.addField('4 :', tempObjectLoop[3].name)
+						.addField('5 :', tempObjectLoop[4].name)
+						.addField('6 :', tempObjectLoop[5].name)
+						.addField('7 :', tempObjectLoop[6].name)
+						.addField('8 :', tempObjectLoop[7].name);
+
+					privatedm0.send(Captain1st).catch(error => {
+						const errorEmbed = new Discord.MessageEmbed()
 							.setColor(EMBED_COLOR_WARNING)
-							.setTitle(`Game ID: ${tempObjectLoop[10].gameID}`)
-							.addField('Captain for team 1', tempObjectLoop[0].name)
-							.addField('Captain for team 2', tempObjectLoop[1].name);
+							.setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`);
 
-						message.channel.send(CaptainsEmbed);
+						console.error(error);
 
-						const privatedm0 = await client.users.fetch(tempObjectLoop[0].id);
+						message.channel.send(errorEmbed);
+					});
 
-						const privatedm1 = await client.users.fetch(tempObjectLoop[1].id);
+					filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 9;
 
-						tempObjectLoop.shift();
+					await privatedm0.createDM().then(m => {
+						m.createMessageCollector(filter, {
+							time: 20000,
+						}).on('collect', m => {
 
-						tempObjectLoop.shift();
+							const parsedM = parseInt(m.content) - 1;
 
-						const Captain1st = new Discord.MessageEmbed()
-							.setColor(EMBED_COLOR_WARNING)
-							.setTitle('Choose one ( you have 20 seconds):')
-							.addField('1 :', tempObjectLoop[0].name)
-							.addField('2 :', tempObjectLoop[1].name)
-							.addField('3 :', tempObjectLoop[2].name)
-							.addField('4 :', tempObjectLoop[3].name)
-							.addField('5 :', tempObjectLoop[4].name)
-							.addField('6 :', tempObjectLoop[5].name)
-							.addField('7 :', tempObjectLoop[6].name)
-							.addField('8 :', tempObjectLoop[7].name);
+							if (!hasVoted) {
 
-						privatedm0.send(Captain1st).catch(error => {
-							const errorEmbed = new Discord.MessageEmbed()
-								.setColor(EMBED_COLOR_WARNING)
-								.setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`);
+								queueArray[1] = tempObjectLoop[parsedM];
 
-							console.error(error);
+								tempObjectLoop.splice(parsedM, 1);
 
-							message.channel.send(errorEmbed);
+								hasVoted = true;
+							}
 						});
+					});
 
-						filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 9;
+					await new Promise(resolve => setTimeout(resolve, 20000));
 
-						await privatedm0.createDM().then(m => {
-							m.createMessageCollector(filter, {
-								time: 20000,
-							}).on('collect', m => {
+					if (!hasVoted) {
 
-								const parsedM = parseInt(m.content) - 1;
+						const randomnumber = Math.floor(Math.random() * 8);
 
-								if (!hasVoted) {
+						queueArray[1] = tempObjectLoop[randomnumber];
 
-									queueArray[1] = tempObjectLoop[parsedM];
-
-									tempObjectLoop.splice(parsedM, 1);
-
-									hasVoted = true;
-								}
-							});
-						});
-
-						await new Promise(resolve => setTimeout(resolve, 20000));
-
-						if (!hasVoted) {
-
-							const randomnumber = Math.floor(Math.random() * 8);
-
-							queueArray[1] = tempObjectLoop[randomnumber];
-
-							tempObjectLoop.splice(randomnumber, 1);
-						}
-
-						hasVoted = false;
-
-						const Captain2nd = new Discord.MessageEmbed()
-							.setColor(EMBED_COLOR_WARNING)
-							.setTitle('Choose two ( you have 20 seconds):')
-							.addField('1 :', tempObjectLoop[0].name)
-							.addField('2 :', tempObjectLoop[1].name)
-							.addField('3 :', tempObjectLoop[2].name)
-							.addField('4 :', tempObjectLoop[3].name)
-							.addField('5 :', tempObjectLoop[4].name)
-							.addField('6 :', tempObjectLoop[5].name)
-							.addField('7 :', tempObjectLoop[6].name);
-
-						privatedm1.send(Captain2nd).catch(error => {
-							const errorEmbed = new Discord.MessageEmbed()
-								.setColor(EMBED_COLOR_WARNING)
-								.setTitle(`:x: Couldn't sent message to ${privatedm1}, please check if your DM'S aren't set to friends only.`);
-
-							console.error(error);
-
-							message.channel.send(errorEmbed);
-						});
-
-						filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 8;
-
-						privatedm1.createDM().then(m => {
-							m.createMessageCollector(filter, {
-								time: 20000,
-							}).on('collect', m => {
-
-								const parsedM = parseInt(m.content) - 1;
-
-								if (!hasVoted) {
-									queueArray[6] = tempObjectLoop[parsedM];
-
-									hasVoted = true;
-
-									usedNums.push(parsedM);
-
-								} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
-
-									queueArray[7] = tempObjectLoop[parsedM];
-
-									hasVoted = 'all';
-
-									usedNums.push(parsedM);
-
-									tempObjectLoop.splice(usedNums[0], 1);
-
-									if (usedNums[1] > usedNums[0]) {
-
-										tempObjectLoop.splice(usedNums[1] - 1, 1);
-									} else {
-
-										tempObjectLoop.splice(usedNums[1], 1);
-									}
-								}
-							});
-						});
-
-						await new Promise(resolve => setTimeout(resolve, 20000));
-
-						let randomnumber = Math.floor(Math.random() * 7);
-
-						let randomnumber2 = Math.floor(Math.random() * 7);
-
-						if (!hasVoted) {
-
-							while (randomnumber === randomnumber2) {
-								randomnumber2 = Math.floor(Math.random() * 7);
-							}
-
-							queueArray[6] = tempObjectLoop[randomnumber];
-
-							queueArray[7] = tempObjectLoop[randomnumber2];
-
-							tempObjectLoop.splice(randomnumber, 1);
-
-							if (randomnumber2 > randomnumber) {
-
-								tempObjectLoop.splice(randomnumber2 - 1, 1);
-							} else {
-
-								tempObjectLoop.splice(randomnumber2, 1);
-							}
-
-						} else if (hasVoted !== 'all') {
-
-							while (usedNums.includes(randomnumber2)) {
-
-								randomnumber2 = Math.floor(Math.random() * 6);
-							}
-
-							queueArray[7] = tempObjectLoop[randomnumber2];
-
-							tempObjectLoop.splice(usedNums[0], 1);
-
-							if (randomnumber2 > usedNums[0]) {
-
-								tempObjectLoop.splice(randomnumber2 - 1, 1);
-							} else {
-
-								tempObjectLoop.splice(randomnumber2, 1);
-							}
-						}
-
-						usedNums = [];
-
-						hasVoted = false;
-
-						const Captain3rd = new Discord.MessageEmbed()
-							.setColor(EMBED_COLOR_WARNING)
-							.setTitle('Choose two ( you have 20 seconds):')
-							.addField('1 :', tempObjectLoop[0].name)
-							.addField('2 :', tempObjectLoop[1].name)
-							.addField('3 :', tempObjectLoop[2].name)
-							.addField('4 :', tempObjectLoop[3].name)
-							.addField('5 :', tempObjectLoop[4].name);
-
-						privatedm0.send(Captain3rd).catch(error => {
-							const errorEmbed = new Discord.MessageEmbed()
-								.setColor(EMBED_COLOR_WARNING)
-								.setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`); - console.error(error);
-
-							message.channel.send(errorEmbed);
-						});
-
-						filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 6;
-
-						privatedm0.createDM().then(m => {
-							m.createMessageCollector(filter, {
-								time: 20000,
-							}).on('collect', m => {
-
-								const parsedM = parseInt(m.content) - 1;
-
-								if (!hasVoted) {
-
-									queueArray[2] = tempObjectLoop[parsedM];
-
-									hasVoted = true;
-
-									usedNums.push(parsedM);
-
-								} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
-
-									queueArray[3] = tempObjectLoop[parsedM];
-
-									hasVoted = 'all';
-
-									usedNums.push(parsedM);
-
-									tempObjectLoop.splice(usedNums[0], 1);
-
-									if (usedNums[1] > usedNums[0]) {
-
-										tempObjectLoop.splice(usedNums[1] - 1, 1);
-									} else {
-
-										tempObjectLoop.splice(usedNums[1], 1);
-									}
-								}
-							});
-						});
-
-						await new Promise(resolve => setTimeout(resolve, 20000));
-
-						randomnumber = Math.floor(Math.random() * 5);
-
-						randomnumber2 = Math.floor(Math.random() * 5);
-
-						if (!hasVoted) {
-
-							while (randomnumber === randomnumber2) {
-								randomnumber2 = Math.floor(Math.random() * 5);
-							}
-
-							queueArray[2] = tempObjectLoop[randomnumber];
-
-							queueArray[3] = tempObjectLoop[randomnumber2];
-
-							tempObjectLoop.splice(randomnumber, 1);
-
-							if (randomnumber2 > randomnumber) {
-
-								tempObjectLoop.splice(randomnumber2 - 1, 1);
-							} else {
-
-								tempObjectLoop.splice(randomnumber2, 1);
-							}
-
-						} else if (hasVoted !== 'all') {
-
-							while (usedNums.includes(randomnumber2)) {
-
-								randomnumber2 = Math.floor(Math.random() * 4);
-							}
-
-							queueArray[3] = tempObjectLoop[randomnumber2];
-
-							tempObjectLoop.splice(usedNums[0], 1);
-
-							if (randomnumber2 > usedNums[0]) {
-
-								tempObjectLoop.splice(randomnumber2 - 1, 1);
-							} else {
-
-								tempObjectLoop.splice(randomnumber2, 1);
-							}
-						}
-
-						usedNums = [];
-
-						hasVoted = false;
-
-						const Captain4th = new Discord.MessageEmbed()
-							.setColor(EMBED_COLOR_WARNING)
-							.setTitle('Choose two ( you have 20 seconds):')
-							.addField('1 :', tempObjectLoop[0].name)
-							.addField('2 :', tempObjectLoop[1].name)
-							.addField('3 :', tempObjectLoop[2].name);
-
-						privatedm1.send(Captain4th).catch(error => {
-							const errorEmbed = new Discord.MessageEmbed()
-								.setColor(EMBED_COLOR_WARNING)
-								.setTitle(`:x: Couldn't sent message to ${privatedm1}, please check if your DM'S aren't set to friends only.`);
-
-							console.error(error);
-
-							message.channel.send(errorEmbed);
-						});
-
-						filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 4;
-
-						privatedm1.createDM().then(m => {
-							m.createMessageCollector(filter, {
-								time: 20000,
-							}).on('collect', m => {
-
-								const parsedM = parseInt(m.content) - 1;
-
-								if (!hasVoted) {
-
-									queueArray[8] = tempObjectLoop[parsedM];
-
-									hasVoted = true;
-
-									usedNums.push(parsedM);
-
-								} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
-
-									queueArray[9] = tempObjectLoop[parsedM];
-
-									hasVoted = 'all';
-
-									usedNums.push(parsedM);
-
-									tempObjectLoop.splice(usedNums[0], 1);
-
-									if (usedNums[1] > usedNums[0]) {
-
-										tempObjectLoop.splice(usedNums[1] - 1, 1);
-									} else {
-
-										tempObjectLoop.splice(usedNums[1], 1);
-									}
-								}
-							});
-						});
-
-						await new Promise(resolve => setTimeout(resolve, 20000));
-
-						randomnumber = Math.floor(Math.random() * 3);
-
-						randomnumber2 = Math.floor(Math.random() * 3);
-
-						if (!hasVoted) {
-
-							while (randomnumber === randomnumber2) {
-								randomnumber2 = Math.floor(Math.random() * 3);
-							}
-
-							queueArray[8] = tempObjectLoop[randomnumber];
-
-							queueArray[9] = tempObjectLoop[randomnumber2];
-
-							tempObjectLoop.splice(randomnumber, 1);
-
-							if (randomnumber2 > randomnumber) {
-
-								tempObjectLoop.splice(randomnumber2 - 1, 1);
-							} else {
-
-								tempObjectLoop.splice(randomnumber2, 1);
-							}
-
-						} else if (hasVoted && hasVoted !== 'all') {
-
-							while (usedNums.includes(randomnumber2)) {
-
-								randomnumber2 = Math.floor(Math.random() * 2);
-							}
-
-							queueArray[9] = tempObjectLoop[randomnumber2];
-
-							tempObjectLoop.splice(usedNums[0], 1);
-
-							if (randomnumber2 > usedNums[0]) {
-
-								tempObjectLoop.splice(randomnumber2 - 1, 1);
-							} else {
-
-								tempObjectLoop.splice(randomnumber2, 1);
-							}
-						}
-
-						usedNums = [];
-
-						queueArray[4] = tempObjectLoop[0];
-
-						delete tempObject[gameCount];
+						tempObjectLoop.splice(randomnumber, 1);
 					}
+
+					hasVoted = false;
+
+					const Captain2nd = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_WARNING)
+						.setTitle('Choose two ( you have 20 seconds):')
+						.addField('1 :', tempObjectLoop[0].name)
+						.addField('2 :', tempObjectLoop[1].name)
+						.addField('3 :', tempObjectLoop[2].name)
+						.addField('4 :', tempObjectLoop[3].name)
+						.addField('5 :', tempObjectLoop[4].name)
+						.addField('6 :', tempObjectLoop[5].name)
+						.addField('7 :', tempObjectLoop[6].name);
+
+					privatedm1.send(Captain2nd).catch(error => {
+						const errorEmbed = new Discord.MessageEmbed()
+							.setColor(EMBED_COLOR_WARNING)
+							.setTitle(`:x: Couldn't sent message to ${privatedm1}, please check if your DM'S aren't set to friends only.`);
+
+						console.error(error);
+
+						message.channel.send(errorEmbed);
+					});
+
+					filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 8;
+
+					privatedm1.createDM().then(m => {
+						m.createMessageCollector(filter, {
+							time: 20000,
+						}).on('collect', m => {
+
+							const parsedM = parseInt(m.content) - 1;
+
+							if (!hasVoted) {
+								queueArray[6] = tempObjectLoop[parsedM];
+
+								hasVoted = true;
+
+								usedNums.push(parsedM);
+
+							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
+
+								queueArray[7] = tempObjectLoop[parsedM];
+
+								hasVoted = 'all';
+
+								usedNums.push(parsedM);
+
+								tempObjectLoop.splice(usedNums[0], 1);
+
+								if (usedNums[1] > usedNums[0]) {
+
+									tempObjectLoop.splice(usedNums[1] - 1, 1);
+								} else {
+
+									tempObjectLoop.splice(usedNums[1], 1);
+								}
+							}
+						});
+					});
+
+					await new Promise(resolve => setTimeout(resolve, 20000));
+
+					let randomnumber = Math.floor(Math.random() * 7);
+
+					let randomnumber2 = Math.floor(Math.random() * 7);
+
+					if (!hasVoted) {
+
+						while (randomnumber === randomnumber2) {
+							randomnumber2 = Math.floor(Math.random() * 7);
+						}
+
+						queueArray[6] = tempObjectLoop[randomnumber];
+
+						queueArray[7] = tempObjectLoop[randomnumber2];
+
+						tempObjectLoop.splice(randomnumber, 1);
+
+						if (randomnumber2 > randomnumber) {
+
+							tempObjectLoop.splice(randomnumber2 - 1, 1);
+						} else {
+
+							tempObjectLoop.splice(randomnumber2, 1);
+						}
+
+					} else if (hasVoted !== 'all') {
+
+						while (usedNums.includes(randomnumber2)) {
+
+							randomnumber2 = Math.floor(Math.random() * 6);
+						}
+
+						queueArray[7] = tempObjectLoop[randomnumber2];
+
+						tempObjectLoop.splice(usedNums[0], 1);
+
+						if (randomnumber2 > usedNums[0]) {
+
+							tempObjectLoop.splice(randomnumber2 - 1, 1);
+						} else {
+
+							tempObjectLoop.splice(randomnumber2, 1);
+						}
+					}
+
+					usedNums = [];
+
+					hasVoted = false;
+
+					const Captain3rd = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_WARNING)
+						.setTitle('Choose two ( you have 20 seconds):')
+						.addField('1 :', tempObjectLoop[0].name)
+						.addField('2 :', tempObjectLoop[1].name)
+						.addField('3 :', tempObjectLoop[2].name)
+						.addField('4 :', tempObjectLoop[3].name)
+						.addField('5 :', tempObjectLoop[4].name);
+
+					privatedm0.send(Captain3rd).catch(error => {
+						const errorEmbed = new Discord.MessageEmbed()
+							.setColor(EMBED_COLOR_WARNING)
+							.setTitle(`:x: Couldn't sent message to ${privatedm0}, please check if your DM'S aren't set to friends only.`); - console.error(error);
+
+						message.channel.send(errorEmbed);
+					});
+
+					filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 6;
+
+					privatedm0.createDM().then(m => {
+						m.createMessageCollector(filter, {
+							time: 20000,
+						}).on('collect', m => {
+
+							const parsedM = parseInt(m.content) - 1;
+
+							if (!hasVoted) {
+
+								queueArray[2] = tempObjectLoop[parsedM];
+
+								hasVoted = true;
+
+								usedNums.push(parsedM);
+
+							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
+
+								queueArray[3] = tempObjectLoop[parsedM];
+
+								hasVoted = 'all';
+
+								usedNums.push(parsedM);
+
+								tempObjectLoop.splice(usedNums[0], 1);
+
+								if (usedNums[1] > usedNums[0]) {
+
+									tempObjectLoop.splice(usedNums[1] - 1, 1);
+								} else {
+
+									tempObjectLoop.splice(usedNums[1], 1);
+								}
+							}
+						});
+					});
+
+					await new Promise(resolve => setTimeout(resolve, 20000));
+
+					randomnumber = Math.floor(Math.random() * 5);
+
+					randomnumber2 = Math.floor(Math.random() * 5);
+
+					if (!hasVoted) {
+
+						while (randomnumber === randomnumber2) {
+							randomnumber2 = Math.floor(Math.random() * 5);
+						}
+
+						queueArray[2] = tempObjectLoop[randomnumber];
+
+						queueArray[3] = tempObjectLoop[randomnumber2];
+
+						tempObjectLoop.splice(randomnumber, 1);
+
+						if (randomnumber2 > randomnumber) {
+
+							tempObjectLoop.splice(randomnumber2 - 1, 1);
+						} else {
+
+							tempObjectLoop.splice(randomnumber2, 1);
+						}
+
+					} else if (hasVoted !== 'all') {
+
+						while (usedNums.includes(randomnumber2)) {
+
+							randomnumber2 = Math.floor(Math.random() * 4);
+						}
+
+						queueArray[3] = tempObjectLoop[randomnumber2];
+
+						tempObjectLoop.splice(usedNums[0], 1);
+
+						if (randomnumber2 > usedNums[0]) {
+
+							tempObjectLoop.splice(randomnumber2 - 1, 1);
+						} else {
+
+							tempObjectLoop.splice(randomnumber2, 1);
+						}
+					}
+
+					usedNums = [];
+
+					hasVoted = false;
+
+					const Captain4th = new Discord.MessageEmbed()
+						.setColor(EMBED_COLOR_WARNING)
+						.setTitle('Choose two ( you have 20 seconds):')
+						.addField('1 :', tempObjectLoop[0].name)
+						.addField('2 :', tempObjectLoop[1].name)
+						.addField('3 :', tempObjectLoop[2].name);
+
+					privatedm1.send(Captain4th).catch(error => {
+						const errorEmbed = new Discord.MessageEmbed()
+							.setColor(EMBED_COLOR_WARNING)
+							.setTitle(`:x: Couldn't sent message to ${privatedm1}, please check if your DM'S aren't set to friends only.`);
+
+						console.error(error);
+
+						message.channel.send(errorEmbed);
+					});
+
+					filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 4;
+
+					privatedm1.createDM().then(m => {
+						m.createMessageCollector(filter, {
+							time: 20000,
+						}).on('collect', m => {
+
+							const parsedM = parseInt(m.content) - 1;
+
+							if (!hasVoted) {
+
+								queueArray[8] = tempObjectLoop[parsedM];
+
+								hasVoted = true;
+
+								usedNums.push(parsedM);
+
+							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
+
+								queueArray[9] = tempObjectLoop[parsedM];
+
+								hasVoted = 'all';
+
+								usedNums.push(parsedM);
+
+								tempObjectLoop.splice(usedNums[0], 1);
+
+								if (usedNums[1] > usedNums[0]) {
+
+									tempObjectLoop.splice(usedNums[1] - 1, 1);
+								} else {
+
+									tempObjectLoop.splice(usedNums[1], 1);
+								}
+							}
+						});
+					});
+
+					await new Promise(resolve => setTimeout(resolve, 20000));
+
+					randomnumber = Math.floor(Math.random() * 3);
+
+					randomnumber2 = Math.floor(Math.random() * 3);
+
+					if (!hasVoted) {
+
+						while (randomnumber === randomnumber2) {
+							randomnumber2 = Math.floor(Math.random() * 3);
+						}
+
+						queueArray[8] = tempObjectLoop[randomnumber];
+
+						queueArray[9] = tempObjectLoop[randomnumber2];
+
+						tempObjectLoop.splice(randomnumber, 1);
+
+						if (randomnumber2 > randomnumber) {
+
+							tempObjectLoop.splice(randomnumber2 - 1, 1);
+						} else {
+
+							tempObjectLoop.splice(randomnumber2, 1);
+						}
+
+					} else if (hasVoted && hasVoted !== 'all') {
+
+						while (usedNums.includes(randomnumber2)) {
+
+							randomnumber2 = Math.floor(Math.random() * 2);
+						}
+
+						queueArray[9] = tempObjectLoop[randomnumber2];
+
+						tempObjectLoop.splice(usedNums[0], 1);
+
+						if (randomnumber2 > usedNums[0]) {
+
+							tempObjectLoop.splice(randomnumber2 - 1, 1);
+						} else {
+
+							tempObjectLoop.splice(randomnumber2, 1);
+						}
+					}
+
+					usedNums = [];
+
+					queueArray[4] = tempObjectLoop[0];
+
+					delete tempObject[gameCount];
+
 				}
 				ongoingGames.push([...queueArray]);
 
