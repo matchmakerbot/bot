@@ -22,33 +22,7 @@ const ongoingGames = [];
 
 const finishedGames = [];
 
-const channelQueues = {
-	["697856354194554881"]: [{
-			id: '240546167602151424',
-			name: 'Dan The Man',
-			date: "2020-07-16T17:26:32.498Z"
-		},
-		{
-			id: '481921171907149834',
-			name: 'helgemo89',
-			date: "2020-07-16T17:23:19.358Z"
-		},
-		{
-			id: '161992764672835584',
-			name: 'Hertzum',
-			date: "2020-07-16T17:24:13.134Z"
-		}, {
-			id: '270597189128945665',
-			name: 'VaderRL',
-			date: "2020-07-16T17:23:43.010Z"
-		},
-		{
-			id: '182842009772490752',
-			name: 'Reechs',
-			date: "2020-07-16T17:22:54.426Z"
-		},
-	],
-};
+const channelQueues = {};
 
 const cancelQueue = {};
 
