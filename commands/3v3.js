@@ -22,7 +22,33 @@ const ongoingGames = [];
 
 const finishedGames = [];
 
-const channelQueues = {};
+const channelQueues = {
+	["697856354194554881"]: [{
+			id: '240546167602151424',
+			name: 'Dan The Man',
+			date: "2020-07-16T17:26:32.498Z"
+		},
+		{
+			id: '481921171907149834',
+			name: 'helgemo89',
+			date: "2020-07-16T17:23:19.358Z"
+		},
+		{
+			id: '161992764672835584',
+			name: 'Hertzum',
+			date: "2020-07-16T17:24:13.134Z"
+		}, {
+			id: '270597189128945665',
+			name: 'VaderRL',
+			date: "2020-07-16T17:23:43.010Z"
+		},
+		{
+			id: '182842009772490752',
+			name: 'Reechs',
+			date: "2020-07-16T17:22:54.426Z"
+		},
+	],
+};
 
 const cancelQueue = {};
 
@@ -40,7 +66,7 @@ setInterval(async () => {
 		for (const channel of Object.values(channelQueues)) {
 			for (const user of channel) {
 				if ((Date.now() - user.date) > 45 * 60 * 1000) {
-					 if (channel.length > 5) {
+					if (channel.length > 5) {
 						continue
 					}
 					const actualChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel));
@@ -822,6 +848,7 @@ const execute = async (message) => {
 							},
 						});
 					});
+					
 					correctEmbed.setTitle(':white_check_mark: Player\'s score reset!');
 
 					return message.channel.send(correctEmbed);
@@ -933,7 +960,7 @@ const execute = async (message) => {
 				let filter = m => m.content.split('')[1] === 'r' || m.content.split('')[1] === 'c';
 
 				message.channel.createMessageCollector(filter, {
-					time: 15000,
+					time: 20000,
 				}).on('collect', m => {
 					if (!queueArray.map(e => e.id).includes(m.author.id) || rorcArray.map(e => e.id).includes(m.author.id)) {
 
@@ -946,7 +973,7 @@ const execute = async (message) => {
 					}
 				});
 
-				await new Promise(resolve => setTimeout(resolve, 15000));
+				await new Promise(resolve => setTimeout(resolve, 20000));
 
 				function getOccurrence(array, value) {
 
@@ -986,11 +1013,11 @@ const execute = async (message) => {
 
 					tempObject[gameCount] = [];
 
-					const tempobjectArray = tempObject[gameCount];
+					const captainsArray = tempObject[gameCount];
 
-					tempobjectArray.push([...queueArray]);
+					captainsArray.push([...queueArray]);
 
-					const tempObjectLoop = tempobjectArray.find(object => includesUserID(object))
+					const tempObjectLoop = captainsArray.find(object => includesUserID(object))
 
 					const tempvar = tempObjectLoop[6];
 
@@ -999,8 +1026,6 @@ const execute = async (message) => {
 					tempObjectLoop.splice(tempObjectLoop.findIndex(o => o.gameID === tempvar.gameID), 1);
 
 					tempObjectLoop.push(tempvar);
-
-					console.log(tempObjectLoop)
 
 					queueArray[0] = tempObjectLoop[0];
 
@@ -1019,8 +1044,16 @@ const execute = async (message) => {
 					const privatedm1 = await client.users.fetch(tempObjectLoop[1].id);
 
 					tempObjectLoop.shift();
-					
+
 					tempObjectLoop.shift();
+
+					console.log(queueArray)
+
+					console.log("fuck")
+
+					console.log(tempObjectLoop)
+
+					return
 
 					const Captain1st = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)

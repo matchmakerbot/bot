@@ -988,7 +988,7 @@ const execute = async (message) => {
 				let filter = m => m.content.split('')[1] === 'r' || m.content.split('')[1] === 'c';
 
 				message.channel.createMessageCollector(filter, {
-					time: 15000,
+					time: 20000,
 				}).on('collect', m => {
 					if (!queueArray.map(e => e.id).includes(m.author.id) || rorcArray.map(e => e.id).includes(m.author.id)) {
 
@@ -1001,7 +1001,7 @@ const execute = async (message) => {
 					}
 				});
 
-				await new Promise(resolve => setTimeout(resolve, 15000));
+				await new Promise(resolve => setTimeout(resolve, 20000));
 
 				function getOccurrence(array, value) {
 
