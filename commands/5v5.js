@@ -660,8 +660,9 @@ const execute = async (message) => {
 
 						correctEmbed.addField('MMR:', scoreDirectory.mmr);
 
+						return message.channel.send(correctEmbed);
 					});
-					return message.channel.send(correctEmbed);
+					break
 				}
 				case 'channel': {
 
@@ -1045,51 +1046,55 @@ const execute = async (message) => {
 
 					tempObject[gameCount] = [];
 
-					const tempobjectArray = tempObject[gameCount];
+					const captainsArray = tempObject[gameCount];
 
-					tempobjectArray.push([...queueArray]);
+					captainsArray.push(...queueArray.map(queueItem => ({ ...queueItem })));
 
-					const tempObjectLoop = tempobjectArray.find(object => includesUserID(object))
+					const tempvar = captainsArray[10];
 
-					const tempvar = tempObjectLoop[10];
+					shuffle(captainsArray);
 
-					shuffle(tempObjectLoop);
+					captainsArray.splice(captainsArray.findIndex(o => o.gameID === tempvar.gameID), 1);
 
-					tempObjectLoop.splice(tempObjectLoop.findIndex(o => o.gameID === tempvar.gameID), 1);
+					captainsArray.push(tempvar);
 
-					tempObjectLoop.push(tempvar);
+					for(let player of queueArray) {
+						if (player.name !== undefined) {
+							player.name = "Placeholder"
+						}
+					}
 
-					queueArray[0] = tempObjectLoop[0];
+					queueArray[0] = captainsArray[0];
 
-					queueArray[5] = tempObjectLoop[1];
+					queueArray[5] = captainsArray[1];
 
 					const CaptainsEmbed = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
-						.setTitle(`Game ID: ${tempObjectLoop[10].gameID}`)
-						.addField('Captain for team 1', tempObjectLoop[0].name)
-						.addField('Captain for team 2', tempObjectLoop[1].name);
+						.setTitle(`Game ID: ${captainsArray[10].gameID}`)
+						.addField('Captain for team 1', captainsArray[0].name)
+						.addField('Captain for team 2', captainsArray[1].name);
 
 					message.channel.send(CaptainsEmbed);
 
-					const privatedm0 = await client.users.fetch(tempObjectLoop[0].id);
+					const privatedm0 = await client.users.fetch(captainsArray[0].id);
 
-					const privatedm1 = await client.users.fetch(tempObjectLoop[1].id);
+					const privatedm1 = await client.users.fetch(captainsArray[1].id);
 
-					tempObjectLoop.shift();
+					captainsArray.shift();
 
-					tempObjectLoop.shift();
+					captainsArray.shift();
 
 					const Captain1st = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
 						.setTitle('Choose one ( you have 20 seconds):')
-						.addField('1 :', tempObjectLoop[0].name)
-						.addField('2 :', tempObjectLoop[1].name)
-						.addField('3 :', tempObjectLoop[2].name)
-						.addField('4 :', tempObjectLoop[3].name)
-						.addField('5 :', tempObjectLoop[4].name)
-						.addField('6 :', tempObjectLoop[5].name)
-						.addField('7 :', tempObjectLoop[6].name)
-						.addField('8 :', tempObjectLoop[7].name);
+						.addField('1 :', captainsArray[0].name)
+						.addField('2 :', captainsArray[1].name)
+						.addField('3 :', captainsArray[2].name)
+						.addField('4 :', captainsArray[3].name)
+						.addField('5 :', captainsArray[4].name)
+						.addField('6 :', captainsArray[5].name)
+						.addField('7 :', captainsArray[6].name)
+						.addField('8 :', captainsArray[7].name);
 
 					privatedm0.send(Captain1st).catch(error => {
 						const errorEmbed = new Discord.MessageEmbed()
@@ -1112,9 +1117,9 @@ const execute = async (message) => {
 
 							if (!hasVoted) {
 
-								queueArray[1] = tempObjectLoop[parsedM];
+								queueArray[1] = captainsArray[parsedM];
 
-								tempObjectLoop.splice(parsedM, 1);
+								captainsArray.splice(parsedM, 1);
 
 								hasVoted = true;
 							}
@@ -1127,9 +1132,9 @@ const execute = async (message) => {
 
 						const randomnumber = Math.floor(Math.random() * 8);
 
-						queueArray[1] = tempObjectLoop[randomnumber];
+						queueArray[1] = captainsArray[randomnumber];
 
-						tempObjectLoop.splice(randomnumber, 1);
+						captainsArray.splice(randomnumber, 1);
 					}
 
 					hasVoted = false;
@@ -1137,13 +1142,13 @@ const execute = async (message) => {
 					const Captain2nd = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
 						.setTitle('Choose two ( you have 20 seconds):')
-						.addField('1 :', tempObjectLoop[0].name)
-						.addField('2 :', tempObjectLoop[1].name)
-						.addField('3 :', tempObjectLoop[2].name)
-						.addField('4 :', tempObjectLoop[3].name)
-						.addField('5 :', tempObjectLoop[4].name)
-						.addField('6 :', tempObjectLoop[5].name)
-						.addField('7 :', tempObjectLoop[6].name);
+						.addField('1 :', captainsArray[0].name)
+						.addField('2 :', captainsArray[1].name)
+						.addField('3 :', captainsArray[2].name)
+						.addField('4 :', captainsArray[3].name)
+						.addField('5 :', captainsArray[4].name)
+						.addField('6 :', captainsArray[5].name)
+						.addField('7 :', captainsArray[6].name);
 
 					privatedm1.send(Captain2nd).catch(error => {
 						const errorEmbed = new Discord.MessageEmbed()
@@ -1165,7 +1170,7 @@ const execute = async (message) => {
 							const parsedM = parseInt(m.content) - 1;
 
 							if (!hasVoted) {
-								queueArray[6] = tempObjectLoop[parsedM];
+								queueArray[6] = captainsArray[parsedM];
 
 								hasVoted = true;
 
@@ -1173,20 +1178,20 @@ const execute = async (message) => {
 
 							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
 
-								queueArray[7] = tempObjectLoop[parsedM];
+								queueArray[7] = captainsArray[parsedM];
 
 								hasVoted = 'all';
 
 								usedNums.push(parsedM);
 
-								tempObjectLoop.splice(usedNums[0], 1);
+								captainsArray.splice(usedNums[0], 1);
 
 								if (usedNums[1] > usedNums[0]) {
 
-									tempObjectLoop.splice(usedNums[1] - 1, 1);
+									captainsArray.splice(usedNums[1] - 1, 1);
 								} else {
 
-									tempObjectLoop.splice(usedNums[1], 1);
+									captainsArray.splice(usedNums[1], 1);
 								}
 							}
 						});
@@ -1204,18 +1209,18 @@ const execute = async (message) => {
 							randomnumber2 = Math.floor(Math.random() * 7);
 						}
 
-						queueArray[6] = tempObjectLoop[randomnumber];
+						queueArray[6] = captainsArray[randomnumber];
 
-						queueArray[7] = tempObjectLoop[randomnumber2];
+						queueArray[7] = captainsArray[randomnumber2];
 
-						tempObjectLoop.splice(randomnumber, 1);
+						captainsArray.splice(randomnumber, 1);
 
 						if (randomnumber2 > randomnumber) {
 
-							tempObjectLoop.splice(randomnumber2 - 1, 1);
+							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
 
-							tempObjectLoop.splice(randomnumber2, 1);
+							captainsArray.splice(randomnumber2, 1);
 						}
 
 					} else if (hasVoted !== 'all') {
@@ -1225,16 +1230,16 @@ const execute = async (message) => {
 							randomnumber2 = Math.floor(Math.random() * 6);
 						}
 
-						queueArray[7] = tempObjectLoop[randomnumber2];
+						queueArray[7] = captainsArray[randomnumber2];
 
-						tempObjectLoop.splice(usedNums[0], 1);
+						captainsArray.splice(usedNums[0], 1);
 
 						if (randomnumber2 > usedNums[0]) {
 
-							tempObjectLoop.splice(randomnumber2 - 1, 1);
+							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
 
-							tempObjectLoop.splice(randomnumber2, 1);
+							captainsArray.splice(randomnumber2, 1);
 						}
 					}
 
@@ -1245,11 +1250,11 @@ const execute = async (message) => {
 					const Captain3rd = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
 						.setTitle('Choose two ( you have 20 seconds):')
-						.addField('1 :', tempObjectLoop[0].name)
-						.addField('2 :', tempObjectLoop[1].name)
-						.addField('3 :', tempObjectLoop[2].name)
-						.addField('4 :', tempObjectLoop[3].name)
-						.addField('5 :', tempObjectLoop[4].name);
+						.addField('1 :', captainsArray[0].name)
+						.addField('2 :', captainsArray[1].name)
+						.addField('3 :', captainsArray[2].name)
+						.addField('4 :', captainsArray[3].name)
+						.addField('5 :', captainsArray[4].name);
 
 					privatedm0.send(Captain3rd).catch(error => {
 						const errorEmbed = new Discord.MessageEmbed()
@@ -1270,7 +1275,7 @@ const execute = async (message) => {
 
 							if (!hasVoted) {
 
-								queueArray[2] = tempObjectLoop[parsedM];
+								queueArray[2] = captainsArray[parsedM];
 
 								hasVoted = true;
 
@@ -1278,20 +1283,20 @@ const execute = async (message) => {
 
 							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
 
-								queueArray[3] = tempObjectLoop[parsedM];
+								queueArray[3] = captainsArray[parsedM];
 
 								hasVoted = 'all';
 
 								usedNums.push(parsedM);
 
-								tempObjectLoop.splice(usedNums[0], 1);
+								captainsArray.splice(usedNums[0], 1);
 
 								if (usedNums[1] > usedNums[0]) {
 
-									tempObjectLoop.splice(usedNums[1] - 1, 1);
+									captainsArray.splice(usedNums[1] - 1, 1);
 								} else {
 
-									tempObjectLoop.splice(usedNums[1], 1);
+									captainsArray.splice(usedNums[1], 1);
 								}
 							}
 						});
@@ -1309,18 +1314,18 @@ const execute = async (message) => {
 							randomnumber2 = Math.floor(Math.random() * 5);
 						}
 
-						queueArray[2] = tempObjectLoop[randomnumber];
+						queueArray[2] = captainsArray[randomnumber];
 
-						queueArray[3] = tempObjectLoop[randomnumber2];
+						queueArray[3] = captainsArray[randomnumber2];
 
-						tempObjectLoop.splice(randomnumber, 1);
+						captainsArray.splice(randomnumber, 1);
 
 						if (randomnumber2 > randomnumber) {
 
-							tempObjectLoop.splice(randomnumber2 - 1, 1);
+							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
 
-							tempObjectLoop.splice(randomnumber2, 1);
+							captainsArray.splice(randomnumber2, 1);
 						}
 
 					} else if (hasVoted !== 'all') {
@@ -1330,16 +1335,16 @@ const execute = async (message) => {
 							randomnumber2 = Math.floor(Math.random() * 4);
 						}
 
-						queueArray[3] = tempObjectLoop[randomnumber2];
+						queueArray[3] = captainsArray[randomnumber2];
 
-						tempObjectLoop.splice(usedNums[0], 1);
+						captainsArray.splice(usedNums[0], 1);
 
 						if (randomnumber2 > usedNums[0]) {
 
-							tempObjectLoop.splice(randomnumber2 - 1, 1);
+							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
 
-							tempObjectLoop.splice(randomnumber2, 1);
+							captainsArray.splice(randomnumber2, 1);
 						}
 					}
 
@@ -1350,9 +1355,9 @@ const execute = async (message) => {
 					const Captain4th = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
 						.setTitle('Choose two ( you have 20 seconds):')
-						.addField('1 :', tempObjectLoop[0].name)
-						.addField('2 :', tempObjectLoop[1].name)
-						.addField('3 :', tempObjectLoop[2].name);
+						.addField('1 :', captainsArray[0].name)
+						.addField('2 :', captainsArray[1].name)
+						.addField('3 :', captainsArray[2].name);
 
 					privatedm1.send(Captain4th).catch(error => {
 						const errorEmbed = new Discord.MessageEmbed()
@@ -1375,7 +1380,7 @@ const execute = async (message) => {
 
 							if (!hasVoted) {
 
-								queueArray[8] = tempObjectLoop[parsedM];
+								queueArray[8] = captainsArray[parsedM];
 
 								hasVoted = true;
 
@@ -1383,20 +1388,20 @@ const execute = async (message) => {
 
 							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
 
-								queueArray[9] = tempObjectLoop[parsedM];
+								queueArray[9] = captainsArray[parsedM];
 
 								hasVoted = 'all';
 
 								usedNums.push(parsedM);
 
-								tempObjectLoop.splice(usedNums[0], 1);
+								captainsArray.splice(usedNums[0], 1);
 
 								if (usedNums[1] > usedNums[0]) {
 
-									tempObjectLoop.splice(usedNums[1] - 1, 1);
+									captainsArray.splice(usedNums[1] - 1, 1);
 								} else {
 
-									tempObjectLoop.splice(usedNums[1], 1);
+									captainsArray.splice(usedNums[1], 1);
 								}
 							}
 						});
@@ -1414,18 +1419,18 @@ const execute = async (message) => {
 							randomnumber2 = Math.floor(Math.random() * 3);
 						}
 
-						queueArray[8] = tempObjectLoop[randomnumber];
+						queueArray[8] = captainsArray[randomnumber];
 
-						queueArray[9] = tempObjectLoop[randomnumber2];
+						queueArray[9] = captainsArray[randomnumber2];
 
-						tempObjectLoop.splice(randomnumber, 1);
+						captainsArray.splice(randomnumber, 1);
 
 						if (randomnumber2 > randomnumber) {
 
-							tempObjectLoop.splice(randomnumber2 - 1, 1);
+							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
 
-							tempObjectLoop.splice(randomnumber2, 1);
+							captainsArray.splice(randomnumber2, 1);
 						}
 
 					} else if (hasVoted && hasVoted !== 'all') {
@@ -1435,22 +1440,22 @@ const execute = async (message) => {
 							randomnumber2 = Math.floor(Math.random() * 2);
 						}
 
-						queueArray[9] = tempObjectLoop[randomnumber2];
+						queueArray[9] = captainsArray[randomnumber2];
 
-						tempObjectLoop.splice(usedNums[0], 1);
+						captainsArray.splice(usedNums[0], 1);
 
 						if (randomnumber2 > usedNums[0]) {
 
-							tempObjectLoop.splice(randomnumber2 - 1, 1);
+							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
 
-							tempObjectLoop.splice(randomnumber2, 1);
+							captainsArray.splice(randomnumber2, 1);
 						}
 					}
 
 					usedNums = [];
 
-					queueArray[4] = tempObjectLoop[0];
+					queueArray[4] = captainsArray[0];
 
 					delete tempObject[gameCount];
 
