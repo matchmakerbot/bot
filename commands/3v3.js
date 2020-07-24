@@ -1006,9 +1006,9 @@ const execute = async (message) => {
 						}
 					}
 
-					queueArray[0] = queueArray[0]
+					queueArray[0] = captainsArray[0]
 
-					queueArray[3] = queueArray[1]
+					queueArray[3] = captainsArray[1]
 
 					const CaptainsEmbed = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
