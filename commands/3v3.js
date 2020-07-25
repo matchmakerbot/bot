@@ -1044,7 +1044,7 @@ const execute = async (message) => {
 						message.channel.send(errorEmbed);
 					});
 
-					filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 4;
+					filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 5;
 
 					await privatedm0.createDM().then(m => {
 						m.createMessageCollector(filter, {
@@ -1092,7 +1092,7 @@ const execute = async (message) => {
 						message.channel.send(errorEmbed);
 					});
 
-					filter = m => !isNaN(m.content) && parseInt(m.content) > -1 && parseInt(m.content) < 4;
+					filter = m => !isNaN(m.content) && parseInt(m.content) > 0 && parseInt(m.content) < 4;
 
 					privatedm1.createDM().then(m => {
 						m.createMessageCollector(filter, {
