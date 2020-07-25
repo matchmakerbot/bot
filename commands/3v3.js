@@ -422,7 +422,7 @@ const execute = async (message) => {
 							if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
 								deletableChannels.push({
 									id: channel.id,
-									guild: message.guild
+									channel: message.channel.id
 								})
 
 							}
@@ -430,11 +430,12 @@ const execute = async (message) => {
 							if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
 								deletableChannels.push({
 									id: channel.id,
-									guild: message.guild
+									channel: message.channel.id
 								})
 
 							}
 						}
+
 						correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
 
 						return message.channel.send(correctEmbed);
