@@ -36,6 +36,8 @@ const finishedGames = [];
 
 const storedGames = {};
 
+const deletableChannels = []
+
 let gameCount = 0;
 
 let teamsInGameVar = [];
@@ -95,6 +97,17 @@ setInterval(async () => {
 
 				embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 			}
+		}
+	}
+	for (let voiceChannel of deletableChannels) {
+
+		const getVoiceChannel = await client.channels.fetch(voiceChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === voiceChannel.id))
+
+		if (getVoiceChannel.members.array().length === 0) {
+
+			getVoiceChannel.delete()
+
+			deletableChannels.splice(deletableChannels.indexOf(voiceChannel), 1)
 		}
 	}
 }, 60 * 1000);
@@ -191,7 +204,11 @@ const execute = async (message) => {
 	const userId = message.author.id;
 
 	const getIDByTag = (tag) => {
-		return tag.substring(3, tag.length - 1);
+		if(tag.indexOf("!") > -1){
+			return tag.substring(3, tag.length - 1);
+		} else {
+			return tag.substring(2, tag.length - 1);
+		}
 	};
 
 	const teamsInsert = {
@@ -863,13 +880,19 @@ const execute = async (message) => {
 						for (const channel of message.guild.channels.cache.array()) {
 
 							if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 
 							if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 						}
 
@@ -910,13 +933,19 @@ const execute = async (message) => {
 						for (const channel of message.guild.channels.cache.array()) {
 
 							if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 
 							if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 						}
 

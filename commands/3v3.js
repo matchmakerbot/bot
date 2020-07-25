@@ -26,6 +26,8 @@ const channelQueues = {};
 
 const cancelQueue = {};
 
+const deletableChannels = []
+
 let gameCount = 0;
 
 let hasVoted = false;
@@ -87,6 +89,18 @@ setInterval(async () => {
 
 				embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 			}
+		}
+	}
+
+	for (let voiceChannel of deletableChannels) {
+
+		const getVoiceChannel = await client.channels.fetch(voiceChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === voiceChannel.id))
+
+		if (getVoiceChannel.members.array().length === 0) {
+
+			getVoiceChannel.delete()
+
+			deletableChannels.splice(deletableChannels.indexOf(voiceChannel), 1)
 		}
 	}
 }, 60 * 1000);
@@ -336,13 +350,19 @@ const execute = async (message) => {
 						for (const channel of message.guild.channels.cache.array()) {
 
 							if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 
 							if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 						}
 
@@ -400,13 +420,19 @@ const execute = async (message) => {
 						for (const channel of message.guild.channels.cache.array()) {
 
 							if (channel.name === `🔸Team-1-Game-${games[6].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									guild: message.guild
+								})
 
-								channel.delete();
 							}
 
 							if (channel.name === `🔹Team-2-Game-${games[6].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									guild: message.guild
+								})
 
-								channel.delete();
 							}
 						}
 						correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
@@ -823,7 +849,7 @@ const execute = async (message) => {
 							},
 						});
 					});
-					
+
 					correctEmbed.setTitle(':white_check_mark: Player\'s score reset!');
 
 					return message.channel.send(correctEmbed);
@@ -990,7 +1016,9 @@ const execute = async (message) => {
 
 					const captainsArray = tempObject[gameCount];
 
-					captainsArray.push(...queueArray.map(queueItem => ({ ...queueItem })));
+					captainsArray.push(...queueArray.map(queueItem => ({
+						...queueItem
+					})));
 
 					const tempvar = captainsArray[6];
 
@@ -1000,7 +1028,7 @@ const execute = async (message) => {
 
 					captainsArray.push(tempvar);
 
-					for(let player of queueArray) {
+					for (let player of queueArray) {
 						if (player.name !== undefined) {
 							player.name = "Placeholder"
 						}
@@ -1058,6 +1086,7 @@ const execute = async (message) => {
 								captainsArray.splice(parsedM, 1);
 
 								hasVoted = true;
+
 							}
 						});
 					});
@@ -1071,6 +1100,7 @@ const execute = async (message) => {
 						queueArray[1] = captainsArray[randomnumber];
 
 						captainsArray.splice(randomnumber, 1);
+
 					}
 
 					hasVoted = false;

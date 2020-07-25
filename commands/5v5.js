@@ -30,6 +30,8 @@ const ongoingGames = [];
 
 const finishedGames = [];
 
+const deletableChannels = []
+
 const channelQueues = {};
 
 const cancelQueue = {};
@@ -100,6 +102,18 @@ setInterval(async () => {
 
 				embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 			}
+		}
+	}
+
+	for (let voiceChannel of deletableChannels) {
+
+		const getVoiceChannel = await client.channels.fetch(voiceChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === voiceChannel.id))
+
+		if (getVoiceChannel.members.array().length === 0) {
+
+			getVoiceChannel.delete()
+
+			deletableChannels.splice(deletableChannels.indexOf(voiceChannel), 1)
 		}
 	}
 }, 60 * 1000);
@@ -396,15 +410,22 @@ const execute = async (message) => {
 						for (const channel of message.guild.channels.cache.array()) {
 
 							if (channel.name === `🔸Team-1-Game-${games[10].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 
 							if (channel.name === `🔹Team-2-Game-${games[10].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 						}
+						
 						correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
 
 						return message.channel.send(correctEmbed);
@@ -458,15 +479,22 @@ const execute = async (message) => {
 						for (const channel of message.guild.channels.cache.array()) {
 
 							if (channel.name === `🔸Team-1-Game-${games[10].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 
 							if (channel.name === `🔹Team-2-Game-${games[10].gameID}`) {
+								deletableChannels.push({
+									id: channel.id,
+									channel: message.channel.id
+								})
 
-								channel.delete();
 							}
 						}
+
 						correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
 
 						return message.channel.send(correctEmbed);
@@ -1048,7 +1076,9 @@ const execute = async (message) => {
 
 					const captainsArray = tempObject[gameCount];
 
-					captainsArray.push(...queueArray.map(queueItem => ({ ...queueItem })));
+					captainsArray.push(...queueArray.map(queueItem => ({
+						...queueItem
+					})));
 
 					const tempvar = captainsArray[10];
 
@@ -1058,7 +1088,7 @@ const execute = async (message) => {
 
 					captainsArray.push(tempvar);
 
-					for(let player of queueArray) {
+					for (let player of queueArray) {
 						if (player.name !== undefined) {
 							player.name = "Placeholder"
 						}
