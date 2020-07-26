@@ -30,6 +30,8 @@ const ongoingGames = [];
 
 const finishedGames = [];
 
+const usedNums = [];
+
 const deletableChannels = []
 
 const channelQueues = {};
@@ -43,8 +45,6 @@ const storedGames = {};
 let gameCount = 0;
 
 let hasVoted = false;
-
-let usedNums = [];
 
 setInterval(async () => {
 
@@ -255,7 +255,6 @@ const execute = async (message) => {
 
 		storedGames[message.guild.id] = '';
 	}
-
 
 	const fetchFromID = async (id) => {
 		return (await client.users.fetch(id).catch(error => {
@@ -936,7 +935,7 @@ const execute = async (message) => {
 				return message.channel.send(wrongEmbed);
 			}
 
-			if (Object.entries(tempObject).length !== 0 || queueArray.length === 10) {
+			if (queueArray.length > 9) {
 
 				wrongEmbed.setTitle(':x: Please wait for the next game to be decided!');
 
@@ -1066,13 +1065,11 @@ const execute = async (message) => {
 
 					// also what youre about to see will kill you, its not permanent, as even i have standarts
 
-					queueArray.push({
-						gameID: gameCount,
-						time: new Date(),
-						channelID: channel_ID,
-					});
-
 					tempObject[gameCount] = [];
+
+					usedNums[gameCount] = [];
+
+					const gameCountNums = usedNums[gameCount];
 
 					const captainsArray = tempObject[gameCount];
 
@@ -1080,17 +1077,11 @@ const execute = async (message) => {
 						...queueItem
 					})));
 
-					const tempvar = captainsArray[10];
-
 					shuffle(captainsArray);
-
-					captainsArray.splice(captainsArray.findIndex(o => o.gameID === tempvar.gameID), 1);
-
-					captainsArray.push(tempvar);
 
 					for (let player of queueArray) {
 						if (player.name !== undefined) {
-							player.name = "Placeholder"
+							player.name = "Error, please report this error to tweeno (!credits)"
 						}
 					}
 
@@ -1100,7 +1091,7 @@ const execute = async (message) => {
 
 					const CaptainsEmbed = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
-						.setTitle(`Game ID: ${captainsArray[10].gameID}`)
+						.setTitle(`Game ID: ${gameCount}`)
 						.addField('Captain for team 1', captainsArray[0].name)
 						.addField('Captain for team 2', captainsArray[1].name);
 
@@ -1116,7 +1107,7 @@ const execute = async (message) => {
 
 					const Captain1st = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
-						.setTitle('Choose one ( you have 20 seconds):')
+						.setTitle('Choose one ( you have 40 seconds):')
 						.addField('1 :', captainsArray[0].name)
 						.addField('2 :', captainsArray[1].name)
 						.addField('3 :', captainsArray[2].name)
@@ -1140,7 +1131,7 @@ const execute = async (message) => {
 
 					await privatedm0.createDM().then(m => {
 						m.createMessageCollector(filter, {
-							time: 20000,
+							time: 40000,
 						}).on('collect', m => {
 
 							const parsedM = parseInt(m.content) - 1;
@@ -1156,7 +1147,7 @@ const execute = async (message) => {
 						});
 					});
 
-					await new Promise(resolve => setTimeout(resolve, 20000));
+					await new Promise(resolve => setTimeout(resolve, 40000));
 
 					if (!hasVoted) {
 
@@ -1171,7 +1162,7 @@ const execute = async (message) => {
 
 					const Captain2nd = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
-						.setTitle('Choose two ( you have 20 seconds):')
+						.setTitle('Choose two ( you have 40 seconds):')
 						.addField('1 :', captainsArray[0].name)
 						.addField('2 :', captainsArray[1].name)
 						.addField('3 :', captainsArray[2].name)
@@ -1194,7 +1185,7 @@ const execute = async (message) => {
 
 					privatedm1.createDM().then(m => {
 						m.createMessageCollector(filter, {
-							time: 20000,
+							time: 40000,
 						}).on('collect', m => {
 
 							const parsedM = parseInt(m.content) - 1;
@@ -1227,7 +1218,7 @@ const execute = async (message) => {
 						});
 					});
 
-					await new Promise(resolve => setTimeout(resolve, 20000));
+					await new Promise(resolve => setTimeout(resolve, 40000));
 
 					let randomnumber = Math.floor(Math.random() * 7);
 
@@ -1298,7 +1289,7 @@ const execute = async (message) => {
 
 					privatedm0.createDM().then(m => {
 						m.createMessageCollector(filter, {
-							time: 20000,
+							time: 40000,
 						}).on('collect', m => {
 
 							const parsedM = parseInt(m.content) - 1;
@@ -1309,21 +1300,21 @@ const execute = async (message) => {
 
 								hasVoted = true;
 
-								usedNums.push(parsedM);
+								gameCountNums.push(parsedM);
 
-							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
+							} else if (hasVoted && !gameCountNums.includes(parsedM) && hasVoted !== 'all') {
 
 								queueArray[3] = captainsArray[parsedM];
 
 								hasVoted = 'all';
 
-								usedNums.push(parsedM);
+								gameCountNums.push(parsedM);
 
-								captainsArray.splice(usedNums[0], 1);
+								captainsArray.splice(gameCountNums[0], 1);
 
-								if (usedNums[1] > usedNums[0]) {
+								if (gameCountNums[1] > gameCountNums[0]) {
 
-									captainsArray.splice(usedNums[1] - 1, 1);
+									captainsArray.splice(gameCountNums[1] - 1, 1);
 								} else {
 
 									captainsArray.splice(usedNums[1], 1);
@@ -1360,16 +1351,16 @@ const execute = async (message) => {
 
 					} else if (hasVoted !== 'all') {
 
-						while (usedNums.includes(randomnumber2)) {
+						while (gameCountNums.includes(randomnumber2)) {
 
 							randomnumber2 = Math.floor(Math.random() * 4);
 						}
 
 						queueArray[3] = captainsArray[randomnumber2];
 
-						captainsArray.splice(usedNums[0], 1);
+						captainsArray.splice(gameCountNums[0], 1);
 
-						if (randomnumber2 > usedNums[0]) {
+						if (randomnumber2 > gameCountNums[0]) {
 
 							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
@@ -1378,13 +1369,13 @@ const execute = async (message) => {
 						}
 					}
 
-					usedNums = [];
+					gameCountNums = [];
 
 					hasVoted = false;
 
 					const Captain4th = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_WARNING)
-						.setTitle('Choose two ( you have 20 seconds):')
+						.setTitle('Choose two ( you have 40 seconds):')
 						.addField('1 :', captainsArray[0].name)
 						.addField('2 :', captainsArray[1].name)
 						.addField('3 :', captainsArray[2].name);
@@ -1403,7 +1394,7 @@ const execute = async (message) => {
 
 					privatedm1.createDM().then(m => {
 						m.createMessageCollector(filter, {
-							time: 20000,
+							time: 40000,
 						}).on('collect', m => {
 
 							const parsedM = parseInt(m.content) - 1;
@@ -1414,30 +1405,30 @@ const execute = async (message) => {
 
 								hasVoted = true;
 
-								usedNums.push(parsedM);
+								gameCountNums.push(parsedM);
 
-							} else if (hasVoted && !usedNums.includes(parsedM) && hasVoted !== 'all') {
+							} else if (hasVoted && !gameCountNums.includes(parsedM) && hasVoted !== 'all') {
 
 								queueArray[9] = captainsArray[parsedM];
 
 								hasVoted = 'all';
 
-								usedNums.push(parsedM);
+								gameCountNums.push(parsedM);
 
-								captainsArray.splice(usedNums[0], 1);
+								captainsArray.splice(gameCountNums[0], 1);
 
-								if (usedNums[1] > usedNums[0]) {
+								if (gameCountNums[1] > gameCountNums[0]) {
 
-									captainsArray.splice(usedNums[1] - 1, 1);
+									captainsArray.splice(gameCountNums[1] - 1, 1);
 								} else {
 
-									captainsArray.splice(usedNums[1], 1);
+									captainsArray.splice(gameCountNums[1], 1);
 								}
 							}
 						});
 					});
 
-					await new Promise(resolve => setTimeout(resolve, 20000));
+					await new Promise(resolve => setTimeout(resolve, 40000));
 
 					randomnumber = Math.floor(Math.random() * 3);
 
@@ -1465,16 +1456,16 @@ const execute = async (message) => {
 
 					} else if (hasVoted && hasVoted !== 'all') {
 
-						while (usedNums.includes(randomnumber2)) {
+						while (gameCountNums.includes(randomnumber2)) {
 
 							randomnumber2 = Math.floor(Math.random() * 2);
 						}
 
 						queueArray[9] = captainsArray[randomnumber2];
 
-						captainsArray.splice(usedNums[0], 1);
+						captainsArray.splice(gameCountNums[0], 1);
 
-						if (randomnumber2 > usedNums[0]) {
+						if (randomnumber2 > gameCountNums[0]) {
 
 							captainsArray.splice(randomnumber2 - 1, 1);
 						} else {
@@ -1483,13 +1474,21 @@ const execute = async (message) => {
 						}
 					}
 
-					usedNums = [];
+					hasVoted = false;
 
 					queueArray[4] = captainsArray[0];
 
-					delete tempObject[gameCount];
+					captainsArray.splice(0, captainsArray.length)
 
+					usedNums.splice(0, gameCountNums.length)
+
+					queueArray.push({
+						gameID: gameCount,
+						time: new Date(),
+						channelID: channel_ID,
+					});
 				}
+
 				ongoingGames.push([...queueArray]);
 
 				const discordEmbed1 = new Discord.MessageEmbed()
