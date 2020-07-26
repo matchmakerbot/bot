@@ -382,6 +382,14 @@ const execute = async (message) => {
 							continue;
 						}
 
+						
+						if(games[10].channelID !== channel_ID) {
+
+							wrongEmbed.setTitle(':x: This is not the correct channel to report the win/lose!');
+
+							return message.channel.send(wrongEmbed);
+						}
+
 						const indexplayer = games.map(e => e.id).indexOf(userId);
 
 						if (indexplayer === 0 || indexplayer === 1 || indexplayer === 2 || indexplayer === 3 || indexplayer === 4) {
@@ -445,6 +453,13 @@ const execute = async (message) => {
 						if (!includesUserID(games)) {
 
 							continue;
+						}
+
+						if(games[10].channelID !== channel_ID) {
+
+							wrongEmbed.setTitle(':x: This is not the correct channel to report the win/lose!');
+
+							return message.channel.send(wrongEmbed);
 						}
 
 						const indexplayer = games.map(e => e.id).indexOf(userId);

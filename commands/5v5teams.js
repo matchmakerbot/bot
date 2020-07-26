@@ -860,6 +860,13 @@ const execute = async (message) => {
 							continue;
 						}
 
+						if(games[2].channel !== channel_ID) {
+
+							wrongEmbed.setTitle(':x: This is not the correct channel to report the win/lose!');
+
+							return message.channel.send(wrongEmbed);
+						}
+
 						correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
 
 						if (teamsInGameVar.indexOf(teamsInfo().name) % 2 === 0) {
@@ -911,6 +918,13 @@ const execute = async (message) => {
 						if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
 
 							continue;
+						}
+
+						if(games[2].channel !== channel_ID) {
+
+							wrongEmbed.setTitle(':x: This is not the correct channel to report the win/lose!');
+
+							return message.channel.send(wrongEmbed);
 						}
 
 						correctEmbed.setTitle(':white_check_mark: Game Completed! Thank you for Playing!');
