@@ -357,7 +357,7 @@ const execute = async (message) => {
 						color: 'GREY',
 					},
 					reason: 'Matchmaker Bot',
-				}).catch(e => console.error(e));
+				}).catch(e => message.channel.send("Error creating role Team Captain, please check if there is already a role with that name"));
 			}
 
 			await message.guild.roles.create({
@@ -367,9 +367,9 @@ const execute = async (message) => {
 					color: 'BLUE',
 				},
 				reason: 'idk lol',
-			}).catch(e => console.error(e));
+			}).catch(e => message.channel.send(`Error creating role ${messageArgs(message)}, please check if there is already a role with that name`));
 
-			await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e));
+			await message.member.roles.add(getroleID(messageArgs(message))).catch(e => message.channel.send(`Error adding role ${messageArgs(message)}, please check if it exists`));
 
 			await message.member.roles.add(getroleID('Team Captain')).catch(e => message.channel.send('Could not add role Team captain, make sure that the role exists and if not, ask an admin to create it'));
 
@@ -405,7 +405,7 @@ const execute = async (message) => {
 
 				await (await message.guild.members.fetch(findGuildTeams.find(e => e.name === messageArgs(message)).members[0])).roles.remove(getroleID('Team Captain')).catch(e => message.channel.send('Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it'));
 
-				message.guild.roles.cache.find(role => role.name === messageArgs(message)).delete();
+				message.guild.roles.cache.find(role => role.name === messageArgs(message)).delete().catch(e => message.channel.send(`Error trying to delete role ${messageArgs(message)}`));
 
 				await teamsCollection.update({
 					id: message.guild.id,
@@ -456,7 +456,7 @@ const execute = async (message) => {
 			for (const team of findGuildTeams) {
 				if (team.members.indexOf(userId) === 0) {
 
-					message.guild.roles.cache.find(role => role.name === team.name).delete();
+					message.guild.roles.cache.find(role => role.name === team.name).delete().catch(e => message.channel.send(`Could not delete role ${team.name}, please check if the role exists.`));
 
 					message.member.roles.remove(getroleID('Team Captain')).catch(e => message.channel.send('Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it'));
 
@@ -507,9 +507,9 @@ const execute = async (message) => {
 				return message.channel.send(wrongEmbed);
 			}
 
-			await message.member.roles.remove(getroleID('Team Captain'));
+			await message.member.roles.remove(getroleID('Team Captain')).catch(e => message.channel.send('Could not remove role Team captain, make sure that the role exists and if not, ask an admin to create it'));;
 
-			await (await message.guild.members.fetch(getIDByTag(secondArg))).roles.add(getroleID('Team Captain'));
+			await (await message.guild.members.fetch(getIDByTag(secondArg))).roles.add(getroleID('Team Captain')).catch(e => message.channel.send("Could not add role Team captain, make sure that the role exists and if not, ask an admin to create it"));
 
 			await teamsCollection.update({
 				id: message.guild.id,
@@ -551,7 +551,7 @@ const execute = async (message) => {
 
 			const leftTeam = teamsInfo().name;
 
-			await message.member.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e));
+			await message.member.roles.remove(getroleID(teamsInfo().name)).catch(e => message.channel.send(`Could not delete role ${teamsInfo().name}, please check if the role exists.`));
 
 			await teamsCollection.update({
 				id: message.guild.id,
@@ -589,7 +589,7 @@ const execute = async (message) => {
 			const leftTeam = teamsInfo().name;
 
 			await message.guild.members.fetch(getIDByTag(secondArg)).then(e => {
-				e.roles.remove(getroleID(teamsInfo().name)).catch(e => console.error(e));
+				e.roles.remove(getroleID(teamsInfo().name)).catch(e => message.channel.send(`Could not delete role ${teamsInfo().name}, please check if the role exists.`));
 			});
 
 			await teamsCollection.update({
@@ -703,7 +703,7 @@ const execute = async (message) => {
 
 			invites[messageArgs(message)].splice(invites[messageArgs(message)].indexOf(userId), 1);
 
-			await message.member.roles.add(getroleID(messageArgs(message))).catch(e => console.error(e));
+			await message.member.roles.add(getroleID(messageArgs(message))).catch(e => `Could not add role ${messageArgs(message)}, please check if the role exists and if not create it`);
 
 			correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${messageArgs(message)}!`);
 
@@ -1330,6 +1330,12 @@ const execute = async (message) => {
 				}
 			}
 
+			/*if(includesUserID(Object.values(channelQueues).flat())) {
+				wrongEmbed.setTitle(`:x: You\'re already queued in the channel ${(await client.channels.fetch(Object.keys(channelQueues).find(e => includesUserID(channelQueues[e])))).name}!`);
+
+				return message.channel.send(wrongEmbed);
+			}*/
+
 			for (const games of ongoingGames) {
 				if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
 
@@ -1546,7 +1552,6 @@ const execute = async (message) => {
 				teamsArray.splice(0, teamsArray.length);
 
 				gameCount++;
-
 			}
 		}
 	}
