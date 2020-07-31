@@ -51,7 +51,7 @@ MongoDB.connectdb(err => {
 	client.once('ready', async () => {
 		console.log(`Guilds: ${client.guilds.cache.map(a => a.name).join(' || ')}\nNumber of Guilds: ${client.guilds.cache.map(a => a.name).length}`);
 		console.log('Ready');
-		client.user.setActivity('Type !helpsolosmatchmaking to get info', {
+		client.user.setActivity('!helpsolosmatchmaking', {
 			type: 'STREAMING',
 			url: 'https://www.twitch.tv/tweenoTV',
 		});
