@@ -1391,6 +1391,12 @@ const execute = async (message) => {
 				}
 			}
 
+			if(Object.values(channelQueues).flat().map(e=> e[1]).includes(userId)) {
+				wrongEmbed.setTitle(`:x: You\'re already queued in another channel!`);
+
+				return message.channel.send(wrongEmbed);
+			}
+
 			for (const games of ongoingGames) {
 				if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
 
@@ -1451,8 +1457,8 @@ const execute = async (message) => {
 			if (teamsArray.length === 2) {
 
 				const valuesforpm = {
-					name: Math.floor(Math.random() * 99999),
-					password: Math.floor(Math.random() * 99999),
+					name: Math.floor(Math.random() * 99999 ) + 100,
+					password: Math.floor(Math.random() * 99999) + 100,
 				};
 
 				shuffle(teamsArray);

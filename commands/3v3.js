@@ -942,8 +942,8 @@ const execute = async (message) => {
 				}
 
 				const valuesforpm = {
-					name: Math.floor(Math.random() * 99999),
-					password: Math.floor(Math.random() * 99999),
+					name: Math.floor(Math.random() * 99999 ) + 100,
+					password: Math.floor(Math.random() * 99999) + 100,
 				};
 
 				await message.channel.send(`<@${queueArray[0].id}>, <@${queueArray[1].id}>, <@${queueArray[2].id}>, <@${queueArray[3].id}>, <@${queueArray[4].id}>, <@${queueArray[5].id}>`);
