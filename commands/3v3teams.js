@@ -39,19 +39,19 @@ setInterval(async () => {
 	if (Object.entries(channelQueues).length !== 0) {
 		for (const channel of Object.values(channelQueues)) {
 			for (const team of channel) {
-				if ((Date.now() - team[5]) > 45 * 60 * 1000) {
-					
+				if ((Date.now() - team.time) > 45 * 60 * 1000) {
+
 					const actualChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel));
 
 					embedRemove.setTitle('You were removed from the queue after no game has been made in 45 minutes!');
 
-					await actualChannel.send(`<@${team[1]}>`);
+					await actualChannel.send(`<@${team.members[0]}>`);
 
 					actualChannel.send(embedRemove);
 
 					embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 
-					channelQueues = [];
+					channel.splice(0, channel.length);
 				}
 			}
 		}
@@ -59,15 +59,15 @@ setInterval(async () => {
 
 	if (ongoingGames.length !== 0) {
 		for (const games of ongoingGames) {
-			if ((Date.now() - games[2].date) > 3 * 60 * 60 * 1000) {
+			if ((Date.now() - games[2].time) > 3 * 60 * 60 * 1000) {
 				for (const channel of await client.channels.fetch(games[2].channel).then(e => e.guild.channels.cache.array())) {
 
-					if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
+					if (channel.name === `🔸Team-${games[0].name}-Game-${games[2].gameID}`) {
 
 						channel.delete();
 					}
 
-					if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
+					if (channel.name === `🔹Team-${games[1].name}-Game-${games[2].gameID}`) {
 
 						channel.delete();
 					}
@@ -77,30 +77,31 @@ setInterval(async () => {
 
 				const index = ongoingGames.indexOf(games);
 
+				ongoingGames.splice(index, 1);
+
 				const a = await client.channels.fetch(games[2].channel);
 
 				a.send(embedRemove);
-
-				ongoingGames.splice(index, 1);
 
 				embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 			}
 		}
 	}
+
 	for (let voiceChannel of deletableChannels) {
 
-		const getVoiceChannel = await client.channels.fetch(voiceChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === voiceChannel.id))
+		const getVoiceChannel = await client.channels.fetch(voiceChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === voiceChannel.id));
 
 		if (getVoiceChannel.members.array().length === 0) {
 
-			getVoiceChannel.delete()
+			getVoiceChannel.delete();
 
-			deletableChannels.splice(deletableChannels.indexOf(voiceChannel), 1)
+			deletableChannels.splice(deletableChannels.indexOf(voiceChannel), 1);
 		}
 	}
 }, 60 * 1000);
 
-const shuffle = function (array) {
+const shuffle = (array) => {
 
 	let currentIndex = array.length;
 	let temporaryValue, randomIndex;
@@ -120,11 +121,11 @@ const shuffle = function (array) {
 	return array;
 };
 
-function messageEndswith(message) {
+const messageEndswith = message => {
 
 	const split = message.content.split(' ');
 	return split[split.length - 1];
-}
+};
 
 const args = message => {
 	const arraywords = message.content.split(' ');
@@ -169,7 +170,7 @@ const execute = async (message) => {
 	const userId = message.author.id;
 
 	const getIDByTag = (tag) => {
-		if(tag.indexOf("!") > -1){
+		if (tag.indexOf("!") > -1) {
 			return tag.substring(3, tag.length - 1);
 		} else {
 			return tag.substring(2, tag.length - 1);
@@ -222,8 +223,8 @@ const execute = async (message) => {
 		teamsInGameVar = [];
 		for (const game of ongoingGames) {
 			for (const stats of game) {
-				if (typeof stats[0] == 'string' && game[2].guild === message.guild.id) {
-					teamsInGameVar.push(stats[0]);
+				if (typeof stats.name == 'string' && game[2].guild === message.guild.id) {
+					teamsInGameVar.push(stats.name);
 				}
 			}
 		}
@@ -235,7 +236,7 @@ const execute = async (message) => {
 		for (const games of ongoingGames) {
 			for (const team of findGuildTeams) {
 
-				if (games[pos][0] === team.name && games.map(e => e[0]).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
+				if (games[pos].name === team.name && games.map(e => e.name).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
 
 					const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
@@ -262,7 +263,7 @@ const execute = async (message) => {
 
 		for (const team of findGuildTeams) {
 
-			if (games[pos][0] === team.name && games[2].guild === message.guild.id) {
+			if (games[pos].name === team.name && games[2].guild === message.guild.id) {
 
 				const channelPos = findGuildTeams[findGuildTeams.indexOf(team)].channels.map(e => e.channelID).indexOf(channel_ID);
 
@@ -380,15 +381,15 @@ const execute = async (message) => {
 
 			if (messageArgs(message) !== '' && message.member.hasPermission('ADMINISTRATOR')) {
 
-				for (const a of teamsArray) {
-					if (a[0] === messageArgs(message)) {
+				for (const team of teamsArray) {
+					if (team.name === messageArgs(message)) {
 
 						teamsArray.splice(0, teamsArray.length);
 					}
 				}
 
 				for (const games of ongoingGames) {
-					if ((games[0][0] === messageArgs(message) || games[1][0] === messageArgs(message)) && games[2].guild === message.guild.id) {
+					if (games.map(e => e.name).includes(messageArgs(message)) && games[2].guild === message.guild.id) {
 
 						wrongEmbed.setTitle(':x: Team is in the middle of a game!');
 
@@ -423,17 +424,15 @@ const execute = async (message) => {
 
 			}
 
-			for (const a of teamsArray) {
-				if (a[0] === teamsInfo().name) {
+			for (let team of teamsArray) {
+				if (team.name === teamsInfo().name) {
 
-					wrongEmbed.setTitle(':x: Please leave the queue first!');
-
-					return message.channel.send(wrongEmbed);
+					teamsArray.splice(0, teamsArray.length);
 				}
 			}
 
 			for (const games of ongoingGames) {
-				if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
+				if (games.map(e => e.name).includes(messageArgs(message)) && games[2].guild === message.guild.id) {
 
 					wrongEmbed.setTitle(':x: You are in the middle of a game!');
 
@@ -477,8 +476,8 @@ const execute = async (message) => {
 
 		case 'giveownership': {
 
-			for (const a of teamsArray) {
-				if (a[0] === teamsInfo().name) {
+			for (let team of teamsArray) {
+				if (team.name === teamsInfo().name) {
 
 					wrongEmbed.setTitle(':x: Please leave the queue first!');
 
@@ -487,7 +486,7 @@ const execute = async (message) => {
 			}
 
 			for (const games of ongoingGames) {
-				if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
+				if (games.map(e => e.name).includes(messageArgs(message)) && games[2].guild === message.guild.id) {
 
 					wrongEmbed.setTitle(':x: You are in the middle of a game!');
 
@@ -733,7 +732,7 @@ const execute = async (message) => {
 
 			}
 
-			if (teamsArray[0][0] === teamsInfo().name) {
+			if (teamsArray[0].name === teamsInfo().name) {
 
 				teamsArray.splice(0, teamsArray.length);
 
@@ -751,9 +750,9 @@ const execute = async (message) => {
 				return message.channel.send(wrongEmbed);
 			}
 
-			correctEmbed.setTitle(`Team in queue: ${teamsArray[0][0]}`);
+			correctEmbed.setTitle(`Team in queue: ${teamsArray[0].name}`);
 
-			correctEmbed.addField('Players:', `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>`);
+			correctEmbed.addField('Players:', `<@${teamsArray[0].members[0]}>, <@${teamsArray[0].members[1]}>, <@${teamsArray[0].members[2]}>`);
 
 			return message.channel.send(correctEmbed);
 		}
@@ -794,12 +793,12 @@ const execute = async (message) => {
 
 					for (const games of ongoingGames) {
 
-						if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
+						if (games.map(e => e.name).includes(messageArgs(message)) && !games[2].guild === message.guild.id) {
 
 							continue;
 						}
 
-						if(games[2].channel !== channel_ID) {
+						if (games[2].channel !== channel_ID) {
 
 							wrongEmbed.setTitle(':x: This is not the correct channel to report the win/lose!');
 
@@ -825,7 +824,7 @@ const execute = async (message) => {
 
 						for (const channel of message.guild.channels.cache.array()) {
 
-							if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
+							if (channel.name === `🔸Team-${games[0].name}-Game-${games[2].gameID}`) {
 								deletableChannels.push({
 									id: channel.id,
 									channel: message.channel.id
@@ -833,7 +832,7 @@ const execute = async (message) => {
 
 							}
 
-							if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
+							if (channel.name === `🔹Team-${games[1].name}-Game-${games[2].gameID}`) {
 								deletableChannels.push({
 									id: channel.id,
 									channel: message.channel.id
@@ -854,12 +853,12 @@ const execute = async (message) => {
 
 					for (const games of ongoingGames) {
 
-						if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
+						if (games.map(e => e.name).includes(messageArgs(message)) && !games[2].guild === message.guild.id) {
 
 							continue;
 						}
 
-						if(games[2].channel !== channel_ID) {
+						if (games[2].channel !== channel_ID) {
 
 							wrongEmbed.setTitle(':x: This is not the correct channel to report the win/lose!');
 
@@ -885,7 +884,7 @@ const execute = async (message) => {
 
 						for (const channel of message.guild.channels.cache.array()) {
 
-							if (channel.name === `🔸Team-${games[0][0]}-Game-${games[2].gameID}`) {
+							if (channel.name === `🔸Team-${games[0].name}-Game-${games[2].gameID}`) {
 								deletableChannels.push({
 									id: channel.id,
 									channel: message.channel.id
@@ -893,7 +892,7 @@ const execute = async (message) => {
 
 							}
 
-							if (channel.name === `🔹Team-${games[1][0]}-Game-${games[2].gameID}`) {
+							if (channel.name === `🔹Team-${games[1].name}-Game-${games[2].gameID}`) {
 								deletableChannels.push({
 									id: channel.id,
 									channel: message.channel.id
@@ -1012,7 +1011,7 @@ const execute = async (message) => {
 
 			for (const games of ongoingGames) {
 
-				if ((!games[0][0] === teamsInfo().name || !games[1][0] === teamsInfo().name) && !games[2].guild === message.guild.id) {
+				if (games.map(e => e.name).includes(messageArgs(message)) && !games[2].guild === message.guild.id) {
 
 					continue;
 				}
@@ -1042,12 +1041,12 @@ const execute = async (message) => {
 
 					for (const channel of message.guild.channels.cache.array()) {
 
-						if (channel.name === `🔸Team-${games[0][0]}-Game-${IDGame}`) {
+						if (channel.name === `🔸Team-${games[0].name}-Game-${IDGame}`) {
 
 							channel.delete();
 						}
 
-						if (channel.name === `🔹Team-${games[1][0]}-Game-${IDGame}`) {
+						if (channel.name === `🔹Team-${games[1].name}-Game-${IDGame}`) {
 
 							channel.delete();
 						}
@@ -1105,16 +1104,15 @@ const execute = async (message) => {
 
 				case 'channel': {
 					const getScore = (id, arg) => {
-						let a;
-						a = findGuildTeams.filter(a => a.channels.map(e => e.channelID).indexOf(id) !== -1 && a.channels[a.channels.map(e => e.channelID).indexOf(id)].wins + a.channels[a.channels.map(e => e.channelID).indexOf(id)].losses !== 0);
+						let teamScores = findGuildTeams.filter(a => a.channels.map(e => e.channelID).indexOf(id) !== -1 && a.channels[a.channels.map(e => e.channelID).indexOf(id)].wins + a.channels[a.channels.map(e => e.channelID).indexOf(id)].losses !== 0);
 
-						if (a.length === 0) {
+						if (teamScores.length === 0) {
 							wrongEmbed.setTitle(':x: No games have been played in here!');
 
 							return message.channel.send(wrongEmbed);
 						}
 
-						a.sort((a, b) => {
+						teamScores.sort((a, b) => {
 							const indexA = a.channels.map(e => e.channelID).indexOf(id);
 
 							const indexB = b.channels.map(e => e.channelID).indexOf(id);
@@ -1125,33 +1123,33 @@ const execute = async (message) => {
 						if (!isNaN(arg) && arg > 0) {
 							let indexes = 20 * (arg - 1);
 							for (indexes; indexes < 20 * arg; indexes++) {
-								if (a[indexes] == undefined) {
+								if (teamScores[indexes] == undefined) {
 
-									correctEmbed.addField('No more members to list in this page!', 'Encourage your friends to play!');
+									correctEmbed.addField('No more teams to list in this page!', 'Encourage your friends to play!');
 
 									break;
 								}
-								for (const channels of a[indexes].channels) {
+								for (const channels of teamScores[indexes].channels) {
 									if (channels.channelID === id) {
 
-										correctEmbed.addField(a[indexes].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)) ? '0' : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`);
+										correctEmbed.addField(teamScores[indexes].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)) ? '0' : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`);
 
-										correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(a.length / 20)}`);
+										correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(teamScores.length / 20)}`);
 									}
 								}
 							}
 						} else {
 							for (i = 0; i < 20; i++) {
-								if (findGuildTeams[i] == undefined) {
-									correctEmbed.addField('No more members to list in this page!', 'Encourage your friends to play!');
+								if (teamScores[i] == undefined) {
+									correctEmbed.addField('No more teams to list in this page!', 'Encourage your friends to play!');
 									break;
 								}
-								for (const channels of findGuildTeams[i].channels) {
+								for (const channels of teamScores[i].channels) {
 									if (channels.channelID === id) {
 
-										correctEmbed.addField(findGuildTeams[i].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)) ? '0' : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr} `);
+										correctEmbed.addField(teamScores[i].name, `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)) ? '0' : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)}% | MMR: ${channels.mmr}`);
 
-										correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(findGuildTeams.length / 20)}`);
+										correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(teamScores.length / 20)}`);
 									}
 								}
 							}
@@ -1189,8 +1187,8 @@ const execute = async (message) => {
 
 					wrongEmbed.addField('Game :', game[2].gameID);
 
-					wrongEmbed.addField(`🔸 Team: ${game[0][0]}`, `<@${game[0][1]}>, <@${game[0][2]}>, <@${game[0][3]}>`);
-					wrongEmbed.addField(`🔹 Team: ${game[1][0]}`, `<@${game[1][1]}>, <@${game[1][2]}>, <@${game[1][3]}>`);
+					wrongEmbed.addField(`🔸 Team: ${game[0].name}`, `<@${game[0].members[0]}>, <@${game[0].members[1]}>, <@${game[0].members[2]}>`);
+					wrongEmbed.addField(`🔹 Team: ${game[1].name}`, `<@${game[1].members[0]}>, <@${game[1].members[1]}>, <@${game[1].members[2]}>`);
 
 					wrongEmbed.setFooter(`Showing page ${1}/${Math.ceil(ongoingGames.length / 20)}`);
 				}
@@ -1256,14 +1254,14 @@ const execute = async (message) => {
 						}
 					}
 
-					correctEmbed.setTitle(':white_check_mark: Player\'s score reset!');
+					correctEmbed.setTitle(':white_check_mark: Team\'s score reset!');
 
 					return message.channel.send(correctEmbed);
 				}
 				case 'team': {
 
 					for (const games of ongoingGames) {
-						if ((games[0][0] === thirdArg || games[1][0] === thirdArg) && games[2].guild === message.guild.id) {
+						if (games.map(e => e.name).includes(messageArgs(thirdArg)) && games[2].guild === message.guild.id) {
 
 							wrongEmbed.setTitle(':x: Team is in the middle of a game!');
 
@@ -1283,7 +1281,7 @@ const execute = async (message) => {
 
 					if (channelPos == -1) {
 
-						wrongEmbed.setTitle(':x: This user hasn\'t played any games in this channel!');
+						wrongEmbed.setTitle(':x: This team hasn\'t played any games in this channel!');
 
 						return message.channel.send(wrongEmbed);
 					} else {
@@ -1301,7 +1299,7 @@ const execute = async (message) => {
 						});
 					}
 
-					correctEmbed.setTitle(':white_check_mark: Player\'s score reset!');
+					correctEmbed.setTitle(':white_check_mark: Team\'s score reset!');
 
 					return message.channel.send(correctEmbed);
 				}
@@ -1321,8 +1319,8 @@ const execute = async (message) => {
 				return message.channel.send(wrongEmbed);
 			}
 
-			for (const a of teamsArray) {
-				if (a[0] === teamsInfo().name) {
+			for (let team of teamsArray) {
+				if (team.name === teamsInfo().name) {
 
 					wrongEmbed.setTitle(':x: You\'re already in the queue!');
 
@@ -1330,14 +1328,14 @@ const execute = async (message) => {
 				}
 			}
 
-			if(Object.values(channelQueues).flat().map(e=> e[1]).includes(userId)) {
+			if (Object.values(channelQueues).flat().map(e => e.members).flat().includes(userId)) {
 				wrongEmbed.setTitle(`:x: You\'re already queued in another channel!`);
 
 				return message.channel.send(wrongEmbed);
 			}
 
 			for (const games of ongoingGames) {
-				if ((games[0][0] === teamsInfo().name || games[1][0] === teamsInfo().name) && games[2].guild === message.guild.id) {
+				if (games.map(e => e.name).includes(teamsInfo().name) && games[2].guild === message.guild.id) {
 
 					wrongEmbed.setTitle(':x: You are in the middle of a game!');
 
@@ -1373,21 +1371,17 @@ const execute = async (message) => {
 				return message.channel.send(wrongEmbed);
 			}
 
-			teamsArray.push([teamsInfo().name, userId]);
-
-			for (const user of message.content.split(' ').splice(1, 4)) {
-				if (teamsArray.length === 1) {
-					teamsArray[0].push(getIDByTag(user));
-				} else {
-					teamsArray[1].push(getIDByTag(user));
-				}
-
+			const toPush = {
+				name: teamsInfo().name,
+				members: [
+					userId,
+					getIDByTag(message.content.split(" ")[1]),
+					getIDByTag(message.content.split(" ")[2])
+				],
+				time: new Date()
 			}
-			if (teamsArray.length === 1) {
-				teamsArray[0].push(new Date());
-			} else {
-				teamsArray[1].push(new Date());
-			}
+
+			teamsArray.push(toPush)
 
 			correctEmbed.setTitle(`:white_check_mark: Added to queue! ${teamsArray.length}/2`);
 
@@ -1396,17 +1390,19 @@ const execute = async (message) => {
 			if (teamsArray.length === 2) {
 
 				const valuesforpm = {
-					name: Math.floor(Math.random() * 99999 ) + 100,
+					name: Math.floor(Math.random() * 99999) + 100,
 					password: Math.floor(Math.random() * 99999) + 100,
 				};
 
 				shuffle(teamsArray);
 
+				gameCount++;
+
 				teamsArray.push({
 					gameID: gameCount,
 					channel: channel_ID,
 					guild: message.guild.id,
-					date: new Date(),
+					time: new Date(),
 				});
 
 				for (const team of teamsArray) {
@@ -1414,9 +1410,9 @@ const execute = async (message) => {
 
 						break;
 					}
-					const channelsInDatabaseSpecific = `teams.${findGuildTeams.indexOf(teamsInfoSpecific(team[1]))}.channels`;
+					const channelsInDatabaseSpecific = `teams.${findGuildTeams.indexOf(teamsInfoSpecific(team.members[0]))}.channels`;
 
-					if (!findGuildTeams[findGuildTeams.map(e => e.name).indexOf(team[0])].channels.map(e => e.channelID).includes(channel_ID)) {
+					if (!findGuildTeams[findGuildTeams.map(e => e.name).indexOf(team.name)].channels.map(e => e.channelID).includes(channel_ID)) {
 
 						(async function () {
 							await teamsCollection.update({
@@ -1435,40 +1431,38 @@ const execute = async (message) => {
 					}
 				}
 
-				message.channel.send(`<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>, <@${teamsArray[1][1]}>, <@${teamsArray[1][2]}>, <@${teamsArray[1][3]}>`);
+				message.channel.send(`<@${teamsArray[0].members[0]}>, <@${teamsArray[0].members[1]}>, <@${teamsArray[0].members[2]}>, <@${teamsArray[1].members[0]}>, <@${teamsArray[1].members[1]}>, <@${teamsArray[0].members[2]}>`);
 
 				ongoingGames.push([...teamsArray]);
 
 				const discordEmbed1 = new Discord.MessageEmbed()
 					.setColor(EMBED_COLOR_CHECK)
 					.addField('Game is ready:', `Game ID is: ${gameCount}`)
-					.addField(`:small_orange_diamond: Team ${teamsArray[0][0]}`, `<@${teamsArray[0][1]}>, <@${teamsArray[0][2]}>, <@${teamsArray[0][3]}>`)
-					.addField(`:small_blue_diamond: Team ${teamsArray[1][0]}`, `<@${teamsArray[1][1]}>, <@${teamsArray[1][2]}>, <@${teamsArray[1][3]}>`);
+					.addField(`:small_orange_diamond: Team ${teamsArray[0].name}`, `<@${teamsArray[0].members[0]}>, <@${teamsArray[0].members[1]}>, <@${teamsArray[0].members[2]}>`)
+					.addField(`:small_blue_diamond: Team ${teamsArray[1].name}`, `<@${teamsArray[1].members[0]}>, <@${teamsArray[1].members[1]}>, <@${teamsArray[1].members[2]}>`);
 
 				message.channel.send(discordEmbed1);
 
-				userIDsPM.push(teamsArray[0][1], teamsArray[0][2], teamsArray[0][3], teamsArray[1][1], teamsArray[1][2], teamsArray[1][3]);
+				userIDsPM.push(teamsArray[0].members[1], teamsArray[0].members[2], teamsArray[1].members[0], teamsArray[1].members[1], teamsArray[1].members[2]);
 
 				const JoinMatchEmbed = new Discord.MessageEmbed()
 					.setColor(EMBED_COLOR_CHECK)
 					.addField('Name:', valuesforpm.name)
 					.addField('Password:', valuesforpm.password)
-					.addField('You have to:', `Join match(Created by ${(await fetchFromID(teamsArray[0][1])).username})`);
+					.addField('You have to:', `Join match(Created by ${(await fetchFromID(teamsArray[0].members[0])).username})`);
 
 				for (const user of userIDsPM) {
-					if (user !== userIDsPM[0]) {
 
-						const create0 = await client.users.fetch(user);
-						create0.send(JoinMatchEmbed).catch(error => {
-							const errorEmbed = new Discord.MessageEmbed()
-								.setColor(EMBED_COLOR_ERROR)
-								.setTitle(`:x: Couldn't sent message to ${users}, please check if your DM'S aren't set to friends only.`);
+					const create0 = await client.users.fetch(user);
+					create0.send(JoinMatchEmbed).catch(error => {
+						const errorEmbed = new Discord.MessageEmbed()
+							.setColor(EMBED_COLOR_ERROR)
+							.setTitle(`:x: Couldn't sent message to ${users}, please check if your DM'S aren't set to friends only.`);
 
-							console.error(error);
+						console.error(error);
 
-							message.channel.send(errorEmbed);
-						});
-					}
+						message.channel.send(errorEmbed);
+					});
 				}
 
 				userIDsPM = [];
@@ -1479,17 +1473,17 @@ const execute = async (message) => {
 					.addField('Password:', valuesforpm.password)
 					.addField('You have to:', 'Create Custom Match');
 
-				const create1 = await client.users.fetch(teamsArray[0][1]);
+				const create1 = await client.users.fetch(teamsArray[0].members[0]);
 				create1.send(CreateMatchEmbed).catch(error => {
 					const errorEmbed = new Discord.MessageEmbed()
 						.setColor(EMBED_COLOR_ERROR)
-						.setTitle(`:x: Couldn't sent message to ${fetchFromID(teamsArray[0][1])}, please check if your DM'S aren't set to friends only.`);
+						.setTitle(`:x: Couldn't sent message to ${fetchFromID(teamsArray[0].members[0])}, please check if your DM'S aren't set to friends only.`);
 
 					message.channel.send(errorEmbed);
 					console.error(error);
 				});
 
-				message.guild.channels.create(`🔸Team-${teamsArray[0][0]}-Game-${gameCount}`, {
+				message.guild.channels.create(`🔸Team-${teamsArray[0].name}-Game-${gameCount}`, {
 						type: 'voice',
 						parent: message.channel.parentID,
 						permissionOverwrites: [{
@@ -1497,15 +1491,15 @@ const execute = async (message) => {
 								deny: 'CONNECT',
 							},
 							{
-								id: teamsArray[0][1],
+								id: teamsArray[0].members[0],
 								allow: 'CONNECT',
 							},
 							{
-								id: teamsArray[0][2],
+								id: teamsArray[0].members[1],
 								allow: 'CONNECT',
 							},
 							{
-								id: teamsArray[0][3],
+								id: teamsArray[0].members[2],
 								allow: 'CONNECT',
 							},
 						],
@@ -1519,7 +1513,7 @@ const execute = async (message) => {
 						console.error(error);
 					});
 
-				message.guild.channels.create(`🔹Team-${teamsArray[1][0]}-Game-${gameCount}`, {
+				message.guild.channels.create(`🔹Team-${teamsArray[1].name}-Game-${gameCount}`, {
 						type: 'voice',
 						parent: message.channel.parentID,
 						permissionOverwrites: [{
@@ -1527,15 +1521,15 @@ const execute = async (message) => {
 								deny: 'CONNECT',
 							},
 							{
-								id: teamsArray[1][1],
+								id: teamsArray[1].members[0],
 								allow: 'CONNECT',
 							},
 							{
-								id: teamsArray[1][2],
+								id: teamsArray[1].members[1],
 								allow: 'CONNECT',
 							},
 							{
-								id: teamsArray[1][3],
+								id: teamsArray[1].members[2],
 								allow: 'CONNECT',
 							},
 						],
@@ -1550,8 +1544,6 @@ const execute = async (message) => {
 					});
 
 				teamsArray.splice(0, teamsArray.length);
-
-				gameCount++;
 			}
 		}
 	}
