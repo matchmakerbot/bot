@@ -50,7 +50,7 @@ const execute = async (message) => {
 
             musicQueue.shift()
 
-            return voiceChannel.leave()()
+            return voiceChannel.leave()
         } else {
 
             musicQueue.shift()
