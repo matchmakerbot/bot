@@ -14,6 +14,12 @@ const EMBED_COLOR_CHECK = '#77B255';
 
 const EMBED_COLOR_WARNING = '#77B255';
 
+const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
+
+const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
+
+const UPDATE_INTERVAL_MS = 60 * 1000;
+
 const ongoingGames = [];
 
 const channelQueues = {};
@@ -32,74 +38,85 @@ let teamsInGameVar = [];
 
 let userIDsPM = [];
 
-setInterval(async () => {
+const updateUsers = async () => {
+    const currentTimeMS = Date.now();
 
-	let embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
+    for (const channelUsers of Object.values(channelQueues)) {
+        for (const team of channelUsers.filter(team => currentTimeMS - team.time > MAX_USER_IDLE_TIME_MS)) {
+            const notifyChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channelUsers));
+            let embedRemove = new Discord.MessageEmbed()
+                .setColor(EMBED_COLOR_WARNING)
+                .setTitle('You were removed from the queue after no game has been made in 45 minutes!');
+                
+			await notifyChannel.send(`<@${team.members[0]}>`, embedRemove);
+			
+			channel.splice(0, channel.length);
+        }
+    }
+};
 
+const updateOngoingGames = async () => {
+    const currentTimeMS = Date.now();
+
+    for (const game of ongoingGames.filter(game => currentTimeMS - game[2].time > MAX_GAME_LENGTH_MS)) {
+        const channels = await client.channels.fetch(game[10].channelID).then(e => e.guild.channels.cache.array());
+
+        for (const channel of channels) {
+            if (channel.name === `🔸Team-${games[0].name}-Game-${games[2].gameID}`) {
+                await channel.delete();
+            }
+
+            if (channel.name === `🔹Team-${games[1].name}-Game-${games[2].gameID}`) {
+                await channel.delete();
+            }
+        }
+
+        const notifyChannel = await client.channels.fetch(games[2].channel);
+        let embedRemove = new Discord.MessageEmbed()
+            .setColor(EMBED_COLOR_WARNING)
+            .setTitle(`:white_check_mark: Game ${games[2].gameID} Cancelled due to not being finished in 3 Hours!`);
+        
+        await notifyChannel.send(embedRemove);
+        ongoingGames.splice(ongoingGames.indexOf(game), 1);
+    }
+};
+
+const updateVoiceChannels = async () => {
+    for (const deletableChannel of deletableChannels) {
+        const voiceChannel = await client.channels.fetch(deletableChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === deletableChannel.id));
+
+        if (voiceChannel) {
+            if (voiceChannel.members.array().length === 0) {
+                await voiceChannel.delete();
+                deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+            }
+    
+            continue;
+        }
+    
+        const notifyChannel = await client.channels.fetch(deletableChannel.channel);
+        let embedRemove = new Discord.MessageEmbed()
+            .setColor(EMBED_COLOR_WARNING)
+            .setTitle(`Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`);
+    
+        await notifyChannel.send(embedRemove);
+        deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+    }
+};
+
+const evaluateUpdates = async () => {
 	if (Object.entries(channelQueues).length !== 0) {
-		for (const channel of Object.values(channelQueues)) {
-			for (const team of channel) {
-				if ((Date.now() - team.time) > 45 * 60 * 1000) {
-
-					const actualChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channel));
-
-					embedRemove.setTitle('You were removed from the queue after no game has been made in 45 minutes!');
-
-					await actualChannel.send(`<@${team.members[0]}>`);
-
-					actualChannel.send(embedRemove);
-
-					embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
-
-					channel.splice(0, channel.length);
-				}
-			}
-		}
+	    await updateUsers();
 	}
 
 	if (ongoingGames.length !== 0) {
-		for (const games of ongoingGames) {
-			if ((Date.now() - games[2].time) > 3 * 60 * 60 * 1000) {
-				for (const channel of await client.channels.fetch(games[2].channel).then(e => e.guild.channels.cache.array())) {
-
-					if (channel.name === `🔸Team-${games[0].name}-Game-${games[2].gameID}`) {
-
-						channel.delete();
-					}
-
-					if (channel.name === `🔹Team-${games[1].name}-Game-${games[2].gameID}`) {
-
-						channel.delete();
-					}
-				}
-
-				embedRemove.setTitle(`:white_check_mark: Game ${games[2].gameID} Cancelled due to not being finished in 3 Hours!`);
-
-				const index = ongoingGames.indexOf(games);
-
-				ongoingGames.splice(index, 1);
-
-				const a = await client.channels.fetch(games[2].channel);
-
-				a.send(embedRemove);
-
-				embedRemove = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
-			}
-		}
+        await updateOngoingGames();
 	}
 
-	for (let voiceChannel of deletableChannels) {
+	await updateVoiceChannels();
+};
 
-		const getVoiceChannel = await client.channels.fetch(voiceChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === voiceChannel.id));
-
-		if (getVoiceChannel.members.array().length === 0) {
-
-			getVoiceChannel.delete();
-
-			deletableChannels.splice(deletableChannels.indexOf(voiceChannel), 1);
-		}
-	}
-}, 60 * 1000);
+setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);
 
 const shuffle = (array) => {
 

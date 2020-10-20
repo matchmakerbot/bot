@@ -10,6 +10,8 @@ const client = require('./client.js');
 
 const MongoDB = require('./mongodb');
 
+const channelMode = {}
+
 const queueCommands = ['q', 'status', 'leave', 'report', 'score', 'cancel', 'reset', 'game', 'ongoinggames', 'createteam', 'invite', 'disband', 'jointeam', 'pendinginvites', 'leaveteam', 'whois', 'kickplayer', 'r', 'c', 'revertgame', 'giveownership'];
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
@@ -40,8 +42,7 @@ MongoDB.connectdb(err => {
 		const command = require(`./commands/${file}`);
 		if (typeof command.name === 'string') {
 			client.commands.set(command.name, command);
-		}
-		else if (command.name instanceof Array) {
+		} else if (command.name instanceof Array) {
 			for (const a of command.name) {
 				client.commands.set(a, command);
 			}
@@ -59,21 +60,8 @@ MongoDB.connectdb(err => {
 
 	client.on('message', async message => {
 
-		const embed = new Discord.MessageEmbed().setColor('#F8534F');
-
-		const args = message.content.slice(prefix.length).split(/ +/);
-
-		const command = args.shift().toLowerCase();
-
-		if (!message.content.startsWith(prefix) || message.author.bot) return;
-
-		if (!client.commands.has(command)) return;
-
-		if (queueCommands.includes(command)) {
-			await serversCollection.find({
-				id: message.guild.id,
-			}).toArray().then(dataDB => {
-				switch (dataDB[0].channels[message.channel.id]) {
+		const bigBoiiSwitch = gamemode => {
+			switch (gamemode) {
 
 				case undefined: {
 					embed.setTitle(':x: You must first select your prefered gamemode in this channel using !channelmode 3v3solos, 3v3teams, 5v5solos or 5v5teams');
@@ -102,9 +90,33 @@ MongoDB.connectdb(err => {
 
 					return message.channel.send(embed);
 				}
-				}
-			});
-			return;
+			}
+		}
+
+		const embed = new Discord.MessageEmbed().setColor('#F8534F');
+
+		const args = message.content.slice(prefix.length).split(/ +/);
+
+		const command = args.shift().toLowerCase();
+
+		if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+		if (!client.commands.has(command)) return;
+
+		if (queueCommands.includes(command)) {
+			if (channelMode[message.guild.id] === undefined) {
+
+				return await serversCollection.find({
+					id: message.guild.id,
+				}).toArray().then(dataDB => {
+
+					bigBoiiSwitch(dataDB[0].channels[message.channel.id])
+					
+					channelMode[message.guild.id] = dataDB[0].channels[message.channel.id]
+				});
+			}
+
+			return bigBoiiSwitch(channelMode[message.guild.id]);
 		}
 
 		client.commands.get(command).execute(message, args);

@@ -2,6 +2,8 @@ const Discord = require('discord.js')
 
 const MongoDB = require("../mongodb");
 
+const channelModes = require('../index.js');
+
 const db = MongoDB.getDB()
 
 const serversCollection = db.collection('guilds')
@@ -10,16 +12,13 @@ const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F")
 
 const correctEmbed = new Discord.MessageEmbed().setColor("#77B255")
 
-const prefix = require("../config.json").prefix;
-
 const gamemode = ["5v5solos", "5v5teams", "3v3solos", "3v3teams"]
+
 
 module.exports = {
     name: 'channelmode',
     description: 'eh',
     async execute(message) {
-
-        const args = message.content.slice(prefix.length).split(/ +/);
 
         const secondArg = message.content.split(" ")[1]
 
@@ -45,6 +44,7 @@ module.exports = {
 
                 }
             });
+            channelModes[message.guild.id] = secondArg
         }
         correctEmbed.setTitle(":white_check_mark: Done! Have fun :)")
 
