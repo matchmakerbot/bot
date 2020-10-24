@@ -1,4 +1,4 @@
-# Wanna play agaisnt friends but no way to set it up? Want to build a rocket league community?
+# Wanna play agaisnt friends but no way to set it up? Want to build a gaming community?
 
 Hi there. I'm Tweeno and I've developed a Matchmaking/Pugs/Scrims bot that can be used in any discord.
 
