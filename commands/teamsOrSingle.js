@@ -2,7 +2,7 @@ const Discord = require('discord.js')
 
 const MongoDB = require("../mongodb");
 
-const channelModes = require('../index.js');
+const channelMode = require('../index.js');
 
 const db = MongoDB.getDB()
 
@@ -44,7 +44,7 @@ module.exports = {
 
                 }
             });
-            channelModes[message.guild.id] = secondArg
+            channelMode[message.guild.id] = secondArg
         }
         correctEmbed.setTitle(":white_check_mark: Done! Have fun :)")
 

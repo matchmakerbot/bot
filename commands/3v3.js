@@ -43,7 +43,7 @@ let hasVoted = false;
 const updateUsers = async () => {
     const currentTimeMS = Date.now();
 
-    for (const channelUsers of Object.values(channelQueues).filter(channel => channel.length > 5)) {
+    for (const channelUsers of Object.values(channelQueues).filter(channel => channel.length < 5)) {
         for (const user of channelUsers.filter(user => currentTimeMS - user.date > MAX_USER_IDLE_TIME_MS)) {
             const notifyChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channelUsers));
             let embedRemove = new Discord.MessageEmbed()
@@ -64,7 +64,8 @@ const updateOngoingGames = async () => {
 
         for (const channel of channels) {
             if (channel.name === `🔸Team-1-Game-${game[6].gameID}`) {
-                await channel.delete();
+				await channel.delete();
+				//delete the channel in deletablechannels
             }
 
             if (channel.name === `🔹Team-2-Game-${game[6].gameID}`) {

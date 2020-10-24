@@ -151,3 +151,5 @@ MongoDB.connectdb(err => {
 });
 
 client.login(process.env.token);
+
+module.exports = channelMode
