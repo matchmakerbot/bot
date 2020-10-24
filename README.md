@@ -1,11 +1,11 @@
 # Wanna play agaisnt friends but no way to set it up? Want to build a rocket league community?
 
-## Hi there. I'm Tweeno and I've developed a Matchmaking/Pugs/Scrims bot that can be used in any discord.
+Hi there. I'm Tweeno and I've developed a Matchmaking/Pugs/Scrims bot that can be used in any discord.
 
 The bot creates teams of 3 or 5, randomized, with random captains or even Pre made teams.
 The bot comes with its own Leaderboard, based on a mmr system.
 
-##How to play ?
+## How to play ?
 Once enough players have queued up using the correct command, the bot will ask you to pick between random teams or captain mode.
 
 The bot will then create the teams and 2 different voice chats for each team to join.
