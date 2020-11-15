@@ -1,112 +1,115 @@
-const yt = require("ytdl-core");
+const yt = require('ytdl-core');
 
-const rp = require("request-promise-native");
+const rp = require('request-promise-native');
 
-const Discord = require('discord.js')
+const Discord = require('discord.js');
 
-const musicChannels = {}
+const musicChannels = {};
 
 const execute = async (message) => {
 
-    const embed = new Discord.MessageEmbed().setColor("#77B255")
+	const embed = new Discord.MessageEmbed().setColor('#77B255');
 
-    const voiceChannel = message.member.voice.channel
+	const voiceChannel = message.member.voice.channel;
 
-    const secondArg = message.content.split(" ")[1]
+	const secondArg = message.content.split(' ')[1];
 
-    if (!Object.keys(musicChannels).includes(voiceChannel.id)) {
+	if (!Object.keys(musicChannels).includes(voiceChannel.id)) {
 
 		musicChannels[voiceChannel.id] = [];
-    }
-    
-    const musicQueue = musicChannels[voiceChannel.id];
+	}
 
-    const play = () => {
+	const musicQueue = musicChannels[voiceChannel.id];
 
-        if (!voiceChannel || voiceChannel.type !== 'voice') {
-            return message.channel.send('I couldn\'t connect to your voice channel...');
-        }
+	const play = () => {
 
-        voiceChannel.join().then(connection => {
-            connection.play(yt(`https://www.youtube.com/watch?v=${musicQueue[0].videoID}}`, {
-                quality: 'highestaudio'
-            })).on('finish', () => {
-                musicQueue.shift()
+		if (!voiceChannel || voiceChannel.type !== 'voice') {
+			return message.channel.send('I couldn\'t connect to your voice channel...');
+		}
 
-                if (musicQueue.length === 0) {
+		voiceChannel.join().then(connection => {
+			connection.play(yt(`https://www.youtube.com/watch?v=${musicQueue[0].videoID}}`, {
+				quality: 'highestaudio',
+			})).on('finish', () => {
+				musicQueue.shift();
 
-                    return connection.disconnect()
-                }
-                play();
-            })
-        })
-    }
+				if (musicQueue.length === 0) {
 
-    if (secondArg === "skip") {
-        if (musicQueue.length === 0) {
+					return connection.disconnect();
+				}
+				play();
+			});
+		});
+	};
 
-            return message.channel.send("There is nothing to skip")
-        } else if (musicQueue.length === 1) {
+	if (secondArg === 'skip') {
+		if (musicQueue.length === 0) {
 
-            musicQueue.shift()
+			return message.channel.send('There is nothing to skip');
+		}
+		else if (musicQueue.length === 1) {
 
-            return voiceChannel.leave()
-        } else {
+			musicQueue.shift();
 
-            musicQueue.shift()
+			return voiceChannel.leave();
+		}
+		else {
 
-            return play()
-        }
-    }
+			musicQueue.shift();
 
-    if (secondArg === "queue") {
-        if (musicQueue.length === 0) {
+			return play();
+		}
+	}
 
-            return message.channel.send("The queue is empty!")
+	if (secondArg === 'queue') {
+		if (musicQueue.length === 0) {
 
-        }
-        for (let music of musicQueue) {
-            embed.addField(`${musicQueue.indexOf(music) + 1}:`, music.title)
+			return message.channel.send('The queue is empty!');
 
-        }
-        return message.channel.send(embed)
-    }
+		}
+		for (const music of musicQueue) {
+			embed.addField(`${musicQueue.indexOf(music) + 1}:`, music.title);
 
-    rp(` https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${message.content.slice(6)}&type=video&key=AIzaSyB9x1WABswbnTqLywastYgKS7c3mF2BG6I`)
-        .then(res => {
-            const response = JSON.parse(res);
+		}
+		return message.channel.send(embed);
+	}
 
-            if (response.items.length === 0) {
-                embed.setTitle("No videos Found")
+	rp(` https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${message.content.slice(6)}&type=video&key=${process.env.ytapi}`)
+		.then(res => {
+			const response = JSON.parse(res);
 
-                return message.channel.send(embed)
-            }
+			if (response.items.length === 0) {
+				embed.setTitle('No videos Found');
 
-            const item = response.items[0]
+				return message.channel.send(embed);
+			}
 
-            musicQueue.push({
-                videoID: item.id.videoId,
-                title: item.snippet.title,
-                thumbnail: item.snippet.thumbnails.default.url
-            })
+			const item = response.items[0];
 
-            if (musicQueue.length === 1) {
-                play()
-                embed.addField("Now playing: ", musicQueue[0].title)
-                    .setThumbnail(musicQueue[0].thumbnail)
+			musicQueue.push({
+				videoID: item.id.videoId,
+				title: item.snippet.title,
+				thumbnail: item.snippet.thumbnails.default.url,
+			});
 
-                return message.channel.send(embed)
-            } else {
-                embed.addField("Added to queue: ", item.snippet.title)
-                    .setThumbnail(item.snippet.thumbnails.default.url)
+			if (musicQueue.length === 1) {
+				play();
+				embed.addField('Now playing: ', musicQueue[0].title)
+					.setThumbnail(musicQueue[0].thumbnail);
 
-                return message.channel.send(embed)
-            }
-        })
-}
+				return message.channel.send(embed);
+			}
+			else {
+				embed.addField('Added to queue: ', item.snippet.title)
+					.setThumbnail(item.snippet.thumbnails.default.url);
+
+				return message.channel.send(embed);
+			}
+		});
+};
 
 module.exports = {
-    name: 'play',
-    description: 'Gievs you a nice command list',
-    execute
+	name: 'play',
+	description: 'Gievs you a nice command list',
+	execute,
 };
