@@ -10,20 +10,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.27",
-    "@fortawesome/free-solid-svg-icons": "^5.12.1",
-    "@fortawesome/react-fontawesome": "^0.1.9",
+    "@discordjs/opus": "^0.3.3",
     "cloc": "^2.5.1",
     "concurrency": "^0.1.4",
     "discord.js": "^12.2.0",
+    "ffmpeg": "^0.0.4",
     "i18n": "^0.8.6",
     "jest-discord": "^0.1.0",
     "mongod": "^2.0.0",
     "mongoose": "^5.9.11",
     "node-fetch": "^2.6.0",
     "nodemon": "^2.0.3",
+    "puppeteer": "^5.4.1",
     "request": "^2.88.0",
-    "request-promise-native": "^1.0.7"
+    "request-promise-native": "^1.0.7",
+    "ytdl-core": "^4.0.4"
   },
   "devDependencies": {
     "concurrently": "^5.2.0",
