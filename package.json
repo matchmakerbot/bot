@@ -2,10 +2,9 @@
   "name": "deformedbot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently --kill-others \"node ./api/server.js\" \"node .\""
+    "dev": "node src/index.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,12 +15,10 @@
     "discord.js": "^12.2.0",
     "ffmpeg": "0.0.4",
     "ffmpeg-static": "^4.2.7",
-    "i18n": "^0.8.6",
     "jest-discord": "^0.1.0",
     "mongod": "^2.0.0",
     "mongoose": "^5.9.11",
     "node-fetch": "^2.6.0",
-    "nodemon": "^2.0.3",
     "puppeteer": "^5.4.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
