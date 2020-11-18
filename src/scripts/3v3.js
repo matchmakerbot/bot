@@ -886,7 +886,7 @@ const execute = async (message) => {
 
 	case 'q': {
 
-		/*for (const person of queueArray) {
+		for (const person of queueArray) {
 			if (person.id === userId) {
 
 				wrongEmbed.setTitle(':x: You\'re already in the queue!');
@@ -899,7 +899,7 @@ const execute = async (message) => {
 			wrongEmbed.setTitle(`:x: You\'re already queued in the channel ${(await client.channels.fetch(Object.keys(channelQueues).find(e => includesUserID(channelQueues[e])))).name}!`);
 
 			return message.channel.send(wrongEmbed);
-		}*/
+		}
 
 		if (includesUserID(ongoingGames.flat())) {
 
