@@ -55,7 +55,7 @@ let hasVoted = false;
 const updateUsers = async () => {
 	const currentTimeMS = Date.now();
 
-	for (const channelUsers of Object.values(channelQueues).filter(channel => channel.length < 9)) {
+	for (const channelUsers of Object.values(channelQueues).filter(channel => channel.length < 10)) {
 		for (const user of channelUsers.filter(user => currentTimeMS - user.date > MAX_USER_IDLE_TIME_MS)) {
 			const notifyChannel = await client.channels.fetch(Object.keys(channelQueues).find(key => channelQueues[key] === channelUsers));
 			const embedRemove = new Discord.MessageEmbed()
