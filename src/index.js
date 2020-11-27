@@ -21,7 +21,7 @@ client.commands = new Discord.Collection();
 class newTeamGuid {
 	constructor(guildId) {
 		this.id = guildId,
-		this.teams = {};
+		this.teams = [];
 	}
 }
 
