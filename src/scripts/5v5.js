@@ -96,26 +96,44 @@ const updateOngoingGames = async () => {
 
 const updateVoiceChannels = async () => {
 	for (const deletableChannel of deletableChannels) {
-		const voiceChannel = await client.channels.fetch(deletableChannel.channel).then(e => e.guild.channels.cache.array().find(channel => channel.id === deletableChannel.id));
-
-		if (voiceChannel) {
-			if (voiceChannel.members.array().length === 0) {
-				await voiceChannel.delete();
-				deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
-			}
-
-			continue;
+	  const voiceChannel = await client.channels
+		.fetch(deletableChannel.channel)
+		.then((e) =>
+		  e.guild.channels.cache
+			.array()
+			.find((channel) => channel.id === deletableChannel.id)
+		);
+  
+	  if (voiceChannel) {
+		if (voiceChannel.members.array().length === 0) {
+		  await voiceChannel.delete().catch( async () => {
+			const notifyChannel = await client.channels.fetch(deletableChannel.channel);
+			const embedRemove = new Discord.MessageEmbed()
+			  .setColor(EMBED_COLOR_WARNING)
+			  .setTitle(
+				`Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`
+			  );
+			  await notifyChannel.send(embedRemove);
+			  deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+		  });
+		  deletableChannels.splice(
+			deletableChannels.indexOf(deletableChannel),1
+		  );
 		}
-
+  
+		continue;
+	  } else {
 		const notifyChannel = await client.channels.fetch(deletableChannel.channel);
 		const embedRemove = new Discord.MessageEmbed()
-			.setColor(EMBED_COLOR_WARNING)
-			.setTitle(`Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`);
-
-		await notifyChannel.send(embedRemove);
-		deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+		  .setColor(EMBED_COLOR_WARNING)
+		  .setTitle(
+			`Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`
+		  );
+		  await notifyChannel.send(embedRemove);
+		  deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+	  }
 	}
-};
+  };
 
 const evaluateUpdates = async () => {
 	if (Object.entries(channelQueues).length !== 0) {
