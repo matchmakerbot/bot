@@ -69,12 +69,13 @@ const updateUsers = async () => {
 const updateOngoingGames = async () => {
   const currentTimeMS = Date.now();
 
-  for (const game of ongoingGames.filter(
-    (game1) => currentTimeMS - game1[6].time > MAX_GAME_LENGTH_MS
-  )) {
+  for (const game of ongoingGames.filter((game1) => currentTimeMS - game1[6].time > MAX_GAME_LENGTH_MS)) {
     const channels = await client.channels
       .fetch(game[6].channelID)
-      .then((e) => e.guild.channels.cache.array());
+      .then((e) => e.guild.channels.cache.array())
+      .catch(() => {
+        ongoingGames.splice(ongoingGames.indexOf(game), 1);
+      });
 
     for (const channel of channels) {
       if (channel.name === `🔸Team-1-Game-${game[6].gameID}`) {
@@ -111,31 +112,39 @@ const updateVoiceChannels = async () => {
 
     if (voiceChannel) {
       if (voiceChannel.members.array().length === 0) {
-        await voiceChannel.delete().catch( async () => {
-          const notifyChannel = await client.channels.fetch(deletableChannel.channel);
+        await voiceChannel.delete().catch(async () => {
+          const notifyChannel = await client.channels.fetch(
+            deletableChannel.channel
+          );
           const embedRemove = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
               `Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`
             );
-            await notifyChannel.send(embedRemove);
-            deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+          await notifyChannel.send(embedRemove);
+          deletableChannels.splice(
+            deletableChannels.indexOf(deletableChannel),
+            1
+          );
         });
         deletableChannels.splice(
-          deletableChannels.indexOf(deletableChannel),1
+          deletableChannels.indexOf(deletableChannel),
+          1
         );
       }
 
       continue;
     } else {
-      const notifyChannel = await client.channels.fetch(deletableChannel.channel);
+      const notifyChannel = await client.channels.fetch(
+        deletableChannel.channel
+      );
       const embedRemove = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle(
           `Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`
         );
-        await notifyChannel.send(embedRemove);
-        deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+      await notifyChannel.send(embedRemove);
+      deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
     }
   }
 };
@@ -149,7 +158,7 @@ const evaluateUpdates = async () => {
   }
 
   await updateVoiceChannels();
-  console.log(channelQueues)
+  console.log(channelQueues);
 };
 
 setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);
