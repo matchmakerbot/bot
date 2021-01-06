@@ -1,20 +1,16 @@
 const mongoose = require("mongoose");
 
-const url = process.env.mongodb
+const url = process.env.mongodb;
 
-let _db
+let _db;
 
 const connectdb = async (callback) => {
-    try {
-        mongoose.connect(url, (err, db) => {
-            _db = db
-            return callback(err)
-        })
-    } catch (e) {
-        throw e
-    }
+  mongoose.connect(url, (err, db) => {
+    _db = db;
+    return callback(err);
+  });
 };
 
-const getDB = () => _db
+const getDB = () => _db;
 
-module.exports = { connectdb, getDB }
+module.exports = { connectdb, getDB };

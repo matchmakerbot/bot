@@ -1,135 +1,140 @@
-const Discord = require('discord.js');
+/** @format */
 
-const rp = require('request-promise-native');
+const Discord = require("discord.js");
+
+const rp = require("request-promise-native");
 
 module.exports = {
-	name: 'reddit',
-	description: 'ur gay',
-	execute(message) {
+  name: "reddit",
+  description: "ur gay",
+  execute(message) {
+    // Before the reddit thingy actually works
 
-		// Before the reddit thingy actually works
+    function WordCount() {
+      const split2 = message.content;
+      return split2.split(" ").length;
+    }
 
-		function WordCount() {
-			const split2 = message.content;
-			return split2.split(' ').length;
-		}
+    const discordEmbed = new Discord.MessageEmbed().setColor("#F8534F").setTitle(":x: Please only insert one word.");
 
-		const discordEmbed = new Discord.MessageEmbed()
-			.setColor('#F8534F')
-			.setTitle(':x: Please only insert one word.');
+    if (WordCount() > 2) {
+      return message.channel.send(discordEmbed);
+    }
 
-		if (WordCount() > 2) {
-			return message.channel.send(discordEmbed);
-		}
+    function messageEndswith() {
+      const split = message.content.split(" ");
 
-		function messageEndswith() {
-			const split = message.content.split(' ');
+      return split[split.length - 1];
+    }
 
-			return split[split.length - 1];
-		}
+    if (WordCount() === 1) {
+      const discordEmbed = new Discord.MessageEmbed()
+        .setColor("#F8534F")
+        .setDescription(":x: Please specify the subreddit you want to search.");
+      return message.channel.send(discordEmbed);
+    }
 
-		if (WordCount() === 1) {
-			const discordEmbed = new Discord.MessageEmbed()
-				.setColor('#F8534F')
-				.setDescription(':x: Please specify the subreddit you want to search.');
-			return message.channel.send(discordEmbed);
-		}
+    // when all of the thingies are gud
 
-		// when all of the thingies are gud
+    rp("https://www.reddit.com/r/" + messageEndswith() + ".json?limit=1000")
+      .then((response) => {
+        const subreddit = JSON.parse(response);
 
-		rp('https://www.reddit.com/r/' + messageEndswith() + '.json?limit=1000')
-			.then(response => {
+        if (messageEndswith() === "fiftyfifty123") {
+          message.channel.send("Let's not do that");
+        }
+        const data = subreddit.data;
 
-				const subreddit = JSON.parse(response);
+        const childrenConst = data.children;
 
-				if (messageEndswith() === 'fiftyfifty123') {
-					message.channel.send('Let\'s not do that');
-				}
-				const data = subreddit.data;
+        const randomnumber = Math.floor(Math.random() * childrenConst.length);
 
-				const childrenConst = data.children;
+        if (subreddit.error === 404 || data.children.length === 0) {
+          const discordEmbed = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setTitle(":x: Error. Either the subreddit doesn't exist or Reddit made a Fuckie Wookie.");
+          return message.channel.send(discordEmbed);
+        }
+        const nsfwpost = subreddit.data.children[randomnumber].data.over_18;
 
-				const randomnumber = Math.floor(Math.random() * childrenConst.length);
+        if (nsfwpost && !message.channel.nsfw) {
+          const discordEmbed = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setDescription(":warning: This channel does not have a NSFW tag!");
+          return message.channel.send(discordEmbed);
+        }
+        if (nsfwpost && message.channel.id === "416015319736385547") {
+          const discordEmbed = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setTitle(
+              ":warning: This subreddit is disabled in this channel. If you think this shouldn't be happening please ping Tweeno"
+            );
+          return message.channel.send(discordEmbed);
+        }
 
-				if (subreddit.error === 404 || data.children.length === 0) {
-					const discordEmbed = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setTitle(':x: Error. Either the subreddit doesn\'t exist or Reddit made a Fuckie Wookie.');
-					return message.channel.send(discordEmbed);
-				}
-				const nsfwpost = subreddit.data.children[randomnumber].data.over_18;
+        // this code is a fucking mess pls not the belt daddy
 
-				if (nsfwpost && !message.channel.nsfw) {
-					const discordEmbed = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setDescription(':warning: This channel does not have a NSFW tag!');
-					return message.channel.send(discordEmbed);
-				}
-				if (nsfwpost && message.channel.id === '416015319736385547') {
-					const discordEmbed = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setTitle(':warning: This subreddit is disabled in this channel. If you think this shouldn\'t be happening please ping Tweeno');
-					return message.channel.send(discordEmbed);
-				}
+        if (
+          subreddit.data.children[randomnumber].data.is_self &&
+          childrenConst[randomnumber].data.selftext.length > 2048
+        ) {
+          const first2048 = childrenConst[randomnumber].data.selftext.slice(0, 2048);
 
-				// this code is a fucking mess pls not the belt daddy
+          const everythingAfterThat = childrenConst[randomnumber].data.selftext.slice(2048);
 
-				if (subreddit.data.children[randomnumber].data.is_self && childrenConst[randomnumber].data.selftext.length > 2048) {
+          const discordEmbed = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setTitle(childrenConst[randomnumber].data.title)
+            .setDescription(first2048)
+            .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink);
 
-					const first2048 = childrenConst[randomnumber].data.selftext.slice(0, 2048);
+          const discordEmbed2 = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setDescription(everythingAfterThat)
+            .setFooter(
+              "👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments
+            );
 
-					const everythingAfterThat = childrenConst[randomnumber].data.selftext.slice(2048);
+          message.channel.send(discordEmbed);
+          message.channel.send(discordEmbed2);
+          return;
+        }
 
-					const discordEmbed = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setTitle(childrenConst[randomnumber].data.title)
-						.setDescription(first2048)
-						.setURL('https://reddit.com' + childrenConst[randomnumber].data.permalink);
+        if (
+          subreddit.data.children[randomnumber].data.is_self &&
+          childrenConst[randomnumber].data.selftext.length < 2048
+        ) {
+          const discordEmbed = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setTitle(childrenConst[randomnumber].data.title)
+            .setDescription(childrenConst[randomnumber].data.selftext)
+            .setFooter(
+              "👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments
+            )
+            .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink);
 
-					const discordEmbed2 = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setDescription(everythingAfterThat)
-						.setFooter('👍 ' + childrenConst[randomnumber].data.ups + ' | 💬 ' + childrenConst[randomnumber].data.num_comments);
+          return message.channel.send(discordEmbed);
+        }
+        if (!subreddit.data.children[randomnumber].data.is_self) {
+          const discordEmbed = new Discord.MessageEmbed()
+            .setColor("#F8534F")
+            .setTitle(childrenConst[randomnumber].data.title)
+            .setFooter(
+              "👍 " + childrenConst[randomnumber].data.ups + " | 💬 " + childrenConst[randomnumber].data.num_comments
+            )
+            .setURL("https://reddit.com" + childrenConst[randomnumber].data.permalink);
 
-					message.channel.send(discordEmbed);
-					message.channel.send(discordEmbed2);
-					return;
-				}
+          message.channel.send(childrenConst[randomnumber].data.url);
+          message.channel.send(discordEmbed);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        const discordEmbed = new Discord.MessageEmbed()
+          .setColor("#F8534F")
+          .setTitle(":x: Error. Either the subreddit doesn't exist or Reddit made a Fuckie Wookie.");
 
-				if (subreddit.data.children[randomnumber].data.is_self && childrenConst[randomnumber].data.selftext.length < 2048) {
-
-					const discordEmbed = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setTitle(childrenConst[randomnumber].data.title)
-						.setDescription(childrenConst[randomnumber].data.selftext)
-						.setFooter('👍 ' + childrenConst[randomnumber].data.ups + ' | 💬 ' + childrenConst[randomnumber].data.num_comments)
-						.setURL('https://reddit.com' + childrenConst[randomnumber].data.permalink);
-
-					return message.channel.send(discordEmbed);
-				}
-				if (!subreddit.data.children[randomnumber].data.is_self) {
-					const discordEmbed = new Discord.MessageEmbed()
-						.setColor('#F8534F')
-						.setTitle(childrenConst[randomnumber].data.title)
-						.setFooter('👍 ' + childrenConst[randomnumber].data.ups + ' | 💬 ' + childrenConst[randomnumber].data.num_comments)
-						.setURL('https://reddit.com' + childrenConst[randomnumber].data.permalink);
-
-
-					message.channel.send(childrenConst[randomnumber].data.url);
-					message.channel.send(discordEmbed);
-				}
-
-
-			})
-			.catch(error => {
-				console.error(error);
-				const discordEmbed = new Discord.MessageEmbed()
-					.setColor('#F8534F')
-					.setTitle(':x: Error. Either the subreddit doesn\'t exist or Reddit made a Fuckie Wookie.');
-
-				message.channel.send(discordEmbed);
-			});
-
-
-	},
+        message.channel.send(discordEmbed);
+      });
+  },
 };

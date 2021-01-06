@@ -9,15 +9,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ffmpeg-static": "^4.2.7",
     "@discordjs/opus": "^0.3.3",
     "cloc": "^2.5.1",
     "concurrency": "^0.1.4",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "eslint": "^7.13.0",
+    "eslint-config-airbnb": "^18.2.1",
     "ffmpeg": "0.0.4",
+    "ffmpeg-static": "^4.2.7",
     "jest-discord": "^0.1.0",
+    "jsdom": "^16.4.0",
     "mongod": "^2.0.0",
     "mongoose": "^5.9.11",
     "node-fetch": "^2.6.0",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "concurrently": "^5.2.0",
+    "eslint-plugin-prettier": "^3.3.0",
     "jest-environment-discord": "^0.1.0"
   }
 }

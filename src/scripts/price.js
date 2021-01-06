@@ -1,6 +1,12 @@
 const Discord = require('discord.js');
 
-const puppeteer = require('puppeteer');
+const rp = require('request-promise-native');
+
+const jsdom = require('jsdom')
+
+const {
+	JSDOM
+} = jsdom
 
 const execute = async (message) => {
 
@@ -12,55 +18,25 @@ const execute = async (message) => {
 
 	content.join('%20');
 
-	const browser = await puppeteer.launch();
+		const response = await rp(`https://www.globaldata.pt/?q=3600`);
+		const parsed = new JSDOM(response).window.document;
+		console.log(parsed.getElementsByClassName('price')[0].textContent)
 
-	const getItem = async url => {
+		const price = parsed.getElementsByClassName('df-card__price ')[0].textContent;
+		const title = parsed.getElementsByClassName('df-card__title')[0].textContent;
+		const pic = parsed.getElementsByClassName('df-card__image')[0].querySelectorAll()[0].src;
+		const link = parsed.getElementsByClassName('df-card__main')[0].href;
+		const stock = parsed.getElementsByClassName('stock_message')[0].textContent;
 
-		const page = await browser.newPage();
-
-		await page.goto(url);
-
-		const [el] = await page.$x('//*[@id="hits"]/div/div[1]/li/div/div[1]/div[2]/a');
-
-		const src = await el.getProperty('href');
-
-		const [elImage] = await page.$x('//*[@id="hits"]/div/div[1]/li/div/div[1]/div[1]/a/span/span/img');
-
-		const srcImage = await elImage.getProperty('src');
-
-		embed.setThumbnail(await srcImage.jsonValue());
-
-		return await src.jsonValue();
-	};
-
-	const getValues = async url => {
-
-		const page = await browser.newPage();
-
-		await page.goto(url);
-
-		const getName = async () => {
-			const [el] = await page.$x('//*[@id="maincontent"]/div[3]/h1/span');
-
-			const src = await el.getProperty('textContent');
-
-			return await src.jsonValue();
-		};
-
-		const getPrice = async () => {
-			const [el] = await page.$x('//*[@id="maincontent"]/div[5]/div[2]/div[3]/div[1]/div/div/p/span');
-
-			const src = await el.getProperty('textContent');
-
-			return await src.jsonValue();
-		};
 		embed.setColor('#F8534F')
-			.setTitle(await getName())
-			.addField('Preço PCDIGA:', await getPrice())
-			.setTimestamp();
+			.setTitle(title)
+			.setAuthor("Go to link",pic,link)
+			.addField('Preço PCDIGA:', price)
+			.addField('Stock:',stock)
+			.setTimestamp()
+
 		message.channel.send(embed);
-	};
-	getValues(await getItem(`https://www.pcdiga.com/?query=${content}`));
+
 };
 
 module.exports = {

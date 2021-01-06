@@ -1,7 +1,7 @@
-"use strict"
+"use strict";
 
-const Discord = require('discord.js')
+const Discord = require("discord.js");
 
 const client = new Discord.Client();
 
-module.exports = client
+module.exports = client;
