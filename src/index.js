@@ -86,9 +86,6 @@ MongoDB.connectdb((err) => {
   }
 
   client.once("ready", async () => {
-    (await client.channels.fetch("733790694048792621")).send(
-      "Tas a falar pa quem boi"
-    );
     for (const guidId of client.guilds.cache.map((a) => a.id)) {
       await guildsCollection
         .find({
