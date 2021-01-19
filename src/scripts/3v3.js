@@ -101,17 +101,13 @@ const updateOngoingGames = async () => {
 };
 
 const updateVoiceChannels = async () => {
+   const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
-    const voiceChannel = await client.channels
-      .fetch(deletableChannel.channel)
-      .then((e) =>
-        e.guild.channels.cache
-          .array()
-          .find((channel) => channel.id === deletableChannel.id)
-      );
+    const voiceChannel = await client.channels.fetch(deletableChannel.id);
 
     if (voiceChannel) {
       if (voiceChannel.members.array().length === 0) {
+        deleteVC.push(deletableChannel);
         await voiceChannel.delete().catch(async () => {
           const notifyChannel = await client.channels.fetch(
             deletableChannel.channel
@@ -121,20 +117,14 @@ const updateVoiceChannels = async () => {
             .setTitle(
               `Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`
             );
-          await notifyChannel.send(embedRemove);
-          deletableChannels.splice(
-            deletableChannels.indexOf(deletableChannel),
-            1
-          );
+          await notifyChannel.send(embedRemove).catch(() => {
+            console.log("Unknown error 1")
+          });
         });
-        deletableChannels.splice(
-          deletableChannels.indexOf(deletableChannel),
-          1
-        );
       }
 
-      continue;
     } else {
+      deleteVC.push(deletableChannel)
       const notifyChannel = await client.channels.fetch(
         deletableChannel.channel
       );
@@ -143,9 +133,13 @@ const updateVoiceChannels = async () => {
         .setTitle(
           `Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`
         );
-      await notifyChannel.send(embedRemove);
-      deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+        await notifyChannel.send(embedRemove).catch(() => {
+          console.log("Unknown error 2")
+        });
     }
+  }
+  for(let item of deleteVC) {
+    deletableChannels.splice(deletableChannels.indexOf(item),1);
   }
 };
 
@@ -158,7 +152,6 @@ const evaluateUpdates = async () => {
   }
 
   await updateVoiceChannels();
-  console.log(channelQueues);
 };
 
 setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);
@@ -424,8 +417,7 @@ const execute = async (message) => {
             }
           }
 
-          games[6].winningTeam =
-            indexplayer === 0 || indexplayer === 1 || indexplayer === 2 ? 0 : 1;
+          games[6].winningTeam = indexplayer === 0 || indexplayer === 1 || indexplayer === 2 ? 0 : 1;
 
           finishedGames.push(games);
 
@@ -451,9 +443,7 @@ const execute = async (message) => {
             }
           }
 
-          correctEmbed.setTitle(
-            ":white_check_mark: Game Completed! Thank you for Playing!"
-          );
+          correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
           return message.channel.send(correctEmbed);
         }
