@@ -42,6 +42,20 @@ let gameCount = 0;
 
 let hasVoted = false;
 
+const warnNonDeletableChannel = async (channel,gameID) => {
+  const notifyChannel = await client.channels.fetch(channel).catch(() => {
+    console.log("Cannot find notifyChannel")
+  });
+  const embedRemove = new Discord.MessageEmbed()
+    .setColor(EMBED_COLOR_WARNING)
+    .setTitle(
+      `Unable to delete voice channel ${gameID}, maybe the bot doesn't have permissions to do so? Please delete vc manually.`
+    );
+    await notifyChannel.send(embedRemove).catch(() => {
+      console.log("Cannot send unable to delete voice channel message");
+    });
+}
+
 const updateUsers = async () => {
   const currentTimeMS = Date.now();
 
@@ -95,14 +109,15 @@ const updateVoiceChannels = async () => {
   const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
     const voiceChannel = await client.channels.fetch(deletableChannel.id).catch((e) => {
-      deletableChannel.splice(deletableChannels.indexOf(deletableChannel), 1);
+      deleteVC.push(deletableChannel);
+      warnNonDeletableChannel(deletableChannel.channel,deletableChannel.gameID)
     });
 
     if (voiceChannel) {
       if (voiceChannel.members.array().length === 0) {
         deleteVC.push(deletableChannel);
         await voiceChannel.delete().catch(async () => {
-          const notifyChannel = await client.channels.fetch(deletableChannel.channel);
+          warnNonDeletableChannel(deletableChannel.channel,deletableChannel.gameID)
           const embedRemove = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
@@ -110,12 +125,12 @@ const updateVoiceChannels = async () => {
             );
           await notifyChannel.send(embedRemove).catch(() => {
             console.log("Unknown error 1");
-          });
+        });
         });
       }
     } else {
       deleteVC.push(deletableChannel);
-      const notifyChannel = await client.channels.fetch(deletableChannel.channel);
+      warnNonDeletableChannel(deletableChannel.channel,deletableChannel.gameID)
       const embedRemove = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle(
