@@ -22,7 +22,7 @@ const EMBED_COLOR_CHECK = "#77B255";
 
 const EMBED_COLOR_WARNING = "#77B255";
 
-const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
+const MAX_USER_IDLE_TIME_MS =  60 * 1000;
 
 const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
@@ -61,14 +61,19 @@ const updateUsers = async () => {
 
   for (const channelUsers of Object.values(channelQueues).filter((channel) => channel.length < 6)) {
     for (const user of channelUsers.filter((user1) => currentTimeMS - user1.date > MAX_USER_IDLE_TIME_MS)) {
-      const notifyChannel = await client.channels.fetch(
-        Object.keys(channelQueues).find((key) => channelQueues[key] === channelUsers)
-      );
+      const channel = Object.keys(channelQueues).find((key) => channelQueues[key] === channelUsers)
+      const notifyChannel = await client.channels
+        .fetch(channel)
+        .catch(() => {
+          delete channelQueues[channel]
+        });
       const embedRemove = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
-      await notifyChannel.send(`<@${user.id}>`, embedRemove);
+      await notifyChannel.send(`<@${user.id}>`, embedRemove).catch(() => {
+        console.log("oof")
+      });
       channelUsers.splice(channelUsers.indexOf(user), 1);
     }
   }
