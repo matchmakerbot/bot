@@ -22,7 +22,7 @@ const EMBED_COLOR_CHECK = "#77B255";
 
 const EMBED_COLOR_WARNING = "#77B255";
 
-const MAX_USER_IDLE_TIME_MS =  60 * 1000;
+const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
 
 const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
@@ -61,18 +61,16 @@ const updateUsers = async () => {
 
   for (const channelUsers of Object.values(channelQueues).filter((channel) => channel.length < 6)) {
     for (const user of channelUsers.filter((user1) => currentTimeMS - user1.date > MAX_USER_IDLE_TIME_MS)) {
-      const channel = Object.keys(channelQueues).find((key) => channelQueues[key] === channelUsers)
-      const notifyChannel = await client.channels
-        .fetch(channel)
-        .catch(() => {
-          delete channelQueues[channel]
-        });
+      const channel = Object.keys(channelQueues).find((key) => channelQueues[key] === channelUsers);
+      const notifyChannel = await client.channels.fetch(channel).catch(() => {
+        delete channelQueues[channel];
+      });
       const embedRemove = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
       await notifyChannel.send(`<@${user.id}>`, embedRemove).catch(() => {
-        console.log("oof")
+        console.log("oof");
       });
       channelUsers.splice(channelUsers.indexOf(user), 1);
     }
@@ -130,7 +128,7 @@ const updateOngoingGames = async () => {
 const updateVoiceChannels = async () => {
   const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
-    const voiceChannel = await client.channels.fetch(deletableChannel.id).catch((e) => {
+    const voiceChannel = await client.channels.fetch(deletableChannel.id).catch(() => {
       deleteVC.push(deletableChannel);
       warnNonDeletableChannel(deletableChannel.channel, deletableChannel.gameID);
     });
@@ -957,6 +955,17 @@ const execute = async (message) => {
       message.channel.send(correctEmbed);
 
       if (queueArray.length === 6) {
+        gameCount++;
+
+        const gameCreatedObj = {
+          gamemode: "3v3",
+          gameID: gameCount,
+          time: new Date(),
+          channelID: channel_Id,
+          players: [],
+          winningTeam: null,
+        };
+
         for (const user of queueArray) {
           await dbCollection
             .find({
@@ -1021,8 +1030,6 @@ const execute = async (message) => {
           "A game has been made! Please select your preferred gamemode: Captains (!c) or Random (!r) "
         );
 
-        gameCount++;
-
         const rorc = {};
 
         rorc[gameCount] = [];
@@ -1082,12 +1089,6 @@ const execute = async (message) => {
           )
         ) {
           shuffle(queueArray);
-
-          queueArray.push({
-            gameID: gameCount,
-            time: new Date(),
-            channelID: channel_Id,
-          });
         } else if (
           getOccurrence(
             rorcArray.map((e) => e.param),
@@ -1098,13 +1099,13 @@ const execute = async (message) => {
             "r"
           )
         ) {
-          tempObject[gameCount] = [];
+          tempObject[gameCreatedObj.gameID] = [];
 
-          usedNums[gameCount] = [];
+          usedNums[gameCreatedObj.gameID] = [];
 
-          const gameCountNums = usedNums[gameCount];
+          const gameCountNums = usedNums[gameCreatedObj.gameID];
 
-          const captainsArray = tempObject[gameCount];
+          const captainsArray = tempObject[gameCreatedObj.gameID];
 
           captainsArray.push(
             ...queueArray.map((queueItem) => ({
@@ -1126,7 +1127,7 @@ const execute = async (message) => {
 
           const CaptainsEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
-            .setTitle(`Game ID: ${gameCount}`)
+            .setTitle(`Game ID: ${gameCreatedObj.gameID}`)
             .addField("Captain for team 1", captainsArray[0].name)
             .addField("Captain for team 2", captainsArray[1].name);
 
@@ -1290,32 +1291,17 @@ const execute = async (message) => {
           captainsArray.splice(0, captainsArray.length);
 
           gameCountNums.splice(0, gameCountNums.length);
-
-          queueArray.push({
-            gameID: gameCount,
-            time: new Date(),
-            channelID: channel_Id,
-          });
         }
-
-        const ongoingGame = {
-          gamemode: "3v3",
-          gameID: queueArray[6].gameID,
-          time: queueArray[6].time,
-          channelID: queueArray[6].channelID,
-          players: [],
-          winningTeam: undefined,
-        };
 
         for (let i = 0; i < 6; i++) {
-          ongoingGame.players.push(queueArray[i]);
+          gameCreatedObj.players.push(queueArray[i]);
         }
 
-        await gamesCollection.insert(ongoingGame);
+        await gamesCollection.insert(gameCreatedObj);
 
         const discordEmbed1 = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_WARNING)
-          .addField("Game is ready:", `Game ID is: ${queueArray[6].gameID}`)
+          .addField("Game is ready:", `Game ID is: ${gameCreatedObj.gameID}`)
           .addField(
             ":small_orange_diamond: -Team 1-",
             `${queueArray[0].name}, ${queueArray[1].name}, ${queueArray[2].name}`
@@ -1371,7 +1357,7 @@ const execute = async (message) => {
         });
 
         message.guild.channels
-          .create(`🔸Team-1-Game-${queueArray[6].gameID}`, {
+          .create(`🔸Team-1-Game-${gameCreatedObj.gameID}`, {
             type: "voice",
             parent: message.channel.parentID,
             permissionOverwrites: [
@@ -1398,7 +1384,7 @@ const execute = async (message) => {
           );
 
         message.guild.channels
-          .create(`🔹Team-2-Game-${queueArray[6].gameID}`, {
+          .create(`🔹Team-2-Game-${gameCreatedObj.gameID}`, {
             type: "voice",
             parent: message.channel.parentID,
             permissionOverwrites: [
