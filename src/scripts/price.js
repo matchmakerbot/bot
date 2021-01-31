@@ -9,7 +9,7 @@ const {
 } = jsdom
 
 const execute = async (message) => {
-
+return message.channel.send("it broke")
 	const embed = new Discord.MessageEmbed();
 
 	const content = message.content.split(' ');

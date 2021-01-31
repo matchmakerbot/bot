@@ -9,6 +9,9 @@ const Discord = require("discord.js");
 const musicChannels = {};
 
 const execute = async (message) => {
+
+  return message.channel.send("This is broke i need to fix it soz, blame discord opus");
+
   const embed = new Discord.MessageEmbed().setColor("#77B255");
 
   const voiceChannel = message.member.voice.channel;
