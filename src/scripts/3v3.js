@@ -345,7 +345,7 @@ const execute = async (message) => {
   switch (args(message)) {
     case "leave": {
       for (const captainGames of Object.values(tempObject).flat()) {
-        if (includesUserId(captainGames)) {
+        if (captainGames.id === userId) {
           wrongEmbed.setTitle(":x: You can't leave now!");
 
           return message.channel.send(wrongEmbed);
@@ -499,33 +499,33 @@ const execute = async (message) => {
       if (thirdArg === "revert") {
         if (selectedGame.winningTeam === 0) {
           for (let i = 0; i < 3; i++) {
-            revertgame("losses", i);
+            await revertgame("losses", i);
           }
           for (let i = 3; i < 6; i++) {
-            revertgame("wins", i);
+            await revertgame("wins", i);
           }
         } else {
           for (let i = 3; i < 6; i++) {
-            revertgame("losses", i);
+            await revertgame("losses", i);
           }
           for (let i = 0; i < 3; i++) {
-            revertgame("wins", i);
+            await revertgame("wins", i);
           }
         }
       } else if (thirdArg === "cancel") {
         if (selectedGame.winningTeam === 0) {
           for (let i = 0; i < 3; i++) {
-            revertgame("wins", i);
+            await revertgame("wins", i);
           }
           for (let i = 3; i < 6; i++) {
-            revertgame("losses", i);
+            await revertgame("losses", i);
           }
         } else {
           for (let i = 3; i < 6; i++) {
-            revertgame("wins", i);
+            await revertgame("wins", i);
           }
           for (let i = 0; i < 3; i++) {
-            revertgame("losses", i);
+            await revertgame("losses", i);
           }
         }
       } else {
