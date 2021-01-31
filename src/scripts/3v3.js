@@ -1304,11 +1304,11 @@ const execute = async (message) => {
           .addField("Game is ready:", `Game ID is: ${gameCreatedObj.gameID}`)
           .addField(
             ":small_orange_diamond: -Team 1-",
-            `${queueArray[0].name}, ${queueArray[1].name}, ${queueArray[2].name}`
+            `${gameCreatedObj.players[0].name}, ${gameCreatedObj.players[1].name}, ${gameCreatedObj.players[2].name}`
           )
           .addField(
             ":small_blue_diamond: -Team 2-",
-            `${queueArray[3].name}, ${queueArray[4].name}, ${queueArray[5].name}`
+            `${gameCreatedObj.players[3].name}, ${gameCreatedObj.players[4].name}, ${gameCreatedObj.players[5].name}`
           );
         message.channel.send(discordEmbed1);
 
@@ -1316,10 +1316,10 @@ const execute = async (message) => {
           .setColor(EMBED_COLOR_WARNING)
           .addField("Name:", valuesforpm.name)
           .addField("Password:", valuesforpm.password)
-          .addField("You have to:", `Join match(Created by ${queueArray[0].name})`);
+          .addField("You have to:", `Join match(Created by ${gameCreatedObj.players[0].name})`);
 
-        for (const users of queueArray) {
-          if (users.id !== queueArray[0].id && users.id !== queueArray[6].id) {
+        for (const users of gameCreatedObj.players) {
+          if (users.id !== gameCreatedObj.players[0].name) {
             const fetchedUser = await client.users.fetch(users.id).catch(() => message.channel.send("Invalid User"));
             fetchedUser.send(JoinMatchEmbed).catch((error) => {
               const errorEmbed = new Discord.MessageEmbed()
@@ -1342,14 +1342,14 @@ const execute = async (message) => {
           .addField("You have to:", "Create Custom Match");
 
         const fetchedUser = await client.users
-          .fetch(queueArray[0].id)
+          .fetch(gameCreatedObj.players[0].id)
           .catch(() => message.channel.send("Invalid User"));
 
         fetchedUser.send(CreateMatchEmbed).catch((error) => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
-              `:x: Couldn't sent message to ${queueArray[0].name}, please check if your DM'S aren't set to friends only.`
+              `:x: Couldn't sent message to ${gameCreatedObj.players[0].name}, please check if your DM'S aren't set to friends only.`
             );
 
           message.channel.send(errorEmbed);
@@ -1366,15 +1366,15 @@ const execute = async (message) => {
                 deny: "CONNECT",
               },
               {
-                id: queueArray[0].id,
+                id: gameCreatedObj.players[0].id,
                 allow: "CONNECT",
               },
               {
-                id: queueArray[1].id,
+                id: gameCreatedObj.players[1].id,
                 allow: "CONNECT",
               },
               {
-                id: queueArray[2].id,
+                id: gameCreatedObj.players[2].id,
                 allow: "CONNECT",
               },
             ],
@@ -1393,15 +1393,15 @@ const execute = async (message) => {
                 deny: "CONNECT",
               },
               {
-                id: queueArray[3].id,
+                id: gameCreatedObj.players[3].id,
                 allow: "CONNECT",
               },
               {
-                id: queueArray[4].id,
+                id: gameCreatedObj.players[4].id,
                 allow: "CONNECT",
               },
               {
-                id: queueArray[5].id,
+                id: gameCreatedObj.players[5].id,
                 allow: "CONNECT",
               },
             ],
