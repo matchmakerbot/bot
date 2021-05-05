@@ -1,14 +1,6 @@
-/** @format */
-
 const Discord = require("discord.js");
 
-const client = require("../utils/client.js");
-
-const MongoDB = require("../utils/mongodb");
-
-const db = MongoDB.getDB();
-
-const teamsCollection = db.collection("teams");
+const client = require("../utils/createClientInstance.js");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -63,7 +55,7 @@ const updateOngoingGames = async () => {
   const currentTimeMS = Date.now();
 
   for (const game of ongoingGames.filter((game) => currentTimeMS - game[2].time > MAX_GAME_LENGTH_MS)) {
-    const channels = await client.channels.fetch(game[10].channelID).then((e) => e.guild.channels.cache.array());
+    const channels = await client.channels.fetch(game[2].channelID).then((e) => e.guild.channels.cache.array());
 
     for (const channel of channels) {
       if (channel.name === `🔸Team-${games[0].name}-Game-${games[2].gameID}`) {
@@ -86,33 +78,42 @@ const updateOngoingGames = async () => {
 };
 
 const updateVoiceChannels = async () => {
+  const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
-    const voiceChannel = await client.channels
-      .fetch(deletableChannel.channel)
-      .then((e) => e.guild.channels.cache.array().find((channel) => channel.id === deletableChannel.id));
+    const voiceChannel = await client.channels.fetch(deletableChannel.id).catch((e) => {
+      deletableChannel.splice(deletableChannels.indexOf(deletableChannel), 1);
+    });
 
     if (voiceChannel) {
       if (voiceChannel.members.array().length === 0) {
+        deleteVC.push(deletableChannel);
         await voiceChannel.delete().catch(async () => {
           const notifyChannel = await client.channels.fetch(deletableChannel.channel);
           const embedRemove = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
-            .setTitle(`Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`);
-          await notifyChannel.send(embedRemove);
-          deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+            .setTitle(
+              `Unable to delete voice channel ${deletableChannel.gameID}, maybe the bot doesn't have permissions to do so? Please delete vc manually.`
+            );
+          await notifyChannel.send(embedRemove).catch(() => {
+            console.log("Unknown error 1");
+          });
         });
-        deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
       }
-
-      continue;
     } else {
+      deleteVC.push(deletableChannel);
       const notifyChannel = await client.channels.fetch(deletableChannel.channel);
       const embedRemove = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
-        .setTitle(`Unable to delete voice channel ${deletableChannel.gameID}, please delete it manually.`);
-      await notifyChannel.send(embedRemove);
-      deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+        .setTitle(
+          `Unable to delete voice channel ${deletableChannel.gameID}, maybe the bot doesn't have permissions to do so? Please delete vc manually.`
+        );
+      await notifyChannel.send(embedRemove).catch(() => {
+        console.log("Unknown error 2");
+      });
     }
+  }
+  for (const item of deleteVC) {
+    deletableChannels.splice(deletableChannels.indexOf(item), 1);
   }
 };
 
@@ -120,7 +121,6 @@ const evaluateUpdates = async () => {
   if (Object.entries(channelQueues).length !== 0) {
     await updateUsers();
   }
-
   if (ongoingGames.length !== 0) {
     await updateOngoingGames();
   }
@@ -132,7 +132,8 @@ setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);
 
 const shuffle = (array) => {
   let currentIndex = array.length;
-  let temporaryValue, randomIndex;
+  let temporaryValue;
+  let randomIndex;
 
   while (currentIndex !== 0) {
     randomIndex = Math.floor(Math.random() * currentIndex);
@@ -197,9 +198,8 @@ const execute = async (message) => {
   const getIDByTag = (tag) => {
     if (tag.indexOf("!") > -1) {
       return tag.substring(3, tag.length - 1);
-    } else {
-      return tag.substring(2, tag.length - 1);
     }
+    return tag.substring(2, tag.length - 1);
   };
 
   const teamsInsert = {
@@ -212,7 +212,6 @@ const execute = async (message) => {
     .find({
       id: message.guild.id,
     })
-    .toArray()
     .then(async (storedTeams) => {
       return storedTeams[0].teams;
     });
@@ -251,7 +250,7 @@ const execute = async (message) => {
     teamsInGameVar = [];
     for (const game of ongoingGames) {
       for (const stats of game) {
-        if (typeof stats.name == "string" && game[2].guild === message.guild.id) {
+        if (typeof stats.name === "string" && game[2].guild === message.guild.id) {
           teamsInGameVar.push(stats.name);
         }
       }
@@ -1175,6 +1174,11 @@ const execute = async (message) => {
     case "score": {
       switch (secondArg) {
         case "me": {
+          if (teamsInfo() == undefined) {
+            wrongEmbed.setTitle(":x: You don't have a team!");
+
+            return message.channel.send(wrongEmbed);
+          }
           if (!findGuildTeams.map((e) => e.name).includes(teamsInfo().name)) {
             wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
@@ -1202,7 +1206,7 @@ const execute = async (message) => {
                 "Winrate:",
                 isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100))
                   ? "0%"
-                  : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%"
+                  : `${Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)}%`
               );
 
               correctEmbed.addField("MMR:", scoreDirectory.mmr);
@@ -1285,9 +1289,8 @@ const execute = async (message) => {
           };
           if (!isNaN(thirdArg) && parseInt(thirdArg) > 10000) {
             return getScore(thirdArg, fourthArg);
-          } else {
-            return getScore(channel_ID, thirdArg);
           }
+          return getScore(channel_ID, thirdArg);
         }
       }
       break;
@@ -1410,22 +1413,21 @@ const execute = async (message) => {
             wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
             return message.channel.send(wrongEmbed);
-          } else {
-            const channelsInDatabase = `teams.${findGuildTeams.map((e) => e.name).indexOf(thirdArg)}.channels`;
-
-            await teamsCollection.update(
-              {
-                id: message.guild.id,
-              },
-              {
-                $pull: {
-                  [channelsInDatabase]: {
-                    channelID: channel_ID,
-                  },
-                },
-              }
-            );
           }
+          const channelsInDatabase = `teams.${findGuildTeams.map((e) => e.name).indexOf(thirdArg)}.channels`;
+
+          await teamsCollection.update(
+            {
+              id: message.guild.id,
+            },
+            {
+              $pull: {
+                [channelsInDatabase]: {
+                  channelID: channel_ID,
+                },
+              },
+            }
+          );
 
           correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 

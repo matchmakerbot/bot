@@ -1,0 +1,6 @@
+src/scripts/randomword.js
+.vscode/*
+node_modules/*
+src/scripts/3v3teams.js
+src/scripts/5v5.js
+src/scripts/5v5teams.js

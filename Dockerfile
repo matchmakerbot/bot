@@ -8,4 +8,4 @@ COPY . .
 RUN yarn install --production --frozen-lockfile --ignore-scripts
 
 
-CMD [ "node", "." ]
+CMD [ "node", "."]

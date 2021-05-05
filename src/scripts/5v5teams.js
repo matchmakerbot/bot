@@ -2,15 +2,7 @@
 
 const Discord = require("discord.js");
 
-const client = require("../utils/client.js");
-
-const MongoDB = require("../utils/mongodb");
-
-const db = MongoDB.getDB();
-
-const teamsCollection = db.collection("teams");
-
-const serversCollection = db.collection("guilds");
+const client = require("../utils/createClientInstance.js");
 
 const valorantMaps = ["Haven", "Bind", "Split"];
 
@@ -140,11 +132,12 @@ const evaluateUpdates = async () => {
   await updateVoiceChannels();
 };
 
-setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);
+// setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);
 
 const shuffle = (array) => {
   let currentIndex = array.length;
-  let temporaryValue, randomIndex;
+  let temporaryValue;
+  let randomIndex;
 
   while (currentIndex !== 0) {
     randomIndex = Math.floor(Math.random() * currentIndex);
@@ -233,9 +226,8 @@ const execute = async (message) => {
   const getIDByTag = (tag) => {
     if (tag.indexOf("!") > -1) {
       return tag.substring(3, tag.length - 1);
-    } else {
-      return tag.substring(2, tag.length - 1);
     }
+    return tag.substring(2, tag.length - 1);
   };
 
   const teamsInsert = {
@@ -287,7 +279,7 @@ const execute = async (message) => {
     teamsInGameVar = [];
     for (const game of ongoingGames) {
       for (const stats of game) {
-        if (typeof stats.name == "string" && game[2].guild === message.guild.id) {
+        if (typeof stats.name === "string" && game[2].guild === message.guild.id) {
           teamsInGameVar.push(stats.name);
         }
       }
@@ -1265,7 +1257,7 @@ const execute = async (message) => {
                 "Winrate:",
                 isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100))
                   ? "0%"
-                  : Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100) + "%"
+                  : `${Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)}%`
               );
 
               correctEmbed.addField("MMR:", scoreDirectory.mmr);
@@ -1348,9 +1340,8 @@ const execute = async (message) => {
           };
           if (!isNaN(thirdArg) && parseInt(thirdArg) > 10000) {
             return getScore(thirdArg, fourthArg);
-          } else {
-            return getScore(channel_ID, thirdArg);
           }
+          return getScore(channel_ID, thirdArg);
         }
       }
       break;
@@ -1473,22 +1464,21 @@ const execute = async (message) => {
             wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
             return message.channel.send(wrongEmbed);
-          } else {
-            const channelsInDatabase = `teams.${findGuildTeams.map((e) => e.name).indexOf(thirdArg)}.channels`;
-
-            await teamsCollection.update(
-              {
-                id: message.guild.id,
-              },
-              {
-                $pull: {
-                  [channelsInDatabase]: {
-                    channelID: channel_ID,
-                  },
-                },
-              }
-            );
           }
+          const channelsInDatabase = `teams.${findGuildTeams.map((e) => e.name).indexOf(thirdArg)}.channels`;
+
+          await teamsCollection.update(
+            {
+              id: message.guild.id,
+            },
+            {
+              $pull: {
+                [channelsInDatabase]: {
+                  channelID: channel_ID,
+                },
+              },
+            }
+          );
 
           correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 
