@@ -226,7 +226,7 @@ const givewinLose = async (score, i, gameList, channelIdParam, userIdParam) => {
     }
   );
 };
-
+// take the game as a parameter, much easier than doing what im doing rn
 const revertgame = async (status, i, thirdArg, secondArg, channelId) => {
   const games = finishedGames.find((game) => game.gameID === Number(secondArg));
 
@@ -907,7 +907,8 @@ const execute = async (message) => {
           gameID: gameCount,
           time: new Date(),
           channelID: channelId,
-          players: [],
+          team1: [],
+          team2: [],
           voiceChannelIds: [],
         };
 
@@ -1053,12 +1054,6 @@ const execute = async (message) => {
           );
 
           shuffle(captainsArray);
-
-          for (const player of queueArray) {
-            if (player.name != null) {
-              player.name = "Placeholder";
-            }
-          }
 
           queueArray[0] = captainsArray[0];
 
@@ -1242,8 +1237,12 @@ const execute = async (message) => {
           gameCountNums.splice(0, gameCountNums.length);
         }
 
-        for (let i = 0; i < 6; i++) {
-          gameCreatedObj.players.push(queueArray[i]);
+        for (let i = 0; i < 3; i++) {
+          gameCreatedObj.team1.push(queueArray[i]);
+        }
+
+        for (let i = 3; i < 6; i++) {
+          gameCreatedObj.team2.push(queueArray[i]);
         }
 
         const orangeTeamVc = await message.guild.channels

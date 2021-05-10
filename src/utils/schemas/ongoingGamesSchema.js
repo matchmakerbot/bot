@@ -1,19 +1,20 @@
 const mongoose = require("mongoose");
 
+const playerObject = {
+  id: String,
+  name: String,
+  date: Date,
+  _id: false,
+};
+
 const schema = new mongoose.Schema(
   {
     gamemode: String,
     gameID: Number,
     time: Date,
     channelID: String,
-    players: [
-      {
-        id: String,
-        name: String,
-        date: Date,
-        _id: false,
-      },
-    ],
+    team1: [playerObject],
+    team2: [playerObject],
     voiceChannelIds: [
       {
         channelName: String,
