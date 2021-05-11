@@ -16,9 +16,9 @@ const TEAM1 = "team1";
 
 const TEAM2 = "team2";
 
-const WINS = "wins"
+const WINS = "wins";
 
-const LOSSES = "losses"
+const LOSSES = "losses";
 
 const EMBED_COLOR_CHECK = "#77B255";
 
@@ -32,8 +32,6 @@ const UPDATE_INTERVAL_MS = 60 * 1000;
 
 const finishedGames = [];
 
-const usedNums = [];
-
 const deletableChannels = [];
 
 const channelQueues = {};
@@ -44,7 +42,9 @@ let promises = [];
 
 let gameCount = 0;
 
-let hasVoted = false;
+const joinTeam1And2 = (object) => {
+  return object.team1.concat(object.team2);
+};
 
 const fetchGames = async () => {
   const games = await OngoingGamesCollection.find({
@@ -121,14 +121,14 @@ const updateOngoingGames = async () => {
         });
         await OngoingGamesCollection.deleteOne({
           gamemode: "3v3",
-          gameID: game.gameID
+          gameID: game.gameID,
         });
         return null;
       })
       .catch(async () => {
         await OngoingGamesCollection.deleteOne({
           gamemode: "3v3",
-          gameID: game.gameID
+          gameID: game.gameID,
         });
       });
     promises.push(channelNotif);
@@ -214,39 +214,42 @@ const args = (message) => {
 const includesUserId = (array, userIdParam) => array.map((e) => e.id).includes(userIdParam);
 
 const assignWinLoseDb = async (user, game, score) => {
-  const storedUserDb = SixmanCollection.findOne({
-    id: user.id
-  })
+  const storedUserDb = await SixmanCollection.findOne({
+    id: user.id,
+  });
 
-  const channelPos = storedUserDb.servers.map((e) => e.channelID).indexOf(game.channelId);
+  const channelPos = storedUserDb.servers.map((e) => e.channelID).indexOf(game.channelID);
 
   const sort = `servers.${channelPos}.${score}`;
 
   const mmr = `servers.${channelPos}.mmr`;
 
-  await SixmanCollection.update({
-    id: user.id,
-  }, {
-    $set: {
-      [sort]: storedUserDb.servers[channelPos][score] + 1,
-      [mmr]: score === WINS ? storedUserDb.servers[channelPos].mmr + 13 : storedUserDb.servers[channelPos].mmr - 10,
+  await SixmanCollection.update(
+    {
+      id: user.id,
     },
-  });
+    {
+      $set: {
+        [sort]: storedUserDb.servers[channelPos][score] + 1,
+        [mmr]: score === WINS ? storedUserDb.servers[channelPos].mmr + 13 : storedUserDb.servers[channelPos].mmr - 10,
+      },
+    }
+  );
 };
 
-
 const revertGame = async (user, game, param, team) => {
-  const storedUserDb = SixmanCollection.findOne({
-    id: user.id
-  })
+  const storedUserDb = await SixmanCollection.findOne({
+    id: user.id,
+  });
 
-  const channelPos = storedUsers.servers.map((e) => e.channelID).indexOf(game.channelID);
+  const channelPos = storedUserDb.servers.map((e) => e.channelID).indexOf(game.channelID);
 
   const win = `servers.${channelPos}.wins`;
 
   const lose = `servers.${channelPos}.losses`;
 
-  const winsOrLosses = game.winningTeam === 1 && team === TEAM1 || game.winningTeam === 2 && team === TEAM2 ? "wins" : "losses"
+  const winsOrLosses =
+    (game.winningTeam === 1 && team === TEAM1) || (game.winningTeam === 2 && team === TEAM2) ? "wins" : "losses";
 
   const sort = `servers.${channelPos}.${winsOrLosses}`;
 
@@ -254,44 +257,63 @@ const revertGame = async (user, game, param, team) => {
 
   switch (param) {
     case "revert": {
-      await SixmanCollection.update({
-        id: user.id,
-      }, {
-        $set: {
-          [win]: winsOrLosses === "wins" ? storedUserDb.servers[channelPos][winsOrLosses] + 1 : storedUserDb.servers[channelPos][winsOrLosses] - 1,
-
-          [lose]: winsOrLosses === "losses" ?
-            storedUserDb.servers[channelPos][winsOrLosses] + 1 : storedUserDb.servers[channelPos][winsOrLosses] - 1,
-
-          [mmr]: status === "wins" ? storedUserDb.servers[channelPos].mmr + 23 : storedUserDb.servers[channelPos].mmr - 23,
+      await SixmanCollection.update(
+        {
+          id: user.id,
         },
-      });
+        {
+          $set: {
+            [win]:
+              winsOrLosses === "wins"
+                ? storedUserDb.servers[channelPos][winsOrLosses] + 1
+                : storedUserDb.servers[channelPos][winsOrLosses] - 1,
+
+            [lose]:
+              winsOrLosses === "losses"
+                ? storedUserDb.servers[channelPos][winsOrLosses] + 1
+                : storedUserDb.servers[channelPos][winsOrLosses] - 1,
+
+            [mmr]:
+              winsOrLosses === "wins"
+                ? storedUserDb.servers[channelPos].mmr + 23
+                : storedUserDb.servers[channelPos].mmr - 23,
+          },
+        }
+      );
+      break;
     }
     case "cancel": {
-      await SixmanCollection.update({
-        id: user.id,
-      }, {
-        $set: {
-          [sort]: storedUserDb.servers[channelPos][winsOrLosses] - 1,
-
-          [mmr]: winsOrLosses === "wins" ? storedUserDb.servers[channelPos].mmr - 13 : storedUserDb.servers[channelPos].mmr + 10,
+      await SixmanCollection.update(
+        {
+          id: user.id,
         },
-      });
+        {
+          $set: {
+            [sort]: storedUserDb.servers[channelPos][winsOrLosses] - 1,
+
+            [mmr]:
+              winsOrLosses === "wins"
+                ? storedUserDb.servers[channelPos].mmr - 13
+                : storedUserDb.servers[channelPos].mmr + 10,
+          },
+        }
+      );
+      break;
     }
     default:
       console.log("Invalid param");
   }
-}
+};
 
 const assignWinLostOrRevert = async (game, param) => {
-  for (let user of game.team1) {
+  for (const user of game.team1) {
     if (param === "Finished") {
       promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES));
     } else {
       promises.push(revertGame(game, param, TEAM1));
     }
   }
-  for (let user of game.team2) {
+  for (const user of game.team2) {
     if (param === "Finished") {
       promises.push(assignWinLoseDb(user, game, game.winningTeam === 2 ? WINS : LOSSES));
     } else {
@@ -318,15 +340,15 @@ const execute = async (message) => {
 
   const [, secondArg, thirdArg, fourthArg] = message.content.split(" ");
 
-  const channelId = message.channel.id;
+  const channelID = message.channel.id;
 
   const userId = message.author.id;
 
-  if (!Object.keys(channelQueues).includes(channelId)) {
-    channelQueues[channelId] = [];
+  if (!Object.keys(channelQueues).includes(channelID)) {
+    channelQueues[channelID] = [];
   }
 
-  const queueArray = channelQueues[channelId];
+  const queueArray = channelQueues[channelID];
 
   const toAdd = {
     id: userId,
@@ -366,24 +388,24 @@ const execute = async (message) => {
     }
 
     case "report": {
-      const gameList = await fetchGames();
+      const storedGames = await fetchGames();
 
-      if (!includesUserId(gameList.map((e) => e.players).flat(), userId)) {
+      if (!includesUserId(storedGames.map((e) => joinTeam1And2(e)).flat(), userId)) {
         wrongEmbed.setTitle(":x: You aren't in a game!");
 
         return message.channel.send(wrongEmbed);
       }
-      const games = gameList.find((game) => includesUserId(game.players, userId));
+      const games = storedGames.find((game) => includesUserId(joinTeam1And2(game), userId));
 
-      if (games.channelID !== channelId) {
+      if (games.channelID !== channelID) {
         wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
 
         return message.channel.send(wrongEmbed);
       }
 
-      games.winningTeam = games.team1.map(e => e.id).includes(userId) && messageEndswith(message) === "win" ? 1 : 2;
+      games.winningTeam = games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win" ? 1 : 2;
 
-      const typeFunc = "Finished"
+      const typeFunc = "Finished";
 
       await assignWinLostOrRevert(games, typeFunc);
 
@@ -391,7 +413,7 @@ const execute = async (message) => {
 
       await OngoingGamesCollection.deleteOne({
         gamemode: "3v3",
-        gameID: games.gameID
+        gameID: games.gameID,
       });
 
       games.voiceChannelIds.forEach((channel) => {
@@ -400,13 +422,12 @@ const execute = async (message) => {
           id: channel.id,
           channel: channel.channel,
         });
-      })
+      });
 
       correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
       return message.channel.send(correctEmbed);
     }
-
 
     case "revertgame": {
       if (message.content.split(" ").length === 1 || message.content.split(" ").length === 2) {
@@ -429,13 +450,13 @@ const execute = async (message) => {
 
       const selectedGame = finishedGames.find((e) => e.gameID === Number(secondArg));
 
-      if (selectedGame.channelID !== channelId) {
+      if (selectedGame.channelID !== channelID) {
         wrongEmbed.setTitle(":x: That game hasn't been played in this channel");
 
         return message.channel.send(wrongEmbed);
       }
 
-      if (thirdArg === "revert " || thirdArg === "cancel") {
+      if (thirdArg === "revert" || thirdArg === "cancel") {
         await assignWinLostOrRevert(selectedGame, thirdArg);
       } else {
         wrongEmbed.setTitle(":x: Invalid Parameters!");
@@ -455,12 +476,18 @@ const execute = async (message) => {
     case "cancel": {
       const gameList = await fetchGames();
 
-      if (!includesUserId(gameList.map((e) => e.players).flat(), userId)) {
+      if (Object.keys(gameList).length === 0) {
         wrongEmbed.setTitle(":x: You aren't in a game!");
 
         return message.channel.send(wrongEmbed);
       }
-      const games = gameList.find((game) => includesUserId(game.players, userId));
+
+      if (!includesUserId(joinTeam1And2(gameList), userId)) {
+        wrongEmbed.setTitle(":x: You aren't in a game!");
+
+        return message.channel.send(wrongEmbed);
+      }
+      const games = gameList.find((game) => includesUserId(joinTeam1And2(game), userId));
 
       const IDGame = games.gameID;
 
@@ -499,7 +526,7 @@ const execute = async (message) => {
 
         await OngoingGamesCollection.deleteOne({
           gamemode: "3v3",
-          gameID: IDGame
+          gameID: IDGame,
         });
 
         return message.channel.send(correctEmbed);
@@ -515,7 +542,7 @@ const execute = async (message) => {
             id: userId,
             servers: {
               $elemMatch: {
-                channelID: channelId,
+                channelID,
               },
             },
           }).then((storedUsers) => {
@@ -525,7 +552,7 @@ const execute = async (message) => {
               return message.channel.send(wrongEmbed);
             }
 
-            const scoreDirectory = storedUsers.servers[storedUsers.servers.map((e) => e.channelID).indexOf(channelId)];
+            const scoreDirectory = storedUsers.servers[storedUsers.servers.map((e) => e.channelID).indexOf(channelID)];
 
             correctEmbed.addField("Wins:", scoreDirectory.wins);
 
@@ -533,9 +560,9 @@ const execute = async (message) => {
 
             correctEmbed.addField(
               "Winrate:",
-              Number.isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)) ?
-              "0%" :
-              `${Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)}%`
+              Number.isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100))
+                ? "0%"
+                : `${Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)}%`
             );
 
             correctEmbed.addField("MMR:", scoreDirectory.mmr);
@@ -555,17 +582,17 @@ const execute = async (message) => {
             }).then(async (storedUsers) => {
               const storedUsersList = storedUsers.filter(
                 (a) =>
-                a.servers.map((e) => e.channelID).indexOf(id) !== -1 &&
-                a.servers[a.servers.map((e) => e.channelID).indexOf(id)].wins +
-                a.servers[a.servers.map((e) => e.channelID).indexOf(id)].losses !==
-                0
+                  a.servers.map((e) => e.channelID).indexOf(id) !== -1 &&
+                  a.servers[a.servers.map((e) => e.channelID).indexOf(id)].wins +
+                    a.servers[a.servers.map((e) => e.channelID).indexOf(id)].losses !==
+                    0
               );
 
               if (
                 !message.guild.channels.cache
-                .array()
-                .map((e) => e.id)
-                .includes(id)
+                  .array()
+                  .map((e) => e.id)
+                  .includes(id)
               ) {
                 wrongEmbed.setTitle(":x: This channel does not belong to this server!");
 
@@ -640,7 +667,7 @@ const execute = async (message) => {
           if (!Number.isNaN(thirdArg) && Number(thirdArg) > 10000) {
             return getScore(thirdArg, fourthArg);
           }
-          return getScore(channelId, thirdArg);
+          return getScore(channelID, thirdArg);
         }
         default: {
           wrongEmbed.setTitle("Invalid Parameters");
@@ -660,7 +687,6 @@ const execute = async (message) => {
       }
 
       for (let i = 0; i < 6; i++) {
-
         const game = games[i];
 
         if (game == null) {
@@ -668,16 +694,16 @@ const execute = async (message) => {
           break;
         }
 
-        if (game.channelID === channelId) {
+        if (game.channelID === channelID) {
           correctEmbed.addField("Game ID:", ` ${game.gameID}`);
 
           correctEmbed.addField(
             ":small_orange_diamond: -Team 1-",
-            `<@${game.players[0].id}>, <@${game.players[1].id}>, <@${game.players[2].id}>`
+            `<@${game.team1[0].id}>, <@${game.team1[1].id}>, <@${game.team1[2].id}>`
           );
           correctEmbed.addField(
             ":small_blue_diamond: -Team 2-",
-            ` <@${game.players[3].id}>, <@${game.players[4].id}>, <@${game.players[5].id}>`
+            ` <@${game.team2[0].id}>, <@${game.team2[1].id}>, <@${game.team2[2].id}>`
           );
 
           correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 20)}`);
@@ -703,7 +729,7 @@ const execute = async (message) => {
         case "channel": {
           const fetchGamesByChannelId = await OngoingGamesCollection.findOne({
             gamemode: "3v3",
-            channelID: channelId
+            channelID,
           });
 
           if (fetchGamesByChannelId.length !== 0) {
@@ -721,7 +747,7 @@ const execute = async (message) => {
           await SixmanCollection.find({
             servers: {
               $elemMatch: {
-                channelID: channelId,
+                channelID,
               },
             },
           }).then(async (storedUsers) => {
@@ -729,24 +755,27 @@ const execute = async (message) => {
               const channelPos = user.servers
                 .map((e) => e)
                 .map((e) => e.channelID)
-                .indexOf(channelId);
+                .indexOf(channelID);
 
               if (channelPos !== -1) {
-                SixmanCollection.update({
-                  id: user.id,
-                }, {
-                  $pull: {
-                    servers: {
-                      channelID: channelId,
-                    },
+                SixmanCollection.update(
+                  {
+                    id: user.id,
                   },
-                });
+                  {
+                    $pull: {
+                      servers: {
+                        channelID,
+                      },
+                    },
+                  }
+                );
               }
             }
           });
 
           for (const game of finishedGames) {
-            if (game.channelID === channelId) {
+            if (game.channelID === channelID) {
               finishedGames.splice(finishedGames.indexOf(game), 1);
             }
           }
@@ -757,7 +786,7 @@ const execute = async (message) => {
 
         case "player": {
           const findUserInGame = (await fetchGames())
-            .map((e) => e.players)
+            .map((e) => joinTeam1And2(e))
             .flat()
             .map((e) => e.id)
             .includes(thirdArg);
@@ -774,7 +803,7 @@ const execute = async (message) => {
           }
 
           const player = await SixmanCollection.findOne({
-            id: thirdArg
+            id: thirdArg,
           });
 
           if (player.length === 0) {
@@ -783,15 +812,18 @@ const execute = async (message) => {
             return message.channel.send(wrongEmbed);
           }
 
-          await SixmanCollection.update({
-            id: thirdArg,
-          }, {
-            $pull: {
-              servers: {
-                channelID: channelId,
-              },
+          await SixmanCollection.update(
+            {
+              id: thirdArg,
             },
-          });
+            {
+              $pull: {
+                servers: {
+                  channelID,
+                },
+              },
+            }
+          );
 
           correctEmbed.setTitle(":white_check_mark: Player's score reset!");
 
@@ -806,7 +838,7 @@ const execute = async (message) => {
     }
 
     case "q": {
-      for (const person of queueArray) {
+      /* for (const person of queueArray) {
         if (person.id === userId) {
           wrongEmbed.setTitle(":x: You're already in the queue!");
 
@@ -821,12 +853,14 @@ const execute = async (message) => {
         wrongEmbed.setTitle(`:x: You're already queued in the channel ${channelQueued}!`);
 
         return message.channel.send(wrongEmbed);
-      }
+      } */
+      const storedGames = await fetchGames();
+      for (const game of storedGames) {
+        if (includesUserId(joinTeam1And2(game), userId)) {
+          wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-      if (includesUserId((await fetchGames()).map((e) => e.players).flat(), userId)) {
-        wrongEmbed.setTitle(":x: You are in the middle of a game!");
-
-        return message.channel.send(wrongEmbed);
+          return message.channel.send(wrongEmbed);
+        }
       }
 
       if (queueArray.length > 5) {
@@ -848,7 +882,7 @@ const execute = async (message) => {
           gamemode: "3v3",
           gameID: gameCount,
           time: new Date(),
-          channelID: channelId,
+          channelID,
           team1: [],
           team2: [],
           voiceChannelIds: [],
@@ -862,30 +896,35 @@ const execute = async (message) => {
               const newUser = {
                 id: user.id,
                 name: user.name,
-                servers: [{
-                  channelID: channelId,
-                  wins: 0,
-                  losses: 0,
-                  mmr: 1000,
-                }, ],
+                servers: [
+                  {
+                    channelID,
+                    wins: 0,
+                    losses: 0,
+                    mmr: 1000,
+                  },
+                ],
               };
 
               const sixmanInsert = new SixmanCollection(newUser);
 
               await sixmanInsert.save();
-            } else if (!storedUser.servers.map((e) => e.channelID).includes(channelId)) {
-              await SixmanCollection.update({
-                id: user.id,
-              }, {
-                $push: {
-                  servers: {
-                    channelID: channelId,
-                    wins: 0,
-                    losses: 0,
-                    mmr: 1000,
-                  },
+            } else if (!storedUser.servers.map((e) => e.channelID).includes(channelID)) {
+              await SixmanCollection.update(
+                {
+                  id: user.id,
                 },
-              });
+                {
+                  $push: {
+                    servers: {
+                      channelID,
+                      wins: 0,
+                      losses: 0,
+                      mmr: 1000,
+                    },
+                  },
+                }
+              );
             }
           });
           promises.push(dbRequest);
@@ -966,6 +1005,12 @@ const execute = async (message) => {
           )
         ) {
           shuffle(queueArray);
+          for (let i = 0; i < queueArray.length / 2; i++) {
+            gameCreatedObj.team1.push(queueArray[i]);
+          }
+          for (let i = queueArray.length / 2; i < queueArray.length; i++) {
+            gameCreatedObj.team2.push(queueArray[i]);
+          }
         } else if (
           getOccurrence(
             rorcArray.map((e) => e.param),
@@ -976,23 +1021,22 @@ const execute = async (message) => {
             "r"
           )
         ) {
+          let hasVoted = false;
           const captainsObject = {
             captain1: null,
             captain2: null,
             team1: [],
             team2: [],
-            usedNums: []
-          }
+            usedNums: [],
+          };
 
-          const queueArrayCopy = [...queueArray]
+          const queueArrayCopy = [...queueArray];
 
           shuffle(queueArrayCopy);
 
-          captainsObject.captain1 = queueArrayCopy[0];
+          [captainsObject.captain1, captainsObject.captain2] = queueArrayCopy;
 
-          captainsObject.captain2 = queueArrayCopy[1];
-
-          queueArrayCopy.splice(0,2)
+          queueArrayCopy.splice(0, 2);
 
           const CaptainsEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
@@ -1010,75 +1054,78 @@ const execute = async (message) => {
             .fetch(captainsObject.captain2.id)
             .catch(() => message.channel.send("Invalid captain"));
 
-          let queueArrayCopyLength = queueArrayCopy.length;
+          const Captain1Embed = new Discord.MessageEmbed()
+            .setColor(EMBED_COLOR_WARNING)
+            .setTitle("Choose one ( you have 40 seconds):");
+          for (let k = 0; k < queueArrayCopy.length; k++) {
+            Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].name);
+          }
 
-          while (queueArrayCopyLength > 0) {
-            const Captain1Embed = new Discord.MessageEmbed()
+          privateDmCaptain1.send(Captain1Embed).catch((error) => {
+            const errorEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR_WARNING)
-              .setTitle("Choose one ( you have 40 seconds):")
-              for(let k=0;k<i;k++) {
-                Captain1Dm.addField(`${queueArrayCopyLength+1} :`, queueArrayCopy[queueArrayCopyLength].name)
-              }
+              .setTitle(
+                `:x: Couldn't sent message to ${privateDmCaptain1.username}, please check if your DM'S aren't set to friends only.`
+              );
 
-              privateDmCaptain1.send(Captain1Embed).catch((error) => {
-              const errorEmbed = new Discord.MessageEmbed()
-                .setColor(EMBED_COLOR_WARNING)
-                .setTitle(
-                  `:x: Couldn't sent message to ${privateDmCaptain1.username}, please check if your DM'S aren't set to friends only.`
-                );
+            console.error(error);
 
-              console.error(error);
+            message.channel.send(errorEmbed);
+          });
 
-              message.channel.send(errorEmbed);
+          filter = (m) =>
+            !Number.isNaN(m.content) && Number(m.content) > 0 && Number(m.content) < queueArrayCopy.length + 1;
+
+          // eslint-disable-next-line no-await-in-loop
+          await privateDmCaptain1
+            .createDM()
+            // eslint-disable-next-line no-loop-func
+            .then((m1) => {
+              m1.createMessageCollector(filter, {
+                time: 40000,
+              }).on("collect", (m) => {
+                const parsedM = Number(m.content) - 1;
+
+                if (!hasVoted) {
+                  captainsObject.team1.push(queueArrayCopy[parsedM]);
+
+                  queueArrayCopy.splice(parsedM, 1);
+
+                  hasVoted = true;
+                }
+              });
+            })
+            .catch((e) => {
+              console.log(e);
             });
 
-            filter = (m) => !Number.isNaN(m.content) && Number(m.content) > 0 && Number(m.content) < queueArrayCopyLength+1;
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 40000));
 
-            await privateDmCaptain1
-              .createDM()
-              .then((m1) => {
-                m1.createMessageCollector(filter, {
-                  time: 40000,
-                }).on("collect", (m) => {
-                  const parsedM = Number(m.content) - 1;
+          if (!hasVoted) {
+            const randomnumber = Math.floor(Math.random() * queueArrayCopy.length);
 
-                  if (!hasVoted) {
-                    captainsObject.team1.push(queueArrayCopy[parsedM]);
+            captainsObject.team1.push(queueArrayCopy[randomnumber]);
 
-                    queueArrayCopy.splice(parsedM, 1);
+            queueArrayCopy.splice(randomnumber, 1);
+          }
 
-                    hasVoted = true;
-                  }
-                });
-              })
-              .catch((e) => {
-                console.log(e);
-              });
+          hasVoted = false;
 
-            await new Promise((resolve) => setTimeout(resolve, 40000));
-
-            if (!hasVoted) {
-              const randomnumber = Math.floor(Math.random() * queueArrayCopyLength - 2); //dunno if its correc
-
-              captainsObject.team1.push(queueArrayCopy[randomnumber]);
-
-              queueArrayCopy.splice(randomnumber, 1);
+          // this part will have to repeat till theres only 1 guy
+          while (queueArrayCopy.length > 1) {
+            const CaptainRepeatingEmbed = new Discord.MessageEmbed()
+              .setColor(EMBED_COLOR_WARNING)
+              .setTitle("Choose two ( you have 40 seconds):");
+            for (let k = 0; k < queueArrayCopy.length; k++) {
+              CaptainRepeatingEmbed.addField(`${k + 1} :`, queueArrayCopy[k].name);
             }
 
-            hasVoted = false;
-
-            const Captain2Embed = new Discord.MessageEmbed()
-              .setColor(EMBED_COLOR_WARNING)
-              .setTitle("Choose two( you have 40 seconds):")
-              for(let k=0;k<i;k++) {
-                Captain2Embed.addField(`${queueArrayCopyLength+1} :`, queueArrayCopy[queueArrayCopyLength].name)
-              }
-//check after this
-            Captain2Dm.send(Captain2Embed).catch((error) => {
+            privateDmCaptain2.send(CaptainRepeatingEmbed).catch((error) => {
               const errorEmbed = new Discord.MessageEmbed()
                 .setColor(EMBED_COLOR_WARNING)
                 .setTitle(
-                  `:x: Couldn't sent message to ${privatedm1.username}, please check if your DM'S aren't set to friends only.`
+                  `:x: Couldn't sent message to ${privateDmCaptain2.username}, please check if your DM'S aren't set to friends only.`
                 );
 
               console.error(error);
@@ -1088,8 +1135,9 @@ const execute = async (message) => {
 
             filter = (m) => !Number.isNaN(m.content) && Number(m.content) > 0 && Number(m.content) < 4;
 
-            privatedm1
+            privateDmCaptain2
               .createDM()
+              // eslint-disable-next-line no-loop-func
               .then((m1) => {
                 m1.createMessageCollector(filter, {
                   time: 40000,
@@ -1097,24 +1145,24 @@ const execute = async (message) => {
                   const parsedM = Number(m) - 1;
 
                   if (!hasVoted) {
-                    queueArray[4] = queueArrayCopy[parsedM];
+                    captainsObject.team2.push(queueArrayCopy[parsedM]);
 
                     hasVoted = true;
 
-                    gameCountNums.push(parsedM);
-                  } else if (hasVoted && !gameCountNums.includes(parsedM) && hasVoted !== "all") {
-                    queueArray[5] = queueArrayCopy[parsedM];
+                    captainsObject.usedNums.push(parsedM);
+                  } else if (hasVoted && !captainsObject.usedNums.includes(parsedM) && hasVoted !== "all") {
+                    captainsObject.team2.push(queueArrayCopy[parsedM]);
 
                     hasVoted = "all";
 
-                    gameCountNums.push(parsedM);
+                    captainsObject.usedNums.push(parsedM);
 
-                    queueArrayCopy.splice(gameCountNums[0], 1);
+                    queueArrayCopy.splice(captainsObject.usedNums[0], 1);
 
-                    if (gameCountNums[1] > gameCountNums[0]) {
-                      queueArrayCopy.splice(gameCountNums[1] - 1, 1);
+                    if (captainsObject.usedNums[1] > captainsObject.usedNums[0]) {
+                      queueArrayCopy.splice(captainsObject.usedNums[1] - 1, 1);
                     } else {
-                      queueArrayCopy.splice(gameCountNums[1], 1);
+                      queueArrayCopy.splice(captainsObject.usedNums[1], 1);
                     }
                   }
                 });
@@ -1123,6 +1171,7 @@ const execute = async (message) => {
                 console.error("Error creating DM");
               });
 
+            // eslint-disable-next-line no-await-in-loop
             await new Promise((resolve) => setTimeout(resolve, 40000));
 
             const randomnumber = Math.floor(Math.random() * 3);
@@ -1134,9 +1183,9 @@ const execute = async (message) => {
                 randomnumber2 = Math.floor(Math.random() * 3);
               }
 
-              queueArray[4] = queueArrayCopy[randomnumber];
+              captainsObject.team2.push(queueArrayCopy[randomnumber]);
 
-              queueArray[5] = queueArrayCopy[randomnumber2];
+              captainsObject.team2.push(queueArrayCopy[randomnumber2]);
 
               queueArrayCopy.splice(randomnumber, 1);
 
@@ -1146,15 +1195,15 @@ const execute = async (message) => {
                 queueArrayCopy.splice(randomnumber2, 1);
               }
             } else if (hasVoted && hasVoted !== "all") {
-              while (gameCountNums.includes(randomnumber2)) {
+              while (captainsObject.usedNums.includes(randomnumber2)) {
                 randomnumber2 = Math.floor(Math.random() * 2);
               }
 
-              queueArray[5] = queueArrayCopy[randomnumber2];
+              captainsObject.team2.push(queueArrayCopy[randomnumber2]);
 
-              queueArrayCopy.splice(gameCountNums[0], 1);
+              queueArrayCopy.splice(captainsObject.usedNums[0], 1);
 
-              if (randomnumber2 > gameCountNums[0]) {
+              if (randomnumber2 > captainsObject.usedNums[0]) {
                 queueArrayCopy.splice(randomnumber2 - 1, 1);
               } else {
                 queueArrayCopy.splice(randomnumber2, 1);
@@ -1163,44 +1212,45 @@ const execute = async (message) => {
 
             hasVoted = false;
 
-            queueArray[2] = queueArrayCopy[0];
-
-            queueArrayCopy.splice(0, queueArrayCopy.length);
-
-            gameCountNums.splice(0, gameCountNums.length);
+            captainsObject.usedNums = [];
           }
+
+          captainsObject.team1.push(queueArrayCopy[0]);
+
+          queueArrayCopy.splice(0, queueArrayCopy.length);
 
           captainsObject.team1.push(captainsObject.captain1);
 
           captainsObject.team2.push(captainsObject.captain2);
-        }
-//only works in captain mode, change to allow both
-        for (let i = 0; i < 3; i++) {
-          gameCreatedObj.team1.push(captainsObject.team1);
-        }
 
-        for (let i = 3; i < 6; i++) {
-          gameCreatedObj.team2.push(captainsObject);
+          for (const player of captainsObject.team1) {
+            gameCreatedObj.team1.push(player);
+          }
+
+          for (const player of captainsObject.team2) {
+            gameCreatedObj.team2.push(player);
+          }
         }
 
         const orangeTeamVc = await message.guild.channels
           .create(`🔸Team-1-Game-${gameCreatedObj.gameID}`, {
             type: "voice",
             parent: message.channel.parentID,
-            permissionOverwrites: [{
+            permissionOverwrites: [
+              {
                 id: message.guild.id,
                 deny: "CONNECT",
               },
               {
-                id: gameCreatedObj.players[0].id,
+                id: gameCreatedObj.team1[0].id,
                 allow: "CONNECT",
               },
               {
-                id: gameCreatedObj.players[1].id,
+                id: gameCreatedObj.team1[1].id,
                 allow: "CONNECT",
               },
               {
-                id: gameCreatedObj.players[2].id,
+                id: gameCreatedObj.team1[2].id,
                 allow: "CONNECT",
               },
             ],
@@ -1212,27 +1262,28 @@ const execute = async (message) => {
         gameCreatedObj.voiceChannelIds.push({
           id: orangeTeamVc.id,
           channelName: `🔸Team-1-Game-${gameCreatedObj.gameID}`,
-          channel: channelId,
+          channel: channelID,
         });
 
         const blueTeamVc = await message.guild.channels
           .create(`🔹Team-2-Game-${gameCreatedObj.gameID}`, {
             type: "voice",
             parent: message.channel.parentID,
-            permissionOverwrites: [{
+            permissionOverwrites: [
+              {
                 id: message.guild.id,
                 deny: "CONNECT",
               },
               {
-                id: gameCreatedObj.players[3].id,
+                id: gameCreatedObj.team2[0].id,
                 allow: "CONNECT",
               },
               {
-                id: gameCreatedObj.players[4].id,
+                id: gameCreatedObj.team2[1].id,
                 allow: "CONNECT",
               },
               {
-                id: gameCreatedObj.players[5].id,
+                id: gameCreatedObj.team2[2].id,
                 allow: "CONNECT",
               },
             ],
@@ -1244,7 +1295,7 @@ const execute = async (message) => {
         gameCreatedObj.voiceChannelIds.push({
           id: blueTeamVc.id,
           channelName: `🔹Team-2-Game-${gameCreatedObj.gameID}`,
-          channel: channelId,
+          channel: channelID,
         });
 
         const ongoingGamesInsert = new OngoingGamesCollection(gameCreatedObj);
@@ -1256,11 +1307,11 @@ const execute = async (message) => {
           .addField("Game is ready:", `Game ID is: ${gameCreatedObj.gameID}`)
           .addField(
             ":small_orange_diamond: -Team 1-",
-            `${gameCreatedObj.players[0].name}, ${gameCreatedObj.players[1].name}, ${gameCreatedObj.players[2].name}`
+            `${gameCreatedObj.team1[0].name}, ${gameCreatedObj.team1[1].name}, ${gameCreatedObj.team1[2].name}`
           )
           .addField(
             ":small_blue_diamond: -Team 2-",
-            `${gameCreatedObj.players[3].name}, ${gameCreatedObj.players[4].name}, ${gameCreatedObj.players[5].name}`
+            `${gameCreatedObj.team2[0].name}, ${gameCreatedObj.team2[1].name}, ${gameCreatedObj.team2[2].name}`
           );
         message.channel.send(discordEmbed1);
 
@@ -1268,10 +1319,12 @@ const execute = async (message) => {
           .setColor(EMBED_COLOR_WARNING)
           .addField("Name:", valuesforpm.name)
           .addField("Password:", valuesforpm.password)
-          .addField("You have to:", `Join match(Created by ${gameCreatedObj.players[0].name})`);
+          .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].name})`);
 
-        for (const users of gameCreatedObj.players) {
-          if (users.id !== gameCreatedObj.players[0].id) {
+        const playersArray = gameCreatedObj.team1.concat(gameCreatedObj.team2);
+
+        for (const users of playersArray) {
+          if (users.id !== gameCreatedObj.team1[0].id) {
             const fetchedUser = client.users
               .fetch(users.id)
               .then(async (user) => {
@@ -1305,14 +1358,14 @@ const execute = async (message) => {
           .addField("You have to:", "Create Custom Match");
 
         const fetchedUser = await client.users
-          .fetch(gameCreatedObj.players[0].id)
+          .fetch(gameCreatedObj.team1[0].id)
           .catch(() => message.channel.send("Invalid User"));
 
         await fetchedUser.send(CreateMatchEmbed).catch((error) => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
-              `:x: Couldn't sent message to ${gameCreatedObj.players[0].name}, please check if your DM'S aren't set to friends only.`
+              `:x: Couldn't sent message to ${gameCreatedObj.team1[0].name}, please check if your DM'S aren't set to friends only.`
             );
 
           message.channel.send(errorEmbed);

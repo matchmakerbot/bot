@@ -26,7 +26,6 @@ module.exports = {
     "no-plusplus": "off",
     "no-restricted-syntax": "off",
     "promise/no-nesting": "off",
-    "prefer-destructuring": "off",
     "promise/always-return": "off",
   },
 };
