@@ -599,11 +599,11 @@ const execute = async (message) => {
 
       const cancelqueuearray = cancelQueue[IDGame];
 
-      /* if (cancelqueuearray.includes(userId)) {
+      if (cancelqueuearray.includes(userId)) {
         wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
         return message.channel.send(wrongEmbed);
-      } */
+      }
 
       cancelqueuearray.push(userId);
 
@@ -937,7 +937,7 @@ const execute = async (message) => {
     }
 
     case "q": {
-      /* for (const person of queueArray) {
+      for (const person of queueArray) {
         if (person.id === userId) {
           wrongEmbed.setTitle(":x: You're already in the queue!");
 
@@ -952,7 +952,7 @@ const execute = async (message) => {
         wrongEmbed.setTitle(`:x: You're already queued in the channel ${channelQueued}!`);
 
         return message.channel.send(wrongEmbed);
-      } */
+      }
       const storedGames = await fetchGames();
       for (const game of storedGames) {
         if (includesUserId(joinTeam1And2(game), userId)) {
