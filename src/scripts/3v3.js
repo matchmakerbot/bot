@@ -6,7 +6,7 @@ const client = require("../utils/createClientInstance.js");
 
 const OngoingGamesCollection = require("../utils/schemas/ongoingGamesSchema.js");
 
-const SixmanCollection = require("../utils/schemas/matchmakerUsers");
+const SixmanCollection = require("../utils/schemas/matchmakerUsersSchema");
 
 const rc = ["r", "c"];
 
@@ -462,10 +462,10 @@ const execute = async (message) => {
     date: new Date(),
   };
 
-  const index = queueArray.map((e) => e.id).indexOf(userId);
-
   switch (args(message)) {
     case "leave": {
+      const index = queueArray.map((e) => e.id).indexOf(userId);
+
       if (queueArray.length === 6) {
         wrongEmbed.setTitle(":x: You can't leave now!");
 
@@ -1397,7 +1397,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: ["q", "status", "leave", "report", "score", "cancel", "reset", "r", "c", "revertgame", "ongoinggames"],
+  name: "a", // ["q", "status", "leave", "report", "score", "cancel", "reset", "r", "c", "revertgame", "ongoinggames"],
   description: "6man bot",
   execute,
 };

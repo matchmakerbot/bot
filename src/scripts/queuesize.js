@@ -2,14 +2,12 @@ const Discord = require("discord.js");
 
 const guildsCollection = require("../utils/schemas/guildsSchema");
 
-const { channelMode } = require("../utils/cache");
+const { queueSizeObject } = require("../utils/cache");
 
 const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F");
 
 const correctEmbed = new Discord.MessageEmbed().setColor("#77B255");
-
-const gamemode = ["5v5solos", "5v5teams", "3v3solos", "3v3teams"];
-
+// make it so that it resets the queue/checks for ongoinggames
 const execute = async (message) => {
   const secondArg = message.content.split(" ")[1];
 
@@ -21,8 +19,16 @@ const execute = async (message) => {
     return message.channel.send(wrongEmbed);
   }
 
-  if (!gamemode.includes(secondArg)) {
-    wrongEmbed.setTitle("Please choose between 5v5solos, 5v5teams, 3v3solos or 3v3teams");
+  const intGamemode = Number(secondArg);
+
+  if (Number.isNaN(intGamemode)) {
+    wrongEmbed.setTitle("Invalid parameter");
+
+    return message.channel.send(wrongEmbed);
+  }
+
+  if (intGamemode % 2 !== 0) {
+    wrongEmbed.setTitle("Please choose an even number");
 
     return message.channel.send(wrongEmbed);
   }
@@ -38,7 +44,7 @@ const execute = async (message) => {
     }
   );
 
-  channelMode[message.channel.id] = secondArg;
+  queueSizeObject[message.channel.id] = secondArg;
 
   correctEmbed.setTitle(":white_check_mark: Done! Have fun :)");
 
@@ -46,6 +52,6 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "channelmode",
+  name: "queuesize",
   execute,
 };

@@ -1,3 +1,3 @@
-const channelMode = {};
+const queueSizeObject = {};
 
-module.exports = { channelMode };
+module.exports = { queueSizeObject };

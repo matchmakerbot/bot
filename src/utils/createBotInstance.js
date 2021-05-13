@@ -8,23 +8,19 @@ const Discord = require("discord.js");
 
 const client = require("./createClientInstance.js");
 
-const { channelMode } = require("./cache");
+const { queueSizeObject } = require("./cache");
 
 const teamsCollection = require("./schemas/teamsSchema");
 
 const guildsCollection = require("./schemas/guildsSchema");
 
-const fivevfivesingles = require("../scripts/5v5.js");
-
-const fivevfiveteams = require("../scripts/5v5teams.js");
-
-const threevthreesingles = require("../scripts/3v3.js");
-
-const threevthreeteams = require("../scripts/3v3teams.js");
+const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/solos/timeout");
 
 const { prefix } = process.env;
 
 const commandFiles = fs.readdirSync("./src/scripts/").filter((file) => file.endsWith(".js"));
+// figure out a way to handle having both teams and solos, maybe instead of only having the value as the queueSize, make it an object with queueSize and type
+const commandFilesMatchmaker = fs.readdirSync("./src/scripts/matchmaker/solos/").filter((file) => file.endsWith(".js"));
 
 const queueCommands = [
   "q",
@@ -52,37 +48,6 @@ const queueCommands = [
 
 client.commands = new Discord.Collection();
 
-const bigBoiiSwitch = (gamemode, messageParam, args) => {
-  const embed = new Discord.MessageEmbed().setColor("#F8534F");
-  switch (gamemode) {
-    case undefined: {
-      embed.setTitle(
-        ":x: You must first select your prefered gamemode in this channel using !channelmode 3v3solos, 3v3teams, 5v5solos or 5v5teams"
-      );
-
-      return messageParam.channel.send(embed);
-    }
-
-    case "5v5solos": {
-      return fivevfivesingles.execute(messageParam, args);
-    }
-    case "5v5teams": {
-      return fivevfiveteams.execute(messageParam, args);
-    }
-    case "3v3solos": {
-      return threevthreesingles.execute(messageParam, args);
-    }
-    case "3v3teams": {
-      return threevthreeteams.execute(messageParam, args);
-    }
-    default: {
-      embed.setTitle(":x: Wtf is going on? Message Tweeno #8687");
-
-      return messageParam.channel.send(embed);
-    }
-  }
-};
-
 const NewTeamGuild = (guildId) => {
   this.newTeamGuild = guildId;
   this.teams = [];
@@ -106,7 +71,14 @@ commandFiles.forEach((file) => {
     });
   }
 });
+
+commandFilesMatchmaker.forEach((file) => {
+  const command = require(`../scripts/matchmaker/solos/${file}`);
+  client.commands.set(command.name, command);
+});
+
 const createBotInstance = async () => {
+  startIntervalMatchmakerBot();
   try {
     client.once("ready", async () => {
       const guilds = client.guilds.cache.map((a) => a.id);
@@ -155,22 +127,32 @@ const createBotInstance = async () => {
       if (message.guild === undefined) return;
 
       if (queueCommands.includes(command)) {
-        if (channelMode[message.channel.id] == null) {
+        if (queueSizeObject[message.channel.id] == null) {
           const guildsInfo = await guildsCollection.findOne({ id: message.guild.id });
 
-          bigBoiiSwitch(guildsInfo.channels[message.channel.id], message, args);
+          if (guildsInfo.channels[message.channel.id] == null) {
+            const embed = new Discord.MessageEmbed().setColor("#F8534F");
+            embed.setTitle(
+              ":x: You must first select your queue size in this channel using !queuesize number , for example !queueSize 6"
+            );
 
-          channelMode[message.channel.id] = guildsInfo.channels[message.channel.id];
+            message.channel.send(embed);
+            return;
+          }
+
+          await client.commands.get(command).execute(message, guildsInfo.channels[message.channel.id]);
+
+          queueSizeObject[message.channel.id] = guildsInfo.channels[message.channel.id];
 
           return;
         }
 
-        bigBoiiSwitch(channelMode[message.channel.id], message, args);
+        await client.commands.get(command).execute(message, queueSizeObject[message.channel.id]);
 
         return;
       }
 
-      await client.commands.get(command).execute(message, args);
+      await client.commands.get(command).execute(message);
     });
     console.log("Successfully created socket Client.on -> Message");
   } catch (e) {
@@ -206,4 +188,4 @@ const createBotInstance = async () => {
   }
 };
 
-module.exports = { channelMode, createBotInstance };
+module.exports = { createBotInstance };

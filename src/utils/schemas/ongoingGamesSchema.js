@@ -9,7 +9,7 @@ const playerObject = {
 
 const schema = new mongoose.Schema(
   {
-    gamemode: String,
+    queueSize: Number,
     gameID: Number,
     time: Date,
     channelID: String,

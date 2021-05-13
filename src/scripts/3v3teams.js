@@ -1704,7 +1704,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: [
+  name: "a", /*[
     "q",
     "status",
     "leave",
@@ -1723,7 +1723,7 @@ module.exports = {
     "kickplayer",
     "revertgame",
     "giveownership",
-  ],
+  ], */
   description: "6man bot",
   execute,
 };

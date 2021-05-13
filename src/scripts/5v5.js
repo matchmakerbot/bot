@@ -1702,7 +1702,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: [
+  name: "a", /* [
     "q",
     "status",
     "leave",
@@ -1716,7 +1716,7 @@ module.exports = {
     "ongoinggames",
     "mode",
     "revertgame",
-  ],
+  ], */
   description: "6man bot",
   execute,
 };
