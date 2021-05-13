@@ -34,18 +34,10 @@ const updateUsers = async () => {
   let promises = [];
   const currentTimeMS = Date.now();
 
-  const allChannels = Object.values(channelQueues)
-    .map((e) => Object.keys(e))
-    .flat();
+  for (const channelUsers of channelQueues.filter((queue) => queue.players.length < queue.queueSize)) {
+    for (const user of channelUsers.players.filter((user1) => currentTimeMS - user1.date > MAX_USER_IDLE_TIME_MS)) {
+      const channel = channelUsers.channelId;
 
-  const playersInChannels = {};
-
-  Object.assign(playersInChannels, ...Object.values(channelQueues));
-  // change 6 to the queueSize
-  for (const channelUsers of Object.values(playersInChannels).filter((channel) => channel.length < 6)) {
-    for (const user of channelUsers.filter((user1) => currentTimeMS - user1.date > MAX_USER_IDLE_TIME_MS)) {
-      const channel = allChannels.find((key) => playersInChannels[key] === channelUsers);
-      console.log(channel);
       const notifyChannel = client.channels
         .fetch(channel)
         .then((e) => {

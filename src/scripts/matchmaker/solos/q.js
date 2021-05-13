@@ -1,24 +1,10 @@
 const Discord = require("discord.js");
-// make captains reaction based, add games like in 5v5, add minimum and maximum queueSize and change captains accordingly
+// make captains reaction based
 const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
 
 const SixmanCollection = require("../../../utils/schemas/matchmakerUsersSchema");
-
-/* might wanna change to this cuz what im doing is extremelly fucky
-const a = [
-  {
-    queueSize: 2,
-    channel: "a",
-    type: "solos",
-    players: [
-      {
-        id: "a",
-      },
-    ],
-  },
-]; */
 
 const {
   EMBED_COLOR_CHECK,
@@ -182,26 +168,15 @@ const execute = async (message, queueSize) => {
     }
   }
 
-  const allUsers = Object.values(channelQueues)
-    .map((e) => Object.values(e).flat())
-    .flat();
-
-  if (includesUserId(allUsers, userId)) {
-    const allChannels = Object.values(channelQueues)
-      .map((e) => Object.keys(e))
-      .flat();
-
-    const playersInChannels = {};
-
-    Object.assign(playersInChannels, ...Object.values(channelQueues));
+  if (includesUserId(channelQueues.map((e) => e.players).flat(), userId)) {
     const channelQueued = (
-      await client.channels.fetch(allChannels.find((key) => includesUserId(playersInChannels[key], userId)))
+      await client.channels.fetch(channelQueues.find((e) => includesUserId(e.players, userId)).channelId)
     ).name;
     wrongEmbed.setTitle(`:x: You're already queued in the channel ${channelQueued}!`);
 
     message.channel.send(wrongEmbed);
     return;
-  } 
+  }
   const storedGames = await fetchGames(NumberQueueSize);
   for (const game of storedGames) {
     if (includesUserId(joinTeam1And2(game), userId)) {
@@ -263,10 +238,9 @@ const execute = async (message, queueSize) => {
               ],
             };
 
-            const sixmanInsert = new SixmanCollection(newUser);
+            const matchmakerInsert = new SixmanCollection(newUser);
 
-            await sixmanInsert.save();
-            console.log(storedUser.servers.map((e) => e.channelId));
+            await matchmakerInsert.save();
           } else if (!storedUser.servers.map((e) => e.channelId).includes(channelId)) {
             await SixmanCollection.update(
               {

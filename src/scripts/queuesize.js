@@ -43,21 +43,20 @@ const execute = async (message) => {
 
   const guildsInfo = await guildsCollection.findOne({ id: message.guild.id });
 
-  const queueSize = guildsInfo.channels[message.channel.id];
-
   if (guildsInfo.channels[message.channel.id] != null) {
-    if (channelQueues[queueSize] != null) {
-      if (channelQueues[queueSize][message.channel.id] != null) {
-        if (channelQueues[queueSize][message.channel.id].length === Number(queueSize)) {
-          wrongEmbed.setTitle("Cannot change queue size once a game has been made");
+    for (const queue of channelQueues) {
+      if (queue.players.length === queue.queueSize) {
+        wrongEmbed.setTitle("Cannot change queue size once a game has been made");
 
-          return message.channel.send(wrongEmbed);
-        }
-        delete channelQueues[queueSize][message.channel.id];
+        return message.channel.send(wrongEmbed);
+      }
+      if (queue.channelId === message.channel.id) {
+        queue.queueSize = secondArg;
+        queueSizeObject[message.channel.id] = secondArg;
+        queue.players.splice(0, queue.players.length);
       }
     }
   }
-
   await guildsCollection.updateOne(
     {
       id: message.guild.id,
@@ -68,8 +67,6 @@ const execute = async (message) => {
       },
     }
   );
-
-  queueSizeObject[message.channel.id] = secondArg;
 
   correctEmbed.setTitle(":white_check_mark: Done! Have fun :)");
 

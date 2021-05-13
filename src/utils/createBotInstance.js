@@ -19,7 +19,7 @@ const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/solos/time
 const { prefix } = process.env;
 
 const commandFiles = fs.readdirSync("./src/scripts/").filter((file) => file.endsWith(".js"));
-// figure out a way to handle having both teams and solos, maybe instead of only having the value as the queueSize, make it an object with queueSize and type
+
 const commandFilesMatchmaker = fs.readdirSync("./src/scripts/matchmaker/solos/").filter((file) => file.endsWith(".js"));
 
 const queueCommands = [

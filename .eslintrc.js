@@ -9,10 +9,7 @@ module.exports = {
     "eslint:recommended",
     "airbnb-base",
 
-    // typescript, prettier
     "plugin:prettier/recommended",
-
-    // everything else
 
     "plugin:promise/recommended",
 
@@ -22,10 +19,10 @@ module.exports = {
     sourceType: "module",
   },
   rules: {
-    "no-console": "off",
-    "no-plusplus": "off",
-    "no-restricted-syntax": "off",
-    "promise/no-nesting": "off",
-    "promise/always-return": "off",
+    "no-console": "off", // i will eventually add a logger
+    "no-plusplus": "off", // no idea why this is even a rule
+    "no-restricted-syntax": "off", // forces you to use forEach instead of forloops, so if you want to return anything yea gl on that
+    "promise/no-nesting": "off", // makes sense but its litteraly only 2 lines that are being warned
+    "promise/always-return": "off", // dumb as shit, forces you to ALWAYS return something in .then
   },
 };

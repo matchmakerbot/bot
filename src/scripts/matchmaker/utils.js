@@ -22,7 +22,7 @@ const finishedGames = [];
 
 const deletableChannels = [];
 
-const channelQueues = {};
+const channelQueues = [];
 
 const cancelQueue = {};
 
@@ -56,14 +56,18 @@ const messageEndswith = (message) => {
 };
 
 const getQueueArray = (queueSize, channelId) => {
-  if (!Object.keys(channelQueues).includes(queueSize)) {
-    channelQueues[queueSize] = {};
+  for (const item of channelQueues) {
+    if (item.channelId === channelId) {
+      return item.players;
+    }
   }
-  if (!Object.keys(channelQueues[queueSize]).includes(channelId)) {
-    channelQueues[queueSize][channelId] = [];
-  }
-
-  return channelQueues[queueSize][channelId];
+  channelQueues.push({
+    channelId,
+    queueSize,
+    game: null,
+    players: [],
+  });
+  return channelQueues[channelQueues.length - 1].players;
 };
 
 const assignWinLoseDb = async (user, game, score) => {
