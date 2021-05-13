@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchFromID } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchFromId } = require("../utils");
 
 const SixmanCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
@@ -11,7 +11,7 @@ const execute = async (message) => {
 
   const [, secondArg, thirdArg, fourthArg] = message.content.split(" ");
 
-  const channelID = message.channel.id;
+  const channelId = message.channel.id;
 
   const userId = message.author.id;
   switch (secondArg) {
@@ -20,7 +20,7 @@ const execute = async (message) => {
         id: userId,
         servers: {
           $elemMatch: {
-            channelID,
+            channelId,
           },
         },
       });
@@ -32,7 +32,7 @@ const execute = async (message) => {
         return;
       }
 
-      const scoreDirectory = user.servers[user.servers.map((e) => e.channelID).indexOf(channelID)];
+      const scoreDirectory = user.servers[user.servers.map((e) => e.channelId).indexOf(channelId)];
 
       correctEmbed.addField("Wins:", scoreDirectory.wins);
 
@@ -55,15 +55,15 @@ const execute = async (message) => {
         const storedUsers = await SixmanCollection.find({
           servers: {
             $elemMatch: {
-              channelID: id,
+              channelId: id,
             },
           },
         });
         const storedUsersList = storedUsers.filter(
           (a) =>
-            a.servers.map((e) => e.channelID).indexOf(id) !== -1 &&
-            a.servers[a.servers.map((e) => e.channelID).indexOf(id)].wins +
-              a.servers[a.servers.map((e) => e.channelID).indexOf(id)].losses !==
+            a.servers.map((e) => e.channelId).indexOf(id) !== -1 &&
+            a.servers[a.servers.map((e) => e.channelId).indexOf(id)].wins +
+              a.servers[a.servers.map((e) => e.channelId).indexOf(id)].losses !==
               0
         );
 
@@ -87,9 +87,9 @@ const execute = async (message) => {
         }
 
         storedUsersList.sort((a, b) => {
-          const indexA = a.servers.map((e) => e.channelID).indexOf(id);
+          const indexA = a.servers.map((e) => e.channelId).indexOf(id);
 
-          const indexB = b.servers.map((e) => e.channelID).indexOf(id);
+          const indexB = b.servers.map((e) => e.channelId).indexOf(id);
 
           return b.servers[indexB].mmr - a.servers[indexA].mmr;
         });
@@ -103,10 +103,10 @@ const execute = async (message) => {
               break;
             }
             for (const servers of storedUsersList[indexes].servers) {
-              if (servers.channelID === id) {
+              if (servers.channelId === id) {
                 correctEmbed.addField(
                   // eslint-disable-next-line no-await-in-loop
-                  (await fetchFromID(storedUsersList[indexes].id, wrongEmbed, message)).username,
+                  (await fetchFromId(storedUsersList[indexes].id, wrongEmbed, message)).username,
                   `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${
                     Number.isNaN(Math.floor((servers.wins / (servers.wins + servers.losses)) * 100))
                       ? "0"
@@ -125,10 +125,10 @@ const execute = async (message) => {
               break;
             }
             for (const servers of storedUsersList[i].servers) {
-              if (servers.channelID === id) {
+              if (servers.channelId === id) {
                 correctEmbed.addField(
                   // eslint-disable-next-line no-await-in-loop
-                  (await fetchFromID(storedUsersList[i].id, wrongEmbed, message)).username,
+                  (await fetchFromId(storedUsersList[i].id, wrongEmbed, message)).username,
                   `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${
                     Number.isNaN(Math.floor((servers.wins / (servers.wins + servers.losses)) * 100))
                       ? "0"
@@ -148,7 +148,7 @@ const execute = async (message) => {
         getScore(thirdArg, fourthArg);
         return;
       }
-      getScore(channelID, thirdArg);
+      getScore(channelId, thirdArg);
       return;
     }
     default: {

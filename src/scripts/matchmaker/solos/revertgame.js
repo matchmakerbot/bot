@@ -9,7 +9,7 @@ const execute = async (message) => {
 
   const [, secondArg, thirdArg] = message.content.split(" ");
 
-  const channelID = message.channel.id;
+  const channelId = message.channel.id;
 
   if (message.content.split(" ").length === 1 || message.content.split(" ").length === 2) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
@@ -23,15 +23,15 @@ const execute = async (message) => {
     return message.channel.send(wrongEmbed);
   }
 
-  if (!finishedGames.map((e) => e.gameID).includes(Number(secondArg))) {
-    wrongEmbed.setTitle(":x: No game with that ID has been played");
+  if (!finishedGames.map((e) => e.gameId).includes(Number(secondArg))) {
+    wrongEmbed.setTitle(":x: No game with that Id has been played");
 
     return message.channel.send(wrongEmbed);
   }
 
-  const selectedGame = finishedGames.find((e) => e.gameID === Number(secondArg));
+  const selectedGame = finishedGames.find((e) => e.gameId === Number(secondArg));
 
-  if (selectedGame.channelID !== channelID) {
+  if (selectedGame.channelId !== channelId) {
     wrongEmbed.setTitle(":x: That game hasn't been played in this channel");
 
     return message.channel.send(wrongEmbed);

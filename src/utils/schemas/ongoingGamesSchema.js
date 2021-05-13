@@ -10,9 +10,9 @@ const playerObject = {
 const schema = new mongoose.Schema(
   {
     queueSize: Number,
-    gameID: Number,
+    gameId: Number,
     time: Date,
-    channelID: String,
+    channelId: String,
     team1: [playerObject],
     team2: [playerObject],
     voiceChannelIds: [

@@ -30,7 +30,7 @@ const joinTeam1And2 = (object) => {
   return object.team1.concat(object.team2);
 };
 
-const fetchFromID = async (id, wrongEmbedParam, messageParam) => {
+const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
   const user = await client.users.fetch(id).catch((error) => {
     wrongEmbedParam.setTitle("Please tag the user");
     console.log(error);
@@ -40,9 +40,13 @@ const fetchFromID = async (id, wrongEmbedParam, messageParam) => {
 };
 
 const fetchGames = async (queueSize) => {
-  const games = await OngoingGamesCollection.find({
-    queueSize,
-  });
+  const games = await OngoingGamesCollection.find(
+    queueSize != null
+      ? {
+          queueSize,
+        }
+      : {}
+  );
   return games;
 };
 
@@ -67,7 +71,7 @@ const assignWinLoseDb = async (user, game, score) => {
     id: user.id,
   });
 
-  const channelPos = storedUserDb.servers.map((e) => e.channelID).indexOf(game.channelID);
+  const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
 
   const sort = `servers.${channelPos}.${score}`;
 
@@ -92,7 +96,7 @@ const revertGame = async (user, game, param, team) => {
     id: user.id,
   });
   console.log(storedUserDb);
-  const channelPos = storedUserDb.servers.map((e) => e.channelID).indexOf(game.channelID);
+  const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
 
   const win = `servers.${channelPos}.wins`;
 
@@ -175,10 +179,12 @@ const assignWinLostOrRevert = async (game, param) => {
   promises = [];
 };
 
-const includesUserId = (array, userIdParam) => array.map((e) => e.id).includes(userIdParam);
+const includesUserId = (array, userIdParam) => {
+  return array.map((e) => e.id).includes(userIdParam);
+};
 
 module.exports = {
-  fetchFromID,
+  fetchFromId,
   fetchGames,
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,

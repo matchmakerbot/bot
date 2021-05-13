@@ -36,41 +36,41 @@ const execute = async (message, queueSize) => {
   }
   const games = gameList.find((game) => includesUserId(joinTeam1And2(game), userId));
 
-  const IDGame = games.gameID;
+  const { gameId } = games;
 
-  if (!Object.keys(cancelQueue).includes(IDGame.toString())) {
-    cancelQueue[IDGame] = [];
+  if (!Object.keys(cancelQueue).includes(gameId.toString())) {
+    cancelQueue[gameId] = [];
   }
 
-  const cancelqueuearray = cancelQueue[IDGame];
+  const cancelqueuearray = cancelQueue[gameId];
 
-  /* if (cancelqueuearray.includes(userId)) {
+  if (cancelqueuearray.includes(userId)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
     message.channel.send(wrongEmbed);
     return;
-  } */
+  }
 
   cancelqueuearray.push(userId);
 
   correctEmbed.setTitle(
-    `:exclamation: ${message.author.username} wants to cancel game ${IDGame}. (${cancelqueuearray.length}/4)`
+    `:exclamation: ${message.author.username} wants to cancel game ${gameId}. (${cancelqueuearray.length}/${
+      Number(queueSize) / 2 + 1
+    })`
   );
 
   message.channel.send(correctEmbed);
 
-  if (cancelqueuearray.length === 4) {
-    games.voiceChannelIds.forEach((channel) => {
-      deletableChannels.push(channel);
-    });
+  if (cancelqueuearray.length === Number(queueSize) / 2 + 1) {
+    deletableChannels.push(...games.voiceChannelIds);
 
-    correctEmbed.setTitle(`:white_check_mark: Game ${games.gameID} Cancelled!`);
+    correctEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
 
-    cancelQueue[IDGame] = [];
+    delete cancelQueue[gameId];
 
     await OngoingGamesCollection.deleteOne({
       queueSize: Number(queueSize),
-      gameID: IDGame,
+      gameId,
     });
 
     message.channel.send(correctEmbed);

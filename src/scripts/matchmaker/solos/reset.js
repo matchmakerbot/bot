@@ -7,7 +7,7 @@ const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchem
 const SixmanCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
 const execute = async (message, queueSize) => {
-  const channelID = message.channel.id;
+  const channelId = message.channel.id;
 
   const [, secondArg, thirdArg] = message.content.split(" ");
 
@@ -31,7 +31,7 @@ const execute = async (message, queueSize) => {
     case "channel": {
       const fetchGamesByChannelId = await OngoingGamesCollection.find({
         gamemode: "3v3",
-        channelID,
+        channelId,
       });
 
       if (fetchGamesByChannelId.length !== 0) {
@@ -49,15 +49,15 @@ const execute = async (message, queueSize) => {
       await SixmanCollection.find({
         servers: {
           $elemMatch: {
-            channelID,
+            channelId,
           },
         },
       }).then(async (storedUsers) => {
         for (const user of storedUsers) {
           const channelPos = user.servers
             .map((e) => e)
-            .map((e) => e.channelID)
-            .indexOf(channelID);
+            .map((e) => e.channelId)
+            .indexOf(channelId);
 
           if (channelPos !== -1) {
             const updatePromise = SixmanCollection.update(
@@ -67,7 +67,7 @@ const execute = async (message, queueSize) => {
               {
                 $pull: {
                   servers: {
-                    channelID,
+                    channelId,
                   },
                 },
               }
@@ -80,7 +80,7 @@ const execute = async (message, queueSize) => {
       });
 
       for (const game of finishedGames) {
-        if (game.channelID === channelID) {
+        if (game.channelId === channelId) {
           finishedGames.splice(finishedGames.indexOf(game), 1);
         }
       }
@@ -124,7 +124,7 @@ const execute = async (message, queueSize) => {
         {
           $pull: {
             servers: {
-              channelID,
+              channelId,
             },
           },
         }

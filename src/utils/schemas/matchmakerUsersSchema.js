@@ -6,7 +6,7 @@ const schema = new mongoose.Schema(
     name: String,
     servers: [
       {
-        channelID: String,
+        channelId: String,
         wins: Number,
         losses: Number,
         mmr: Number,

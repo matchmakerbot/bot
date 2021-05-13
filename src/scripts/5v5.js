@@ -16,7 +16,7 @@ const R6Maps = ["Bank", "House", "Club", "Consulate", "Kafe", "Coastline"];
 
 const CSGOMaps = ["Cache", "Dust II", "Inferno", "Mirage", "Train"];
 
-const avaiableGames = ["valorant", "csgo", "leagueoflegends", "r6"];
+const avaiableGames = ["valorant", "csgo", "leagueoflegends", "r6", "rocketleague"];
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -1702,7 +1702,8 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "a", /* [
+  name:
+    "a" /* [
     "q",
     "status",
     "leave",
@@ -1716,7 +1717,7 @@ module.exports = {
     "ongoinggames",
     "mode",
     "revertgame",
-  ], */
+  ], */,
   description: "6man bot",
   execute,
 };

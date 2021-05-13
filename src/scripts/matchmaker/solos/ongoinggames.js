@@ -21,20 +21,17 @@ const execute = async (message, queueSize) => {
       correctEmbed.addField("No more games to list ", "Encourage your friends to play!");
       break;
     }
-    let team1Message = "";
-    let team2Message = "";
+
     if (game.channelID === message.channel.id) {
-      for (const user of game.team1) {
-        team1Message += `<@${user.id}>, `;
-      }
-
-      for (const user of game.team2) {
-        team2Message += `<@${user.id}>, `;
-      }
-
       correctEmbed.addField("Game ID:", ` ${game.gameID}`);
-      correctEmbed.addField(":small_orange_diamond: -Team 1-", team1Message);
-      correctEmbed.addField(":small_blue_diamond: -Team 2-", team2Message);
+      correctEmbed.addField(
+        ":small_orange_diamond: -Team 1-",
+        game.team1.reduce((acc = "", curr) => `${acc}<@${curr}>, `, "")
+      );
+      correctEmbed.addField(
+        ":small_blue_diamond: -Team 2-",
+        game.team2.reduce((acc = "", curr) => `${acc}<@${curr}>, `, "")
+      );
 
       correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
     }

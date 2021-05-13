@@ -21,7 +21,7 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
-  const channelID = message.channel.id;
+  const channelId = message.channel.id;
 
   const storedGames = await fetchGames(Number(queueSize));
 
@@ -32,7 +32,7 @@ const execute = async (message, queueSize) => {
   }
   const games = storedGames.find((game) => includesUserId(joinTeam1And2(game), userId));
 
-  if (games.channelID !== channelID) {
+  if (games.channelId !== channelId) {
     wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
 
     return message.channel.send(wrongEmbed);
@@ -48,7 +48,7 @@ const execute = async (message, queueSize) => {
 
   await OngoingGamesCollection.deleteOne({
     queueSize: Number(queueSize),
-    gameID: games.gameID,
+    gameId: games.gameId,
   });
 
   games.voiceChannelIds.forEach((channel) => {
