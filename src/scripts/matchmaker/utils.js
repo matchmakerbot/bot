@@ -39,11 +39,11 @@ const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
   return user;
 };
 
-const fetchGames = async (queueSize) => {
+const fetchGames = async (channelId) => {
   const games = await OngoingGamesCollection.find(
-    queueSize != null
+    channelId != null
       ? {
-          queueSize,
+          channelId,
         }
       : {}
   );
@@ -95,11 +95,10 @@ const assignWinLoseDb = async (user, game, score) => {
 };
 
 const revertGame = async (user, game, param, team) => {
-  console.log(user);
   const storedUserDb = await SixmanCollection.findOne({
     id: user.id,
   });
-  console.log(storedUserDb);
+
   const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
 
   const win = `servers.${channelPos}.wins`;

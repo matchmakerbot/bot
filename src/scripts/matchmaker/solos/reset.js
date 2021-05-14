@@ -90,7 +90,7 @@ const execute = async (message, queueSize) => {
     }
 
     case "player": {
-      const findUserInGame = (await fetchGames(Number(queueSize)))
+      const findUserInGame = (await fetchGames(queueSize))
         .map((e) => joinTeam1And2(e))
         .flat()
         .map((e) => e.id)

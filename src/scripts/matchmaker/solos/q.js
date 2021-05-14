@@ -1,5 +1,5 @@
 const Discord = require("discord.js");
-// make captains reaction based
+
 const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
@@ -19,11 +19,18 @@ const {
 
 const rc = ["r", "c"];
 
+const reactEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+
 let gameCount = 0;
 
 const getOccurrence = (array, value) => {
   return array.filter((v) => v === value).length;
 };
+
+const filterReaction = (reaction, user) =>
+  user.id !== "571839826744180736" && reactEmojis.includes(reaction.emoji.name);
+
+const filterMessageCollector = (m) => m.content.split("")[1] === "r" || m.content.split("")[1] === "c";
 
 const shuffle = (array) => {
   const arrayToShuffle = array;
@@ -47,15 +54,15 @@ const shuffle = (array) => {
 };
 
 const choose2Players = async (dm, team, queue, captainsObject, message) => {
-  if (queue.length < 2) return;
+  if (queue.length < 2) return null;
   let hasVoted2 = false;
   const CaptainRepeatingEmbed = new Discord.MessageEmbed()
     .setColor(EMBED_COLOR_WARNING)
-    .setTitle("Choose two ( you have 40 seconds):");
+    .setTitle("Choose two ( you have 30 seconds):");
   for (let k = 0; k < queue.length; k++) {
     CaptainRepeatingEmbed.addField(`${k + 1} :`, queue[k].name);
   }
-  dm.send(CaptainRepeatingEmbed).catch((error) => {
+  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch((error) => {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(`:x: Couldn't sent message to ${dm.username}, please check if your DM'S aren't set to friends only.`);
@@ -65,28 +72,31 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
     message.channel.send(errorEmbed);
   });
 
-  const filter = (m) => !Number.isNaN(m.content) && Number(m.content) > 0 && Number(m.content) < 4;
+  for (let i = 0; i < queue.length; i++) {
+    privateDmMessage.react(reactEmojis[i]);
+  }
 
-  dm.createDM()
-    // eslint-disable-next-line no-loop-func
-    .then((m1) => {
-      m1.createMessageCollector(filter, {
-        time: 40000,
-      }).on("collect", (m) => {
-        const parsedM = Number(m) - 1;
+  await privateDmMessage
+    .awaitReactions(filterReaction, { max: 2, time: 30000 })
+    .then((collected) => {
+      if (collected.first() != null) {
+        const num = reactEmojis.indexOf(collected.first().emoji.name);
 
-        if (!hasVoted2) {
-          team.push(queue[parsedM]);
+        team.push(queue[num]);
 
-          hasVoted2 = true;
+        hasVoted2 = true;
 
-          captainsObject.usedNums.push(parsedM);
-        } else if (hasVoted2 && !captainsObject.usedNums.includes(parsedM) && hasVoted2 !== "all") {
-          team.push(queue[parsedM]);
+        captainsObject.usedNums.push(num);
+      }
+      if (collected.last() != null) {
+        if (collected.last().emoji.name !== collected.first().emoji.name) {
+          const num2 = reactEmojis.indexOf(collected.last().emoji.name);
+
+          team.push(queue[num2]);
 
           hasVoted2 = "all";
 
-          captainsObject.usedNums.push(parsedM);
+          captainsObject.usedNums.push(num2);
 
           queue.splice(captainsObject.usedNums[0], 1);
 
@@ -96,14 +106,13 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
             queue.splice(captainsObject.usedNums[1], 1);
           }
         }
-      });
+      }
     })
-    .catch(() => {
-      console.error("Error creating DM");
+    .catch((e) => {
+      console.log(e);
     });
 
   // eslint-disable-next-line no-await-in-loop
-  await new Promise((resolve) => setTimeout(resolve, 40000));
 
   const randomnumber = Math.floor(Math.random() * 3);
 
@@ -144,6 +153,7 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   hasVoted2 = false;
 
   captainsObject.usedNums.splice(0, captainsObject.usedNums.length);
+  return true;
 };
 
 const execute = async (message, queueSize) => {
@@ -154,8 +164,6 @@ const execute = async (message, queueSize) => {
   const userId = message.author.id;
 
   const queueArray = getQueueArray(queueSize, message.channel.id);
-
-  const NumberQueueSize = Number(queueSize);
 
   const channelId = message.channel.id;
 
@@ -177,7 +185,7 @@ const execute = async (message, queueSize) => {
     message.channel.send(wrongEmbed);
     return;
   }
-  const storedGames = await fetchGames(NumberQueueSize);
+  const storedGames = await fetchGames();
   for (const game of storedGames) {
     if (includesUserId(joinTeam1And2(game), userId)) {
       wrongEmbed.setTitle(":x: You are in the middle of a game!");
@@ -206,7 +214,7 @@ const execute = async (message, queueSize) => {
 
   message.channel.send(correctEmbed);
 
-  if (queueArray.length === NumberQueueSize) {
+  if (queueArray.length === queueSize) {
     try {
       gameCount++;
 
@@ -219,7 +227,7 @@ const execute = async (message, queueSize) => {
         team2: [],
         voiceChannelIds: [],
       };
-      let promises = []; // issue with this, its adding more channels to the array even though channel is already there
+      let promises = [];
       for (const user of queueArray) {
         const dbRequest = SixmanCollection.findOne({
           id: user.id,
@@ -284,10 +292,8 @@ const execute = async (message, queueSize) => {
 
       await message.channel.send(correctEmbed);
 
-      let filter = (m) => m.content.split("")[1] === "r" || m.content.split("")[1] === "c";
-
       message.channel
-        .createMessageCollector(filter, {
+        .createMessageCollector(filterMessageCollector, {
           time: 20000,
         })
         .on("collect", (m) => {
@@ -369,8 +375,8 @@ const execute = async (message, queueSize) => {
         const CaptainsEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_WARNING)
           .setTitle(`Game Id: ${gameCreatedObj.gameId}`)
-          .addField("Captain for team 1", queueArrayCopy[0].name)
-          .addField("Captain for team 2", queueArrayCopy[1].name);
+          .addField("Captain for team 1", captainsObject.captain1.name)
+          .addField("Captain for team 2", captainsObject.captain2.name);
 
         message.channel.send(CaptainsEmbed);
 
@@ -384,12 +390,12 @@ const execute = async (message, queueSize) => {
 
         const Captain1Embed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_WARNING)
-          .setTitle("Choose one ( you have 40 seconds):");
+          .setTitle("Choose one ( you have 30 seconds):");
         for (let k = 0; k < queueArrayCopy.length; k++) {
           Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].name);
         }
 
-        privateDmCaptain1.send(Captain1Embed).catch((error) => {
+        const privateDmCaptain1Message = await privateDmCaptain1.send(Captain1Embed).catch((error) => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
@@ -401,34 +407,26 @@ const execute = async (message, queueSize) => {
           message.channel.send(errorEmbed);
         });
 
-        filter = (m) =>
-          !Number.isNaN(m.content) && Number(m.content) > 0 && Number(m.content) < queueArrayCopy.length + 1;
+        for (let i = 0; i < queueArrayCopy.length; i++) {
+          privateDmCaptain1Message.react(reactEmojis[i]);
+        }
 
-        // eslint-disable-next-line no-await-in-loop
-        await privateDmCaptain1
-          .createDM()
-          // eslint-disable-next-line no-loop-func
-          .then((m1) => {
-            m1.createMessageCollector(filter, {
-              time: 40000,
-            }).on("collect", (m) => {
-              const parsedM = Number(m.content) - 1;
+        await privateDmCaptain1Message
+          .awaitReactions(filterReaction, { max: 1, time: 30000 })
+          .then((collected) => {
+            if (collected.first() != null) {
+              const num = reactEmojis.indexOf(collected.first().emoji.name);
 
-              if (!hasVoted) {
-                captainsObject.team1.push(queueArrayCopy[parsedM]);
+              captainsObject.team1.push(queueArrayCopy[num]);
 
-                queueArrayCopy.splice(parsedM, 1);
+              queueArrayCopy.splice(num, 1);
 
-                hasVoted = true;
-              }
-            });
+              hasVoted = true;
+            }
           })
           .catch((e) => {
             console.log(e);
           });
-
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 40000));
 
         if (!hasVoted) {
           const randomnumber = Math.floor(Math.random() * queueArrayCopy.length);
@@ -449,19 +447,23 @@ const execute = async (message, queueSize) => {
             team: captainsObject.team1,
           },
         ];
-
         let lastCaptain;
         while (queueArrayCopy.length > 1) {
           for (const captain of captains) {
             // eslint-disable-next-line no-await-in-loop
-            await choose2Players(captain.captainDm, captain.team, queueArrayCopy, captainsObject, message);
-            lastCaptain = captain;
+            lastCaptain = await choose2Players(
+              captain.captainDm,
+              captain.team,
+              queueArrayCopy,
+              captainsObject,
+              message
+            );
           }
         }
 
         delete rorc[gameCount];
 
-        if (lastCaptain === captains[0]) {
+        if (lastCaptain == null) {
           captainsObject.team1.push(queueArrayCopy[0]);
         } else {
           captainsObject.team2.push(queueArrayCopy[0]);
@@ -617,7 +619,7 @@ const execute = async (message, queueSize) => {
 
       message.channel.send(wrongEmbed);
 
-      delete channelQueues[queueSize][message.channel.id];
+      queueArray.splice(0, queueSize);
 
       console.log(e);
     }

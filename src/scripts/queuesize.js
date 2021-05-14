@@ -35,8 +35,8 @@ const execute = async (message) => {
     return message.channel.send(wrongEmbed);
   }
 
-  if (intGamemode < 2 || intGamemode > 14) {
-    wrongEmbed.setTitle("QueueSize must range between 2 and 14");
+  if (intGamemode < 2 || intGamemode > 12) {
+    wrongEmbed.setTitle("QueueSize must range between 2 and 12");
 
     return message.channel.send(wrongEmbed);
   }
@@ -51,8 +51,8 @@ const execute = async (message) => {
         return message.channel.send(wrongEmbed);
       }
       if (queue.channelId === message.channel.id) {
-        queue.queueSize = secondArg;
-        queueSizeObject[message.channel.id] = secondArg;
+        queue.queueSize = intGamemode;
+        queueSizeObject[message.channel.id] = intGamemode;
         queue.players.splice(0, queue.players.length);
       }
     }
@@ -63,7 +63,7 @@ const execute = async (message) => {
     },
     {
       $set: {
-        [a]: secondArg,
+        [a]: intGamemode,
       },
     }
   );

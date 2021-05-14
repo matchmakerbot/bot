@@ -23,7 +23,7 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  const storedGames = await fetchGames(Number(queueSize));
+  const storedGames = await fetchGames(message.channel.id);
 
   if (!includesUserId(storedGames.map((e) => joinTeam1And2(e)).flat(), userId)) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
@@ -47,7 +47,7 @@ const execute = async (message, queueSize) => {
   finishedGames.push(games);
 
   await OngoingGamesCollection.deleteOne({
-    queueSize: Number(queueSize),
+    queueSize,
     gameId: games.gameId,
   });
 

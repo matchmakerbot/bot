@@ -11,7 +11,7 @@ const execute = (message, queueSize) => {
 
   const index = queueArray.map((e) => e.id).indexOf(message.author.id);
 
-  if (queueArray.length === Number(queueSize)) {
+  if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
     return message.channel.send(wrongEmbed);

@@ -2,12 +2,12 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchGames } = require("../utils");
 
-const execute = async (message, queueSize) => {
+const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const games = await fetchGames(Number(queueSize));
+  const games = await fetchGames(message.channel.id);
   if (games.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 
@@ -22,19 +22,17 @@ const execute = async (message, queueSize) => {
       break;
     }
 
-    if (game.channelID === message.channel.id) {
-      correctEmbed.addField("Game ID:", ` ${game.gameID}`);
-      correctEmbed.addField(
-        ":small_orange_diamond: -Team 1-",
-        game.team1.reduce((acc = "", curr) => `${acc}<@${curr}>, `, "")
-      );
-      correctEmbed.addField(
-        ":small_blue_diamond: -Team 2-",
-        game.team2.reduce((acc = "", curr) => `${acc}<@${curr}>, `, "")
-      );
+    correctEmbed.addField("Game ID:", ` ${game.gameID}`);
+    correctEmbed.addField(
+      ":small_orange_diamond: -Team 1-",
+      game.team1.reduce((acc = "", curr) => `${acc}<@${curr}>, `, "")
+    );
+    correctEmbed.addField(
+      ":small_blue_diamond: -Team 2-",
+      game.team2.reduce((acc = "", curr) => `${acc}<@${curr}>, `, "")
+    );
 
-      correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
-    }
+    correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
   }
   return message.channel.send(correctEmbed);
 };

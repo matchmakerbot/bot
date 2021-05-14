@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const client = require("../utils/createClientInstance.js");
+const client = require("../../../utils/createClientInstance.js");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -12,7 +12,7 @@ const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
 
 const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
-const UPDATE_INTERVAL_MS = 60 * 1000;
+const UPDATE_INTERVAL_MS = 6 * 1000;
 
 const ongoingGames = [];
 
@@ -1704,7 +1704,8 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "a", /*[
+  name:
+    "a" /*[
     "q",
     "status",
     "leave",
@@ -1723,7 +1724,7 @@ module.exports = {
     "kickplayer",
     "revertgame",
     "giveownership",
-  ], */
+  ], */,
   description: "6man bot",
   execute,
 };

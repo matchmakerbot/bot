@@ -60,7 +60,8 @@ const updateUsers = async () => {
 
 const updateOngoingGames = async () => {
   let promises = [];
-  const ongoingGames = await fetchGames(); // future: only fetch games that happenned more than 3 hours ago
+  // future: only fetch games that happenned more than 3 hours ago
+  const ongoingGames = await fetchGames();
   if (ongoingGames.length === 0) {
     return;
   }

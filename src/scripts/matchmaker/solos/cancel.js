@@ -17,7 +17,7 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const gameList = await fetchGames(Number(queueSize));
+  const gameList = await fetchGames(message.channel.id);
 
   const userId = message.author.id;
 
@@ -55,13 +55,13 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(
     `:exclamation: ${message.author.username} wants to cancel game ${gameId}. (${cancelqueuearray.length}/${
-      Number(queueSize) / 2 + 1
+      queueSize / 2 + 1
     })`
   );
 
   message.channel.send(correctEmbed);
 
-  if (cancelqueuearray.length === Number(queueSize) / 2 + 1) {
+  if (cancelqueuearray.length === queueSize / 2 + 1) {
     deletableChannels.push(...games.voiceChannelIds);
 
     correctEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
@@ -69,7 +69,7 @@ const execute = async (message, queueSize) => {
     delete cancelQueue[gameId];
 
     await OngoingGamesCollection.deleteOne({
-      queueSize: Number(queueSize),
+      queueSize,
       gameId,
     });
 
