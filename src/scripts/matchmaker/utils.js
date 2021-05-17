@@ -168,7 +168,7 @@ const assignWinLostOrRevert = async (game, param) => {
     if (param === "Finished") {
       promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES));
     } else {
-      promises.push(revertGame(game, param, TEAM1));
+      promises.push(revertGame(user, game, param, TEAM1));
     }
   }
   for (const user of game.team2) {
