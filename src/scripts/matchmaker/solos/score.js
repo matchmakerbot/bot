@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchFromId } = require("../utils");
 
-const SixmanCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -16,7 +16,7 @@ const execute = async (message) => {
   const userId = message.author.id;
   switch (secondArg) {
     case "me": {
-      const user = await SixmanCollection.findOne({
+      const user = await MatchmakerCollection.findOne({
         id: userId,
         servers: {
           $elemMatch: {
@@ -52,7 +52,7 @@ const execute = async (message) => {
     }
     case "channel": {
       const getScore = async (id, arg) => {
-        const storedUsers = await SixmanCollection.find({
+        const storedUsers = await MatchmakerCollection.find({
           servers: {
             $elemMatch: {
               channelId: id,

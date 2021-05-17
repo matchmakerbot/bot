@@ -3,7 +3,7 @@ const Discord = require("discord.js");
 const discordEmbed = new Discord.MessageEmbed()
 
   .setAuthor(
-    "Deformed Bot Help Page",
+    "Matchmaker Bot Help Page",
     "https://media.discordapp.net/attachments/464556094728044564/619269142268215355/68884765_417923562160410_1636845361156849664_n.jpg?width=676&height=676"
   )
   .setColor("#F8534F")
@@ -18,7 +18,7 @@ const discordEmbed = new Discord.MessageEmbed()
 
 module.exports = {
   name: "help",
-  description: "Gievs you a nice command list",
+  description: "Gives you a nice command list",
   execute(message) {
     message.channel.send(discordEmbed);
   },

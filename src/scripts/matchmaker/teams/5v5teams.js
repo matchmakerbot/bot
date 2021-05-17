@@ -1,8 +1,6 @@
-/** @format */
-
 const Discord = require("discord.js");
 
-const client = require("../utils/createClientInstance.js");
+const client = require("../../../utils/createClientInstance.js");
 
 const valorantMaps = ["Haven", "Bind", "Split"];
 
@@ -1803,7 +1801,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "a", /*[
+  name: [
     "q",
     "status",
     "leave",
@@ -1823,7 +1821,7 @@ module.exports = {
     "kickplayer",
     "revertgame",
     "giveownership",
-  ], */
+  ],
   description: "6man bot",
   execute,
 };

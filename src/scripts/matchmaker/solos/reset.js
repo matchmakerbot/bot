@@ -4,7 +4,7 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, fetchGames, joinTea
 
 const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema");
 
-const SixmanCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
@@ -46,7 +46,7 @@ const execute = async (message, queueSize) => {
         return message.channel.send(wrongEmbed);
       }
       let promises = [];
-      await SixmanCollection.find({
+      await MatchmakerCollection.find({
         servers: {
           $elemMatch: {
             channelId,
@@ -60,7 +60,7 @@ const execute = async (message, queueSize) => {
             .indexOf(channelId);
 
           if (channelPos !== -1) {
-            const updatePromise = SixmanCollection.update(
+            const updatePromise = MatchmakerCollection.update(
               {
                 id: user.id,
               },
@@ -107,7 +107,7 @@ const execute = async (message, queueSize) => {
         return message.channel.send(wrongEmbed);
       }
 
-      const player = await SixmanCollection.findOne({
+      const player = await MatchmakerCollection.findOne({
         id: thirdArg,
       });
 
@@ -117,7 +117,7 @@ const execute = async (message, queueSize) => {
         return message.channel.send(wrongEmbed);
       }
 
-      await SixmanCollection.update(
+      await MatchmakerCollection.update(
         {
           id: thirdArg,
         },

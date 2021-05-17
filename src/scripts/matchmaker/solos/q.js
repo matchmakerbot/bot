@@ -4,8 +4,8 @@ const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
 
-const SixmanCollection = require("../../../utils/schemas/matchmakerUsersSchema");
-
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+// make mmr based system (the worse the team is the higher mmr they win if they win the match and vice versa,) not just add 13 and subtract 10 like a retard
 const {
   EMBED_COLOR_CHECK,
   getQueueArray,
@@ -80,16 +80,22 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
     .awaitReactions(filterReaction, { max: 2, time: 30000 })
     .then((collected) => {
       if (collected.first() != null) {
-        const num = reactEmojis.indexOf(collected.first().emoji.name);
+        if (reactEmojis.indexOf(collected.first().emoji.name) < queue.length) {
+          const num = reactEmojis.indexOf(collected.first().emoji.name);
 
-        team.push(queue[num]);
+          team.push(queue[num]);
 
-        hasVoted2 = true;
+          hasVoted2 = true;
 
-        captainsObject.usedNums.push(num);
+          captainsObject.usedNums.push(num);
+        }
       }
       if (collected.last() != null) {
-        if (collected.last().emoji.name !== collected.first().emoji.name) {
+        if (
+          collected.last().emoji.name !== collected.first().emoji.name &&
+          reactEmojis.indexOf(collected.last().emoji.name) < queue.length &&
+          reactEmojis.indexOf(collected.first().emoji.name) < queue.length
+        ) {
           const num2 = reactEmojis.indexOf(collected.last().emoji.name);
 
           team.push(queue[num2]);
@@ -109,44 +115,30 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
       }
     })
     .catch((e) => {
-      console.log(e);
+      console.error(e);
     });
 
-  // eslint-disable-next-line no-await-in-loop
-
-  const randomnumber = Math.floor(Math.random() * 3);
-
-  let randomnumber2 = Math.floor(Math.random() * 3);
-
   if (!hasVoted2) {
-    while (randomnumber === randomnumber2) {
-      randomnumber2 = Math.floor(Math.random() * 3);
-    }
+    team.push(queue[0]);
 
-    team.push(queue[randomnumber]);
+    team.push(queue[1]);
 
-    team.push(queue[randomnumber2]);
-
-    queue.splice(randomnumber, 1);
-
-    if (randomnumber2 > randomnumber) {
-      queue.splice(randomnumber2 - 1, 1);
-    } else {
-      queue.splice(randomnumber2, 1);
-    }
+    queue.splice(0, 2);
   } else if (hasVoted2 && hasVoted2 !== "all") {
-    while (captainsObject.usedNums.includes(randomnumber2)) {
-      randomnumber2 = Math.floor(Math.random() * 2);
+    let randomNumber = Math.floor(Math.random() * queue.length);
+
+    while (captainsObject.usedNums.includes(randomNumber)) {
+      randomNumber = Math.floor(Math.random() * queue.length);
     }
 
-    team.push(queue[randomnumber2]);
+    team.push(queue[randomNumber]);
 
     queue.splice(captainsObject.usedNums[0], 1);
 
-    if (randomnumber2 > captainsObject.usedNums[0]) {
-      queue.splice(randomnumber2 - 1, 1);
+    if (randomNumber > captainsObject.usedNums[0]) {
+      queue.splice(randomNumber - 1, 1);
     } else {
-      queue.splice(randomnumber2, 1);
+      queue.splice(randomNumber, 1);
     }
   }
 
@@ -167,13 +159,11 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  for (const person of queueArray) {
-    if (person.id === userId) {
-      wrongEmbed.setTitle(":x: You're already in the queue!");
+  if (queueArray.find((e) => e.id === userId) != null) {
+    wrongEmbed.setTitle(":x: You're already in the queue!");
 
-      message.channel.send(wrongEmbed);
-      return;
-    }
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (includesUserId(channelQueues.map((e) => e.players).flat(), userId)) {
@@ -185,7 +175,9 @@ const execute = async (message, queueSize) => {
     message.channel.send(wrongEmbed);
     return;
   }
+
   const storedGames = await fetchGames();
+
   for (const game of storedGames) {
     if (includesUserId(joinTeam1And2(game), userId)) {
       wrongEmbed.setTitle(":x: You are in the middle of a game!");
@@ -229,7 +221,7 @@ const execute = async (message, queueSize) => {
       };
       let promises = [];
       for (const user of queueArray) {
-        const dbRequest = SixmanCollection.findOne({
+        const dbRequest = MatchmakerCollection.findOne({
           id: user.id,
         }).then(async (storedUser) => {
           if (storedUser == null) {
@@ -246,11 +238,11 @@ const execute = async (message, queueSize) => {
               ],
             };
 
-            const matchmakerInsert = new SixmanCollection(newUser);
+            const matchmakerInsert = new MatchmakerCollection(newUser);
 
             await matchmakerInsert.save();
           } else if (!storedUser.servers.map((e) => e.channelId).includes(channelId)) {
-            await SixmanCollection.update(
+            await MatchmakerCollection.update(
               {
                 id: user.id,
               },
@@ -425,15 +417,13 @@ const execute = async (message, queueSize) => {
             }
           })
           .catch((e) => {
-            console.log(e);
+            console.error(e);
           });
 
         if (!hasVoted) {
-          const randomnumber = Math.floor(Math.random() * queueArrayCopy.length);
+          captainsObject.team1.push(queueArrayCopy[0]);
 
-          captainsObject.team1.push(queueArrayCopy[randomnumber]);
-
-          queueArrayCopy.splice(randomnumber, 1);
+          queueArrayCopy.shift();
         }
 
         hasVoted = false;
@@ -621,7 +611,7 @@ const execute = async (message, queueSize) => {
 
       queueArray.splice(0, queueSize);
 
-      console.log(e);
+      console.error(e);
     }
   }
 };

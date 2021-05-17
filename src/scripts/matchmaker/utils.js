@@ -2,7 +2,7 @@ const client = require("../../utils/createClientInstance.js");
 
 const OngoingGamesCollection = require("../../utils/schemas/ongoingGamesSchema.js");
 
-const SixmanCollection = require("../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerCollection = require("../../utils/schemas/matchmakerUsersSchema");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -71,17 +71,17 @@ const getQueueArray = (queueSize, channelId) => {
 };
 
 const assignWinLoseDb = async (user, game, score) => {
-  const storedUserDb = await SixmanCollection.findOne({
+  const storedUserDb = await MatchmakerCollection.findOne({
     id: user.id,
   });
-
+  // not working for some reason look into it
   const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
 
   const sort = `servers.${channelPos}.${score}`;
 
   const mmr = `servers.${channelPos}.mmr`;
 
-  await SixmanCollection.update(
+  await MatchmakerCollection.update(
     {
       id: user.id,
     },
@@ -95,7 +95,7 @@ const assignWinLoseDb = async (user, game, score) => {
 };
 
 const revertGame = async (user, game, param, team) => {
-  const storedUserDb = await SixmanCollection.findOne({
+  const storedUserDb = await MatchmakerCollection.findOne({
     id: user.id,
   });
 
@@ -114,7 +114,7 @@ const revertGame = async (user, game, param, team) => {
 
   switch (param) {
     case "revert": {
-      await SixmanCollection.update(
+      await MatchmakerCollection.update(
         {
           id: user.id,
         },
@@ -140,7 +140,7 @@ const revertGame = async (user, game, param, team) => {
       break;
     }
     case "cancel": {
-      await SixmanCollection.update(
+      await MatchmakerCollection.update(
         {
           id: user.id,
         },
