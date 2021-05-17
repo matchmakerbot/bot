@@ -31,7 +31,7 @@ const warnNonDeletableChannel = async (channel, gameId, errorId) => {
 };
 
 const updateUsers = async () => {
-  let promises = [];
+  const promises = [];
   const currentTimeMS = Date.now();
 
   for (const channelUsers of channelQueues.filter((queue) => queue.players.length < queue.queueSize)) {
@@ -54,12 +54,10 @@ const updateUsers = async () => {
     }
   }
   await Promise.all(promises);
-
-  promises = [];
 };
 
 const updateOngoingGames = async () => {
-  let promises = [];
+  const promises = [];
   // future: only fetch games that happenned more than 3 hours ago
   const ongoingGames = await fetchGames();
   if (ongoingGames.length === 0) {
@@ -102,12 +100,10 @@ const updateOngoingGames = async () => {
     promises.push(channelNotif);
   }
   await Promise.all(promises);
-
-  promises = [];
 };
 
 const updateVoiceChannels = async () => {
-  let promises = [];
+  const promises = [];
   const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
     const voiceChannel = client.channels
@@ -128,7 +124,6 @@ const updateVoiceChannels = async () => {
   }
   await Promise.all(promises);
 
-  promises = [];
   for (const item of deleteVC) {
     deletableChannels.splice(deletableChannels.indexOf(item), 1);
   }

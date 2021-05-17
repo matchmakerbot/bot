@@ -14,7 +14,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "sixman", versionKey: false }
+  { collection: "sixman", versionKey: false, minimize: false }
 );
 
 module.exports = mongoose.model("sixman", schema);

@@ -45,7 +45,7 @@ const execute = async (message, queueSize) => {
 
         return message.channel.send(wrongEmbed);
       }
-      let promises = [];
+      const promises = [];
       await MatchmakerCollection.find({
         servers: {
           $elemMatch: {
@@ -76,7 +76,6 @@ const execute = async (message, queueSize) => {
           }
         }
         await Promise.all(promises);
-        promises = [];
       });
 
       for (const game of finishedGames) {

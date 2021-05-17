@@ -74,7 +74,7 @@ const assignWinLoseDb = async (user, game, score) => {
   const storedUserDb = await MatchmakerCollection.findOne({
     id: user.id,
   });
-  // not working for some reason look into it
+
   const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
 
   const sort = `servers.${channelPos}.${score}`;
@@ -163,7 +163,7 @@ const revertGame = async (user, game, param, team) => {
 };
 
 const assignWinLostOrRevert = async (game, param) => {
-  let promises = [];
+  const promises = [];
   for (const user of game.team1) {
     if (param === "Finished") {
       promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES));
@@ -179,7 +179,6 @@ const assignWinLostOrRevert = async (game, param) => {
     }
   }
   await Promise.all(promises);
-  promises = [];
 };
 
 const includesUserId = (array, userIdParam) => {

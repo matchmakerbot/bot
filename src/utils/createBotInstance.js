@@ -10,9 +10,7 @@ const client = require("./createClientInstance.js");
 
 const { queueSizeObject } = require("./cache");
 
-const teamsCollection = require("./schemas/teamsSchema");
-
-const guildsCollection = require("./schemas/guildsSchema");
+const GuildsCollection = require("./schemas/guildsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/solos/timeout");
 
@@ -48,17 +46,12 @@ const queueCommands = [
 
 client.commands = new Discord.Collection();
 
-const NewTeamGuild = (guildId) => {
-  this.newTeamGuild = guildId;
-  this.teams = [];
-};
-
 const NewGuild = (guildId) => {
-  this.newTeamGuild = guildId;
-  this.game = "";
-  this.teams = [];
-  this.whitelists = [];
-  this.channels = {};
+  return {
+    id: guildId,
+    channels: {},
+    teams: [],
+  };
 };
 
 commandFiles.forEach((file) => {
@@ -83,14 +76,12 @@ const createBotInstance = async () => {
     client.once("ready", async () => {
       const guilds = client.guilds.cache.map((a) => a.id);
       guilds.forEach(async (guildId) => {
-        const guildsInfo = (await guildsCollection.findOne({ id: guildId })).toObject();
+        const guildsInfo = await GuildsCollection.findOne({ id: guildId });
 
-        if (guildsInfo.length === 0) {
-          const guildInfo = new NewGuild(guildId);
-          const teamsInfo = new NewTeamGuild(guildId);
+        if (guildsInfo == null) {
+          const insertedGuild = new GuildsCollection(NewGuild(guildId));
 
-          guildsCollection.insert(guildInfo);
-          teamsCollection.insert(teamsInfo);
+          await insertedGuild.save();
         }
       });
 
@@ -128,7 +119,7 @@ const createBotInstance = async () => {
 
       if (queueCommands.includes(command)) {
         if (queueSizeObject[message.channel.id] == null) {
-          const guildsInfo = await guildsCollection.findOne({ id: message.guild.id });
+          const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
           if (typeof guildsInfo.channels[message.channel.id] !== "number") {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
@@ -163,14 +154,12 @@ const createBotInstance = async () => {
   try {
     client.on("guildCreate", async (guild) => {
       console.log(`Joined ${guild.name}`);
-      const guildsInfo = (await guildsCollection.find({ id: guild.id })).toObject();
+      const guildsInfo = await GuildsCollection.find({ id: guild.id });
 
-      if (guildsInfo.length === 0) {
-        const guildInfo = new NewGuild(guild.id);
-        const teamsInfo = new NewTeamGuild(guild.id);
+      if (guildsInfo == null) {
+        const insertedGuild = new GuildsCollection(NewGuild(guild.id));
 
-        guildsCollection.insert(guildInfo);
-        teamsCollection.insert(teamsInfo);
+        await insertedGuild.save();
       }
     });
     console.log("Successfully created socket Client.on -> guildCreate");

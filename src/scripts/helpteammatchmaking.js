@@ -4,7 +4,7 @@ const discordEmbed = new Discord.MessageEmbed()
 
   .setAuthor("MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
   .setColor("#F8534F")
-  .setTitle("Team Matchmaking")
+  .setTitle("Team Matchmaking (currently disabled)")
   .addField(
     "!createteam",
     "Creates a team, usage: !createteam Maniacs, the bot then creates a role with the teams name and assigns a Team Captain role to the person that created the team"

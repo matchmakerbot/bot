@@ -54,8 +54,7 @@ const shuffle = (array) => {
 };
 
 const choose2Players = async (dm, team, queue, captainsObject, message) => {
-  if (queue.length < 2) return null;
-  let hasVoted2 = false;
+  if (queue.length < 2) return false;
   const CaptainRepeatingEmbed = new Discord.MessageEmbed()
     .setColor(EMBED_COLOR_WARNING)
     .setTitle("Choose two ( you have 30 seconds):");
@@ -85,8 +84,6 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
 
           team.push(queue[num]);
 
-          hasVoted2 = true;
-
           captainsObject.usedNums.push(num);
         }
       }
@@ -99,8 +96,6 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
           const num2 = reactEmojis.indexOf(collected.last().emoji.name);
 
           team.push(queue[num2]);
-
-          hasVoted2 = "all";
 
           captainsObject.usedNums.push(num2);
 
@@ -118,31 +113,19 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
       console.error(e);
     });
 
-  if (!hasVoted2) {
+  if (team.usedNums.length === 0) {
     team.push(queue[0]);
 
     team.push(queue[1]);
 
     queue.splice(0, 2);
-  } else if (hasVoted2 && hasVoted2 !== "all") {
-    let randomNumber = Math.floor(Math.random() * queue.length);
-
-    while (captainsObject.usedNums.includes(randomNumber)) {
-      randomNumber = Math.floor(Math.random() * queue.length);
-    }
-
-    team.push(queue[randomNumber]);
-
+  } else if (team.usedNums.length === 1) {
     queue.splice(captainsObject.usedNums[0], 1);
 
-    if (randomNumber > captainsObject.usedNums[0]) {
-      queue.splice(randomNumber - 1, 1);
-    } else {
-      queue.splice(randomNumber, 1);
-    }
-  }
+    team.push(queue[0]);
 
-  hasVoted2 = false;
+    queue.shift();
+  }
 
   captainsObject.usedNums.splice(0, captainsObject.usedNums.length);
   return true;
@@ -219,7 +202,7 @@ const execute = async (message, queueSize) => {
         team2: [],
         voiceChannelIds: [],
       };
-      let promises = [];
+      const promises = [];
       for (const user of queueArray) {
         const dbRequest = MatchmakerCollection.findOne({
           id: user.id,
@@ -262,8 +245,6 @@ const execute = async (message, queueSize) => {
         promises.push(dbRequest);
       }
       await Promise.all(promises);
-
-      promises = [];
 
       const valuesforpm = {
         name: Math.floor(Math.random() * 99999) + 100,
@@ -437,11 +418,11 @@ const execute = async (message, queueSize) => {
             team: captainsObject.team1,
           },
         ];
-        let lastCaptain;
+        let wasLastCaptainTeam1;
         while (queueArrayCopy.length > 1) {
           for (const captain of captains) {
             // eslint-disable-next-line no-await-in-loop
-            lastCaptain = await choose2Players(
+            wasLastCaptainTeam1 = await choose2Players(
               captain.captainDm,
               captain.team,
               queueArrayCopy,
@@ -453,11 +434,9 @@ const execute = async (message, queueSize) => {
 
         delete rorc[gameCount];
 
-        if (lastCaptain == null) {
-          captainsObject.team1.push(queueArrayCopy[0]);
-        } else {
-          captainsObject.team2.push(queueArrayCopy[0]);
-        }
+        const teamChosen = !wasLastCaptainTeam1 ? "team1" : "team2";
+
+        captainsObject[teamChosen].push(queueArrayCopy[0]);
 
         queueArrayCopy.splice(0, queueArrayCopy.length);
 
@@ -579,8 +558,6 @@ const execute = async (message, queueSize) => {
       }
 
       await Promise.all(promises);
-
-      promises = [];
 
       const CreateMatchEmbed = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)

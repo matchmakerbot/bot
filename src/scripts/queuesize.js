@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const guildsCollection = require("../utils/schemas/guildsSchema");
+const GuildsCollection = require("../utils/schemas/guildsSchema");
 
 const { queueSizeObject } = require("../utils/cache");
 
@@ -41,7 +41,7 @@ const execute = async (message) => {
     return message.channel.send(wrongEmbed);
   }
 
-  const guildsInfo = await guildsCollection.findOne({ id: message.guild.id });
+  const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
   if (guildsInfo.channels[message.channel.id] != null) {
     for (const queue of channelQueues) {
@@ -57,7 +57,7 @@ const execute = async (message) => {
       }
     }
   }
-  await guildsCollection.updateOne(
+  await GuildsCollection.updateOne(
     {
       id: message.guild.id,
     },
