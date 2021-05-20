@@ -122,18 +122,18 @@ const revertGame = async (user, game, param, team) => {
           $set: {
             [win]:
               winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos][winsOrLosses] + 1
-                : storedUserDb.servers[channelPos][winsOrLosses] - 1,
+                ? storedUserDb.servers[channelPos].wins - 1
+                : storedUserDb.servers[channelPos].losses + 1,
 
             [lose]:
               winsOrLosses === "losses"
-                ? storedUserDb.servers[channelPos][winsOrLosses] + 1
-                : storedUserDb.servers[channelPos][winsOrLosses] - 1,
+                ? storedUserDb.servers[channelPos].wins - 1
+                : storedUserDb.servers[channelPos].losses + 1,
 
             [mmr]:
               winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].mmr + 23
-                : storedUserDb.servers[channelPos].mmr - 23,
+                ? storedUserDb.servers[channelPos].mmr - 23
+                : storedUserDb.servers[channelPos].mmr + 23,
           },
         }
       );

@@ -6,6 +6,8 @@ const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchem
 
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 // make mmr based system (the worse the team is the higher mmr they win if they win the match and vice versa,) not just add 13 and subtract 10 like a retard
+// 2 players with highest mmr are the captains
+// balance randoms by mmr
 const {
   EMBED_COLOR_CHECK,
   getQueueArray,
@@ -113,13 +115,13 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
       console.error(e);
     });
 
-  if (team.usedNums.length === 0) {
+  if (captainsObject.usedNums.length === 0) {
     team.push(queue[0]);
 
     team.push(queue[1]);
 
     queue.splice(0, 2);
-  } else if (team.usedNums.length === 1) {
+  } else if (captainsObject.usedNums.length === 1) {
     queue.splice(captainsObject.usedNums[0], 1);
 
     team.push(queue[0]);
@@ -270,7 +272,7 @@ const execute = async (message, queueSize) => {
           time: 20000,
         })
         .on("collect", (m) => {
-          if (queueArray.map((e) => e.id).includes(m.author.id) || !rorcArray.map((e) => e.id).includes(m.author.id)) {
+          if (queueArray.map((e) => e.id).includes(m.author.id) && !rorcArray.map((e) => e.id).includes(m.author.id)) {
             rorcArray.push({
               id: m.author.id,
               param: m.content.split("")[1],

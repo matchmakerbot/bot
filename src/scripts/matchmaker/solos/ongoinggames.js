@@ -22,14 +22,14 @@ const execute = async (message) => {
       break;
     }
 
-    correctEmbed.addField("Game ID:", ` ${game.gameID}`);
+    correctEmbed.addField("Game ID:", ` ${game.gameId}`);
     correctEmbed.addField(
       ":small_orange_diamond: -Team 1-",
-      game.team1.reduce((acc, curr) => `${acc}<@${curr}>, `, "")
+      game.team1.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
     );
     correctEmbed.addField(
       ":small_blue_diamond: -Team 2-",
-      game.team2.reduce((acc, curr) => `${acc}<@${curr}>, `, "")
+      game.team2.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
     );
 
     correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);

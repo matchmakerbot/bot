@@ -29,7 +29,7 @@ const sentences = [
   "Tired of hearing about school shootings? Try enouraging local teens to use bombs instead.",
   "tired of waiting at airport security? Pull out a gun. Most airports don't allow guns so it's unlikely anyone else will have one. Everyone will be at your mercy, you will be on your upgraded to first class flight in no time.",
   "Don't laugh at your friend for getting hurt from a paper cut cause you might make the pussy cry even more.",
-  "Don't cough while your taking a shit, trust me.",
+  "Don't cough while you're taking a shit, trust me.",
   "Just pretend to be a hot girl to make your room mate clean the apartment.",
   "https://i.redd.it/i4c9ygijglq31.jpg",
   "Spice up your panic attack by using a harmonica.",
@@ -41,9 +41,11 @@ const sentences = [
   "Legally change yourself to a female so that you have a longer life expectancy",
   "Spice up any Social media comment with random quotation marks: \n “Congrats“ on your baby. \n Congrats on “your“ baby. \n Congrats on your “baby“.",
 ];
+
 function lptrandom() {
   return sentences[Math.floor(Math.random() * sentences.length)];
 }
+
 module.exports = {
   name: "lpt",
   description: "it pongs",
