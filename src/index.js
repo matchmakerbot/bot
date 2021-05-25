@@ -13,5 +13,7 @@ const { createDbConnection } = require("./utils/connectMongoDBServer");
     console.log("Error creating a Bot Instance/Db Connection");
 
     console.error(e);
+
+    process.exit(1);
   }
 })();

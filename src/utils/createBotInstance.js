@@ -8,6 +8,10 @@ const Discord = require("discord.js");
 
 const client = require("./createClientInstance.js");
 
+const fastify = require("fastify")({
+  logger: true,
+});
+
 const { queueSizeObject } = require("./cache");
 
 const GuildsCollection = require("./schemas/guildsSchema");
@@ -71,6 +75,13 @@ commandFilesMatchmaker.forEach((file) => {
 });
 
 const createBotInstance = async () => {
+  fastify.get("/healthz", (request, reply) => {
+    reply.send("alive");
+  });
+
+  fastify.listen(3000, "0.0.0.0", (err, address) => {
+    if (err) throw err;
+  });
   startIntervalMatchmakerBot();
   try {
     client.once("ready", async () => {
@@ -124,7 +135,7 @@ const createBotInstance = async () => {
           if (typeof guildsInfo.channels[message.channel.id] !== "number") {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x: You must first select your queue size in this channel using !queuesize number , for example !queueSize 6"
+              ":x: Hi! The bot has changed! Now you must first select your queue size in this channel using !queuesize number , for example !queueSize 6\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"
             );
 
             message.channel.send(embed);
