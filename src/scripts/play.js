@@ -1,18 +1,17 @@
 /** @format */
 
-const yt = require("ytdl-core");
+// const yt = require("ytdl-core");
 
-const rp = require("request-promise-native");
+// const rp = require("request-promise-native");
 
-const Discord = require("discord.js");
+// const Discord = require("discord.js");
 
-const musicChannels = {};
+// const musicChannels = {};
 
 const execute = async (message) => {
-
   return message.channel.send("This is broke i need to fix it soz, blame discord opus");
 
-  const embed = new Discord.MessageEmbed().setColor("#77B255");
+  /* const embed = new Discord.MessageEmbed().setColor("#77B255");
 
   const voiceChannel = message.member.voice.channel;
 
@@ -50,15 +49,15 @@ const execute = async (message) => {
   if (secondArg === "skip") {
     if (musicQueue.length === 0) {
       return message.channel.send("There is nothing to skip");
-    } else if (musicQueue.length === 1) {
+    }
+    if (musicQueue.length === 1) {
       musicQueue.shift();
 
       return voiceChannel.leave();
-    } else {
-      musicQueue.shift();
-
-      return play();
     }
+    musicQueue.shift();
+
+    return play();
   }
 
   if (secondArg === "queue") {
@@ -97,12 +96,11 @@ const execute = async (message) => {
       embed.addField("Now playing: ", musicQueue[0].title).setThumbnail(musicQueue[0].thumbnail);
 
       return message.channel.send(embed);
-    } else {
-      embed.addField("Added to queue: ", item.snippet.title).setThumbnail(item.snippet.thumbnails.default.url);
-
-      return message.channel.send(embed);
     }
-  });
+    embed.addField("Added to queue: ", item.snippet.title).setThumbnail(item.snippet.thumbnails.default.url);
+
+    return message.channel.send(embed);
+  }); */
 };
 
 module.exports = {

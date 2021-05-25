@@ -2,7 +2,7 @@
 
 Hi there. I'm Tweeno and I've developed a Matchmaking/Pugs/Scrims bot that can be used in any discord.
 
-The bot creates teams of 3 or 5, randomized, with random captains or even Pre made teams.
+The bot creates teams of 3 or 5, randomized, with random captains or even Pre made teams // currently disabled.
 The bot comes with its own Leaderboard, based on a mmr system.
 
 ## How to play ?
