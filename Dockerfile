@@ -8,4 +8,4 @@ COPY . .
 RUN yarn install --production --frozen-lockfile --ignore-scripts
 EXPOSE 3000
 
-CMD [ "node", "."]
+CMD [ "yarn", "run", "prod"]
