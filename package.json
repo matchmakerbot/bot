@@ -4,7 +4,7 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=dev node -r dotenv/config src/index.js",
+    "dev": "cross-env NODE_ENV=dev node -r dotenv/config .",
     "prod": "cross-env NODE_ENV=prod node ."
   },
   "author": "",
