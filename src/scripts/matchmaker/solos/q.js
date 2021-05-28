@@ -21,7 +21,9 @@ const {
 
 const rc = ["r", "c"];
 
-const reactEmojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+
+const reactEmojisrorc = ["🇨", "🇷"];
 
 let gameCount = 0;
 
@@ -29,10 +31,11 @@ const getOccurrence = (array, value) => {
   return array.filter((v) => v === value).length;
 };
 
-const filterReaction = (reaction, user) =>
-  user.id !== "571839826744180736" && reactEmojis.includes(reaction.emoji.name);
+const filterReactionrorc = (reaction, user, queueArray) =>
+  reactEmojisrorc.includes(reaction.emoji.name) && queueArray.map((e) => e.id).includes(user.id);
 
-const filterMessageCollector = (m) => m.content.split("")[1] === "r" || m.content.split("")[1] === "c";
+const filterReactionCaptains = (reaction, user) =>
+  user.id !== "571839826744180736" && reactEmojisCaptains.includes(reaction.emoji.name);
 
 const shuffle = (array) => {
   const arrayToShuffle = array;
@@ -74,15 +77,15 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   });
 
   for (let i = 0; i < queue.length; i++) {
-    privateDmMessage.react(reactEmojis[i]);
+    privateDmMessage.react(reactEmojisCaptains[i]);
   }
 
   await privateDmMessage
-    .awaitReactions(filterReaction, { max: 2, time: 30000 })
+    .awaitReactions(filterReactionCaptains, { max: 2, time: 30000 })
     .then((collected) => {
       if (collected.first() != null) {
-        if (reactEmojis.indexOf(collected.first().emoji.name) < queue.length) {
-          const num = reactEmojis.indexOf(collected.first().emoji.name);
+        if (reactEmojisCaptains.indexOf(collected.first().emoji.name) < queue.length) {
+          const num = reactEmojisCaptains.indexOf(collected.first().emoji.name);
 
           team.push(queue[num]);
 
@@ -92,10 +95,10 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
       if (collected.last() != null) {
         if (
           collected.last().emoji.name !== collected.first().emoji.name &&
-          reactEmojis.indexOf(collected.last().emoji.name) < queue.length &&
-          reactEmojis.indexOf(collected.first().emoji.name) < queue.length
+          reactEmojisCaptains.indexOf(collected.last().emoji.name) < queue.length &&
+          reactEmojisCaptains.indexOf(collected.first().emoji.name) < queue.length
         ) {
-          const num2 = reactEmojis.indexOf(collected.last().emoji.name);
+          const num2 = reactEmojisCaptains.indexOf(collected.last().emoji.name);
 
           team.push(queue[num2]);
 
@@ -259,78 +262,42 @@ const execute = async (message, queueSize) => {
         "A game has been made! Please select your preferred gamemode: Captains (!c) or Random (!r) (Captains disabled for queues with less than 6 players)"
       );
 
-      const rorc = {};
+      const rorcCount = {
+        r: 0,
+        c: 0,
+      };
 
-      rorc[gameCount] = [];
+      const rorcMessage = await message.channel.send(correctEmbed);
 
-      const rorcArray = rorc[gameCount];
+      rorcMessage.react("🇨");
 
-      await message.channel.send(correctEmbed);
+      rorcMessage.react("🇷");
 
-      message.channel
-        .createMessageCollector(filterMessageCollector, {
+      await rorcMessage
+        .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray), {
+          max: queueSize,
           time: 20000,
         })
-        .on("collect", (m) => {
-          if (queueArray.map((e) => e.id).includes(m.author.id) && !rorcArray.map((e) => e.id).includes(m.author.id)) {
-            rorcArray.push({
-              id: m.author.id,
-              param: m.content.split("")[1],
-            });
-          }
+        .then((collected) => {
+          collected.forEach((e) => (e._emoji.name === "🇷" ? rorcCount.r++ : rorcCount.c++));
         });
 
-      await new Promise((resolve) => setTimeout(resolve, 20000));
-
-      if (rorcArray.length === 0) {
-        rorcArray.push({
-          param: rc[Math.floor(Math.random() * rc.length)],
-        });
+      if (rorcCount.r === rorcCount.c) {
+        Math.floor(Math.random()) === 0 ? rorcCount.r++ : rorcCount.c++;
       }
-
-      if (
-        getOccurrence(
-          rorcArray.map((e) => e.param),
-          "r"
-        ) ===
-        getOccurrence(
-          rorcArray.map((e) => e.param),
-          "c"
-        )
-      ) {
-        rorcArray.push({
-          param: rorcArray[Math.floor(Math.random() * rorcArray.map((e) => e.param).length)].param,
-        });
-      }
-      if (
-        getOccurrence(
-          rorcArray.map((e) => e.param),
-          "r"
-        ) >
-          getOccurrence(
-            rorcArray.map((e) => e.param),
-            "c"
-          ) ||
-        queueSize < 6
-      ) {
+      if (rorcCount.r > rorcCount.c) {
         shuffle(queueArray);
+
         for (let i = 0; i < queueArray.length / 2; i++) {
           gameCreatedObj.team1.push(queueArray[i]);
         }
+
         for (let i = queueArray.length / 2; i < queueArray.length; i++) {
           gameCreatedObj.team2.push(queueArray[i]);
         }
-      } else if (
-        getOccurrence(
-          rorcArray.map((e) => e.param),
-          "c"
-        ) >
-        getOccurrence(
-          rorcArray.map((e) => e.param),
-          "r"
-        )
-      ) {
+      } else {
         let hasVoted = false;
+
         const captainsObject = {
           captain1: null,
           captain2: null,
@@ -383,14 +350,14 @@ const execute = async (message, queueSize) => {
         });
 
         for (let i = 0; i < queueArrayCopy.length; i++) {
-          privateDmCaptain1Message.react(reactEmojis[i]);
+          privateDmCaptain1Message.react(reactEmojisCaptains[i]);
         }
 
         await privateDmCaptain1Message
-          .awaitReactions(filterReaction, { max: 1, time: 30000 })
+          .awaitReactions(filterReactionCaptains, { max: 1, time: 30000 })
           .then((collected) => {
             if (collected.first() != null) {
-              const num = reactEmojis.indexOf(collected.first().emoji.name);
+              const num = reactEmojisCaptains.indexOf(collected.first().emoji.name);
 
               captainsObject.team1.push(queueArrayCopy[num]);
 
