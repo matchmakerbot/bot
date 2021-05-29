@@ -259,7 +259,7 @@ const execute = async (message, queueSize) => {
       await message.channel.send(queueArray.reduce((acc = "", curr) => `${acc}<@${curr.id}>, `, ""));
 
       correctEmbed.setTitle(
-        "A game has been made! Please select your preferred gamemode: Captains (!c) or Random (!r) (Captains disabled for queues with less than 6 players)"
+        "A game has been made! Please select your preferred gamemode: Captains (Reaction C) or Random (Reaction R) (Captains disabled for queues with less than 6 players)"
       );
 
       const rorcCount = {
