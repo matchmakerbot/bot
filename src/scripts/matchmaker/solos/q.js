@@ -74,6 +74,7 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
     console.error(error);
 
     message.channel.send(errorEmbed);
+    throw new Error("PM'S Disabled");
   });
 
   for (let i = 0; i < queue.length; i++) {
@@ -269,9 +270,9 @@ const execute = async (message, queueSize) => {
 
       const rorcMessage = await message.channel.send(correctEmbed);
 
-      rorcMessage.react("🇨");
+      await rorcMessage.react("🇨");
 
-      rorcMessage.react("🇷");
+      await rorcMessage.react("🇷");
 
       await rorcMessage
         .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray), {
@@ -347,6 +348,7 @@ const execute = async (message, queueSize) => {
           console.error(error);
 
           message.channel.send(errorEmbed);
+          throw new Error("PM'S Disabled");
         });
 
         for (let i = 0; i < queueArrayCopy.length; i++) {
@@ -400,8 +402,6 @@ const execute = async (message, queueSize) => {
             );
           }
         }
-
-        delete rorc[gameCount];
 
         const teamChosen = !wasLastCaptainTeam1 ? "team1" : "team2";
 
