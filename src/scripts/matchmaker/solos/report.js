@@ -38,7 +38,13 @@ const execute = async (message, queueSize) => {
     return message.channel.send(wrongEmbed);
   }
 
-  games.winningTeam = games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win" ? 1 : 2;
+  if(messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
+    wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
+
+    return message.channel.send(wrongEmbed);
+  }
+
+  games.winningTeam = games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win" ? 1 : 0; //further test
 
   const typeFunc = "Finished";
 

@@ -27,12 +27,17 @@ const reactEmojisrorc = ["🇨", "🇷"];
 
 let gameCount = 0;
 
-const getOccurrence = (array, value) => {
-  return array.filter((v) => v === value).length;
+const filterReactionrorc = (reaction, user, queueArray, rorcCount) => {
+  if (
+    reactEmojisrorc.includes(reaction.emoji.name) &&
+    queueArray.map((e) => e.id).includes(user.id) &&
+    !rorcCount.players.includes(user.id)
+  ) {
+    rorcCount.players.push(user.id);
+    return true;
+  }
+  return false;
 };
-
-const filterReactionrorc = (reaction, user, queueArray) =>
-  reactEmojisrorc.includes(reaction.emoji.name) && queueArray.map((e) => e.id).includes(user.id);
 
 const filterReactionCaptains = (reaction, user) =>
   user.id !== "571839826744180736" && reactEmojisCaptains.includes(reaction.emoji.name);
@@ -266,6 +271,7 @@ const execute = async (message, queueSize) => {
       const rorcCount = {
         r: 0,
         c: 0,
+        players:[],
       };
 
       const rorcMessage = await message.channel.send(correctEmbed);
@@ -275,12 +281,12 @@ const execute = async (message, queueSize) => {
       await rorcMessage.react("🇷");
 
       await rorcMessage
-        .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray), {
+        .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount), {
           max: queueSize,
           time: 20000,
         })
         .then((collected) => {
-          collected.forEach((e) => (e._emoji.name === "🇷" ? rorcCount.r++ : rorcCount.c++));
+          collected.forEach((e) => (e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count))); //test
         });
 
       if (rorcCount.r === rorcCount.c) {
