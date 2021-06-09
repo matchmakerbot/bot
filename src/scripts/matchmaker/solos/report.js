@@ -38,13 +38,19 @@ const execute = async (message, queueSize) => {
     return message.channel.send(wrongEmbed);
   }
 
-  if(messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
+  if (messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
     wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
 
     return message.channel.send(wrongEmbed);
   }
-
-  games.winningTeam = games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win" ? 1 : 0; //further test
+  if (
+    (games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win") ||
+    (games.team2.map((e) => e.id).includes(userId) && messageEndswith(message) === "lose")
+  ) {
+    games.winningTeam = 0;
+  } else {
+    games.winningTeam = 1;
+  }
 
   const typeFunc = "Finished";
 

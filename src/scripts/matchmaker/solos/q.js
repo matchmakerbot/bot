@@ -292,7 +292,7 @@ const execute = async (message, queueSize) => {
       if (rorcCount.r === rorcCount.c) {
         Math.floor(Math.random()) === 0 ? rorcCount.r++ : rorcCount.c++;
       }
-      if (rorcCount.r > rorcCount.c) {
+      if (rorcCount.r > rorcCount.c || queueSize < 6) {
         shuffle(queueArray);
 
         for (let i = 0; i < queueArray.length / 2; i++) {
