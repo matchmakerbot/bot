@@ -15,6 +15,14 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
+  const queueArray = getQueueArray(queueSize, message.channel.id);
+
+  if (queueArray.length === queueSize) {
+    wrongEmbed.setTitle(":x: You can't reset the channel now!");
+
+    return message.channel.send(wrongEmbed);
+  }
+
   if (message.content.split(" ").length === 1) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
