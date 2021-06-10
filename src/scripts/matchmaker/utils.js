@@ -88,7 +88,7 @@ const assignWinLoseDb = async (user, game, score) => {
     {
       $set: {
         [sort]: storedUserDb.servers[channelPos][score] + 1,
-        [mmr]: score === WINS ? storedUserDb.servers[channelPos].mmr + 13 : storedUserDb.servers[channelPos].mmr - 10,
+        [mmr]: score === WINS ? storedUserDb.servers[channelPos].mmr + 10 : storedUserDb.servers[channelPos].mmr - 10,
       },
     }
   );
@@ -106,7 +106,7 @@ const revertGame = async (user, game, param, team) => {
   const lose = `servers.${channelPos}.losses`;
 
   const winsOrLosses =
-    (game.winningTeam === 1 && team === TEAM1) || (game.winningTeam === 2 && team === TEAM2) ? "wins" : "losses";
+    (game.winningTeam === 0 && team === TEAM1) || (game.winningTeam === 1 && team === TEAM2) ? "wins" : "losses";
 
   const sort = `servers.${channelPos}.${winsOrLosses}`;
 
@@ -123,17 +123,17 @@ const revertGame = async (user, game, param, team) => {
             [win]:
               winsOrLosses === "wins"
                 ? storedUserDb.servers[channelPos].wins - 1
-                : storedUserDb.servers[channelPos].losses + 1,
+                : storedUserDb.servers[channelPos].wins + 1,
 
             [lose]:
-              winsOrLosses === "losses"
-                ? storedUserDb.servers[channelPos].wins - 1
-                : storedUserDb.servers[channelPos].losses + 1,
+              winsOrLosses === "wins"
+                ? storedUserDb.servers[channelPos].losses + 1
+                : storedUserDb.servers[channelPos].losses - 1,
 
             [mmr]:
               winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].mmr - 23
-                : storedUserDb.servers[channelPos].mmr + 23,
+                ? storedUserDb.servers[channelPos].mmr - 20
+                : storedUserDb.servers[channelPos].mmr + 20,
           },
         }
       );
@@ -150,7 +150,7 @@ const revertGame = async (user, game, param, team) => {
 
             [mmr]:
               winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].mmr - 13
+                ? storedUserDb.servers[channelPos].mmr - 10
                 : storedUserDb.servers[channelPos].mmr + 10,
           },
         }
@@ -166,14 +166,14 @@ const assignWinLostOrRevert = async (game, param) => {
   const promises = [];
   for (const user of game.team1) {
     if (param === "Finished") {
-      promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES));
+      promises.push(assignWinLoseDb(user, game, game.winningTeam === 0 ? WINS : LOSSES));
     } else {
       promises.push(revertGame(user, game, param, TEAM1));
     }
   }
   for (const user of game.team2) {
     if (param === "Finished") {
-      promises.push(assignWinLoseDb(user, game, game.winningTeam === 2 ? WINS : LOSSES));
+      promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES));
     } else {
       promises.push(revertGame(user, game, param, TEAM2));
     }
