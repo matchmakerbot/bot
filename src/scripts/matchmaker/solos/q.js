@@ -269,7 +269,7 @@ const execute = async (message, queueSize) => {
       const rorcCount = {
         r: 0,
         c: 0,
-        players:[],
+        players: [],
       };
 
       const rorcMessage = await message.channel.send(correctEmbed);
@@ -284,10 +284,14 @@ const execute = async (message, queueSize) => {
           time: 20000,
         })
         .then((collected) => {
-          collected.forEach((e) => (e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count))); //test
+          collected.forEach((e) => {
+            // eslint-disable-next-line no-underscore-dangle,no-unused-expressions
+            e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count);
+          });
         });
 
       if (rorcCount.r === rorcCount.c) {
+        // eslint-disable-next-line no-unused-expressions
         Math.floor(Math.random()) === 0 ? rorcCount.r++ : rorcCount.c++;
       }
       if (rorcCount.r > rorcCount.c || queueSize < 6) {

@@ -6,11 +6,11 @@ const fs = require("fs");
 
 const Discord = require("discord.js");
 
-const client = require("./createClientInstance.js");
-
 const fastify = require("fastify")({
   logger: true,
 });
+
+const client = require("./createClientInstance.js");
 
 const { queueSizeObject } = require("./cache");
 
@@ -79,7 +79,7 @@ const createBotInstance = async () => {
     reply.send("alive");
   });
 
-  fastify.listen(3000, "0.0.0.0", (err, address) => {
+  fastify.listen(3000, "0.0.0.0", (err) => {
     if (err) throw err;
   });
   startIntervalMatchmakerBot();

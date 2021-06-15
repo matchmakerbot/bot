@@ -1,6 +1,13 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, fetchGames, joinTeam1And2 } = require("../utils");
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  finishedGames,
+  fetchGames,
+  joinTeam1And2,
+  getQueueArray,
+} = require("../utils");
 
 const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema");
 

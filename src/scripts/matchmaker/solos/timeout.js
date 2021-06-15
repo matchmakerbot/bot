@@ -46,7 +46,7 @@ const updateUsers = async () => {
             .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
           e.send(`<@${user.id}>`, embedRemove);
-          channelUsers.players.splice(channelUsers.players.indexOf(user), 1)
+          channelUsers.players.splice(channelUsers.players.indexOf(user), 1);
         })
         .catch(() => {
           delete channelQueues[channel];
