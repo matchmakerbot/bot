@@ -13,7 +13,7 @@ jobs:
     name: Run eslint
     runs-on: ubuntu-latest
     container:
-      image: node
+      image: node:12.19.0-buster
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -27,6 +27,7 @@ jobs:
   build:
     name: Build docker container
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - uses: actions/checkout@v2
       - name: Login to github docker
