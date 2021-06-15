@@ -1,0 +1,17 @@
+ports:
+  docker: 3000
+#   service: 809
+routes:
+  health: /healthz
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+image:
+  user: tweeno
+  name: "matchmaker-bot"
+  version: latest
+replicas: 1

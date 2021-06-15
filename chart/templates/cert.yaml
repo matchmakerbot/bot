@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{ .Release.Name }}-cert"
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+data:
+  x509.crt: {{ .Values.mongo.cert | b64enc }}
+  x509.pem: {{ .Values.mongo.key | b64enc }}
