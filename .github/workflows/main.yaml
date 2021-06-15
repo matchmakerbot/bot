@@ -13,9 +13,11 @@ jobs:
     name: Run eslint
     runs-on: ubuntu-latest
     container:
-      image: node:12.19.0-buster
+      image: node
     steps:
       - uses: actions/checkout@v2
+        name: Update node
+        run: apt-get install update
       - name: Install dependencies
         uses: borales/actions-yarn@v2.0.0
         with:
