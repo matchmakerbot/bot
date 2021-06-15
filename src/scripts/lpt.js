@@ -40,6 +40,7 @@ const sentences = [
   "Stop Saving for Retirement. Start spending that money on whiskey.",
   "Legally change yourself to a female so that you have a longer life expectancy",
   "Spice up any Social media comment with random quotation marks: \n “Congrats“ on your baby. \n Congrats on “your“ baby. \n Congrats on your “baby“.",
+  "To save money on wet wipes, and to be more environmentally friendly, piss on toilet paper"
 ];
 
 function lptrandom() {

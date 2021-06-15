@@ -7,14 +7,23 @@ const playerObject = {
   _id: false,
 };
 
+const teamObject = {
+  name: String,
+  captain: String,
+  players: [{
+    type: String
+  }]
+}
+
 const schema = new mongoose.Schema(
   {
     queueSize: Number,
     gameId: Number,
+    gamemode: String,
     time: Date,
     channelId: String,
-    team1: [playerObject],
-    team2: [playerObject],
+    team1: [playerObject || teamObject],
+    team2: [playerObject || teamObject],
     voiceChannelIds: [
       {
         channelName: String,

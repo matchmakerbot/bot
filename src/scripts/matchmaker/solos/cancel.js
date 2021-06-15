@@ -34,6 +34,7 @@ const execute = async (message, queueSize) => {
     message.channel.send(wrongEmbed);
     return;
   }
+  
   const games = gameList.find((game) => includesUserId(joinTeam1And2(game), userId));
 
   const { gameId } = games;

@@ -222,6 +222,7 @@ const execute = async (message) => {
         return true;
       }
     }
+    return false;
   };
 
   const teamsInfo = () => {
@@ -230,6 +231,7 @@ const execute = async (message) => {
         return team;
       }
     }
+    return null;
   };
 
   const teamsInfoSpecific = (id) => {
@@ -238,6 +240,7 @@ const execute = async (message) => {
         return team;
       }
     }
+    return null;
   };
 
   const membersInDatabase = `teams.${findGuildTeams.indexOf(teamsInfo())}.members`;

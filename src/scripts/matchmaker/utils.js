@@ -1,8 +1,8 @@
-const client = require("../../utils/createClientInstance.js");
+const client = require("../../../utils/createClientInstance.js");
 
-const OngoingGamesCollection = require("../../utils/schemas/ongoingGamesSchema.js");
+const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
 
-const MatchmakerCollection = require("../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -25,6 +25,8 @@ const deletableChannels = [];
 const channelQueues = [];
 
 const cancelQueue = {};
+
+let gameCount = 0;
 
 const joinTeam1And2 = (object) => {
   return object.team1.concat(object.team2);
@@ -185,6 +187,33 @@ const includesUserId = (array, userIdParam) => {
   return array.map((e) => e.id).includes(userIdParam);
 };
 
+const isCaptain = (teamInfo) => {
+  for (const team of findGuildTeams) {
+    if (team.members.indexOf(userId) === 0) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const fetchTeamData = () => {
+  for (const team of findGuildTeams) {
+    if (team.members.includes(userId)) {
+      return team;
+    }
+  }
+  return null;
+};
+
+const teamsInfoSpecific = (id) => {
+  for (const team of findGuildTeams) {
+    if (team.members.includes(id)) {
+      return team;
+    }
+  }
+  return null;
+};
+
 module.exports = {
   fetchFromId,
   fetchGames,
@@ -202,4 +231,6 @@ module.exports = {
   channelQueues,
   includesUserId,
   joinTeam1And2,
+  gameCount,
+  fetchTeamData
 };

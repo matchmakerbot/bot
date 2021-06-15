@@ -1,7 +1,8 @@
+#Eu FROM node:12.19.0-buster
 FROM node:12.19.0-buster
 
 #app dir
-WORKDIR /
+WORKDIR /app
 
 #dependencies
 COPY . .

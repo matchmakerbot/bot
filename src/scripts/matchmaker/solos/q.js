@@ -17,13 +17,12 @@ const {
   joinTeam1And2,
   fetchGames,
   EMBED_COLOR_WARNING,
+  gameCount
 } = require("../utils");
 
 const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
 const reactEmojisrorc = ["🇨", "🇷"];
-
-let gameCount = 0;
 
 const filterReactionrorc = (reaction, user, queueArray, rorcCount) => {
   if (
@@ -269,7 +268,7 @@ const execute = async (message, queueSize) => {
       const rorcCount = {
         r: 0,
         c: 0,
-        players:[],
+        players: [],
       };
 
       const rorcMessage = await message.channel.send(correctEmbed);
