@@ -165,7 +165,7 @@ const createBotInstance = async () => {
   try {
     client.on("guildCreate", async (guild) => {
       console.log(`Joined ${guild.name}`);
-      const guildsInfo = await GuildsCollection.find({ id: guild.id });
+      const guildsInfo = await GuildsCollection.findOne({ id: guild.id });
 
       if (guildsInfo == null) {
         const insertedGuild = new GuildsCollection(NewGuild(guild.id));
