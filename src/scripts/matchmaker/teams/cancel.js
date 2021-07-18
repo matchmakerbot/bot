@@ -1,30 +1,35 @@
 const Discord = require("discord.js");
 
-const {fetchTeamData, fetchGames, includesUserId, joinTeam1And2} = require("../utils")
+const { fetchTeamData, fetchGames, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../utils");
 
-const execute = async (message, queueSize) => {
+const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const teamData = fetchTeamData();
+  const teamData = fetchTeamData(guildId);
 
   const gameList = fetchGames(message.channel.id);
 
-  if(teamData == null) {
+  if (teamData == null) {
     wrongEmbed.setTitle(":x: You're not in a team.");
 
     return message.channel.send(wrongEmbed);
   }
-    
-  if (teamData.captain !== message.author.id) {
 
+  if (teamData.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
     return message.channel.send(wrongEmbed);
   }
 
-  if (!gameList.map(e=> joinTeam1And2(e)).map(e=>e.captain).includes(message.author.id) || ongoingGames.length === 0) {
+  if (
+    !gameList
+      .map((e) => joinTeam1And2(e))
+      .map((e) => e.captain)
+      .includes(message.author.id) ||
+    ongoingGames.length === 0
+  ) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     return message.channel.send(wrongEmbed);
@@ -82,7 +87,7 @@ const execute = async (message, queueSize) => {
 };
 
 module.exports = {
-    name: "cancel",
-    description: "6man bot",
-    execute,
-  };
+  name: "cancel",
+  description: "6man bot",
+  execute,
+};
