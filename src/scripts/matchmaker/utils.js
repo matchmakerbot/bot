@@ -198,7 +198,24 @@ const fetchTeamByGuildAndUserId = async (guildId, userId) => {
   return team;
 };
 
+const fetchTeamsByGuildId = async (guildId) => {
+  const team = await TeamsCollection.find({
+    guildId,
+  });
+  return team;
+};
+
+const fetchTeamsByGuildIdAndName = async (guildId, name) => {
+  const team = await TeamsCollection.findOne({
+    guildId,
+    name,
+  });
+  return team;
+};
+
 module.exports = {
+  fetchTeamsByGuildIdAndName,
+  fetchTeamsByGuildId,
   fetchTeamByGuildAndUserId,
   fetchFromId,
   fetchGames,

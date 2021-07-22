@@ -4,7 +4,7 @@ const GuildsCollection = require("../utils/schemas/guildsSchema");
 
 const { queueSizeObject } = require("../utils/cache");
 
-const { channelQueues } = require("./matchmaker/solos/utils");
+const { channelQueues } = require("./matchmaker/utils");
 
 const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F");
 

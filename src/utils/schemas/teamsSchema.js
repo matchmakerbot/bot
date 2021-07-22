@@ -5,7 +5,7 @@ const schema = new mongoose.Schema(
     guildId: String,
     name: String,
     captain: String,
-    players: [
+    members: [
       {
         type: String,
       },
