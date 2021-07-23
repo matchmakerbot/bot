@@ -146,7 +146,7 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
   const channelId = message.channel.id;
 

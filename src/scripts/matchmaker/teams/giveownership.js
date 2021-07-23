@@ -17,7 +17,9 @@ const execute = async (message, queueSize) => {
 
   const fetchedTeam = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const gameList = fetchGames(message.channel.id);
+  const gameList = fetchGames();
+
+  const pingedUser = message.mentions.members.first().user.id;
 
   if (message.mentions.members.first() == null) {
     wrongEmbed.setTitle(":x: Please tag the user");
@@ -26,7 +28,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
 
   if (queueArray[0].name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: Please leave the queue first!");
@@ -53,18 +55,18 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (!fetchedTeam.members.includes(message.mentions.members.first().user.id)) {
+  if (!fetchedTeam.members.includes(pingedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  fetchedTeam.captain = message.mentions.members.first().user.id;
+  fetchedTeam.captain = pingedUser;
 
   fetchedTeam.members.push(message.author.id);
 
-  fetchedTeam.members.splice(fetchedTeam.members.indexOf(message.mentions.members.first().user.id, 1));
+  fetchedTeam.members.splice(fetchedTeam.members.indexOf(pingedUser, 1));
 
   correctEmbed.setTitle(`:white_check_mark: Given ownership to ${message.mentions.members.first().user.username}`);
 

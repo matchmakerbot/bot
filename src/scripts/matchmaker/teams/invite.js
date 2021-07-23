@@ -1,8 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, fetchFromId } = require("../utils");
-
-const invites = {};
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, fetchFromId, invites } = require("../utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -16,13 +14,15 @@ const execute = async (message) => {
   if (message.mentions.members.first() == null) {
     wrongEmbed.setTitle(":x: Please mention the user");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (!Object.keys(invites).includes(fetchedTeam.name)) {
@@ -32,7 +32,8 @@ const execute = async (message) => {
   if (invites[fetchedTeam.name].includes(pingedUser)) {
     wrongEmbed.setTitle(`:x: ${(await fetchFromId(pingedUser)).username} was already invited`);
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   const userTeam = fetchTeamByGuildAndUserId(message.guild.id, pingedUser);
@@ -40,7 +41,8 @@ const execute = async (message) => {
   if (userTeam != null) {
     wrongEmbed.setTitle(":x: User already belongs to a team!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   correctEmbed.setTitle(
@@ -49,7 +51,7 @@ const execute = async (message) => {
 
   invites[fetchedTeam.name].push(pingedUser);
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

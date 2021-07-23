@@ -5,7 +5,7 @@ const { EMBED_COLOR_CHECK, getQueueArray } = require("../utils");
 const execute = (message, queueSize) => {
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
   correctEmbed.setTitle(`Players in queue: ${queueArray.length}/${queueSize}`);
 

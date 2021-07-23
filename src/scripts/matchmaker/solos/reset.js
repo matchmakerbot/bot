@@ -15,7 +15,7 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");

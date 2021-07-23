@@ -7,7 +7,7 @@ const execute = (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
   const index = queueArray.map((e) => e.id).indexOf(message.author.id);
 

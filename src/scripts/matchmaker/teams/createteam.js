@@ -12,13 +12,15 @@ const execute = async (message) => {
   if (messageArgs(message).length > 31) {
     wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (messageArgs(message).length < 2) {
     wrongEmbed.setTitle(":x: Name too short! Minimum characters allowed are 3.");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   const guildTeams = await fetchTeamsByGuildId(message.guild.id);
@@ -26,7 +28,8 @@ const execute = async (message) => {
   if (guildTeams.map((e) => e.name).includes(messageArgs(message))) {
     wrongEmbed.setTitle(":x: Name already in use");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (
@@ -38,7 +41,8 @@ const execute = async (message) => {
   ) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   const teamsInsert = {
@@ -55,7 +59,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Created!`);
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

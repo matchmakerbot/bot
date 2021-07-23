@@ -28,6 +28,8 @@ const channelQueues = [];
 
 const cancelQueue = {};
 
+const invites = {};
+
 const gameCount = {
   value: 0,
 };
@@ -61,7 +63,7 @@ const messageEndswith = (message) => {
   return split[split.length - 1];
 };
 
-const getQueueArray = (queueSize, channelId) => {
+const getQueueArray = (queueSize, channelId, guildId, type) => {
   for (const item of channelQueues) {
     if (item.channelId === channelId) {
       return item.players;
@@ -69,8 +71,9 @@ const getQueueArray = (queueSize, channelId) => {
   }
   channelQueues.push({
     channelId,
+    guildId,
     queueSize,
-    game: null,
+    type,
     players: [],
   });
   return channelQueues[channelQueues.length - 1].players;
@@ -234,4 +237,5 @@ module.exports = {
   includesUserId,
   joinTeam1And2,
   gameCount,
+  invites,
 };
