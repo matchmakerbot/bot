@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 
 const {
-  fetchGames,
+  fetchGamesTeams,
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   fetchTeamByGuildAndUserId,
@@ -19,7 +19,7 @@ const execute = async (message) => {
 
   const teamData = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const gameList = fetchGames(message.channel.id);
+  const gameList = fetchGamesTeams();
 
   if (teamData == null) {
     wrongEmbed.setTitle(":x: You're not in a team.");
@@ -35,8 +35,7 @@ const execute = async (message) => {
     return;
   }
 
-  if (teamData == null) {
-    // change this
+  if (teamData.find((e) => e.captain === message.author.id) == null) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     message.channel.send(wrongEmbed);

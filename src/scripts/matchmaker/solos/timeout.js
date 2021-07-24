@@ -4,7 +4,7 @@ const client = require("../../../utils/createClientInstance.js");
 
 const { EMBED_COLOR_WARNING, channelQueues, deletableChannels, fetchGames } = require("../utils");
 
-const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
+const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
 const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
 
@@ -46,7 +46,7 @@ const updateUsers = async () => {
             .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
           e.send(`<@${user.id}>`, embedRemove);
-          channelUsers.players.splice(channelUsers.players.indexOf(user), 1)
+          channelUsers.players.splice(channelUsers.players.indexOf(user), 1);
         })
         .catch(() => {
           delete channelQueues[channel];
@@ -86,14 +86,14 @@ const updateOngoingGames = async () => {
         await e.send(embedRemove).catch(() => {
           console.log("Unable to send message 1");
         });
-        await OngoingGamesCollection.deleteOne({
+        await OngoingGamesSolosCollection.deleteOne({
           queueSize: game.queueSize,
           gameId: game.gameId,
         });
         return null;
       })
       .catch(async () => {
-        await OngoingGamesCollection.deleteOne({
+        await OngoingGamesSolosCollection.deleteOne({
           queueSize: game.queueSize,
           gameId: game.gameId,
         });

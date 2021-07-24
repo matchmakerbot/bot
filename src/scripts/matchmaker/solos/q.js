@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const client = require("../../../utils/createClientInstance.js");
 
-const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
+const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 // make mmr based system (the worse the team is the higher mmr they win if they win the match and vice versa,) not just add 13 and subtract 10 like a retard
@@ -15,9 +15,9 @@ const {
   includesUserId,
   channelQueues,
   joinTeam1And2,
-  fetchGames,
+  fetchGamesSolos,
   EMBED_COLOR_WARNING,
-  gameCount
+  gameCount,
 } = require("../utils");
 
 const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
@@ -167,7 +167,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const storedGames = await fetchGames();
+  const storedGames = await fetchGamesSolos();
 
   for (const game of storedGames) {
     if (includesUserId(joinTeam1And2(game), userId)) {
@@ -199,11 +199,11 @@ const execute = async (message, queueSize) => {
 
   if (queueArray.length === queueSize) {
     try {
-      gameCount++;
+      gameCount.value++;
 
       const gameCreatedObj = {
         queueSize,
-        gameId: gameCount,
+        gameId: gameCount.value,
         time: new Date(),
         channelId,
         team1: [],
@@ -283,10 +283,12 @@ const execute = async (message, queueSize) => {
           time: 20000,
         })
         .then((collected) => {
-          collected.forEach((e) => (e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count))); //test
+          // eslint-disable-next-line no-underscore-dangle,no-unused-expressions,no-return-assign
+          collected.forEach((e) => (e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count)));
         });
 
       if (rorcCount.r === rorcCount.c) {
+        // eslint-disable-next-line no-unused-expressions
         Math.floor(Math.random()) === 0 ? rorcCount.r++ : rorcCount.c++;
       }
       if (rorcCount.r > rorcCount.c || queueSize < 6) {
@@ -480,7 +482,7 @@ const execute = async (message, queueSize) => {
         channel: channelId,
       });
 
-      const ongoingGamesInsert = new OngoingGamesCollection(gameCreatedObj);
+      const ongoingGamesInsert = new OngoingGamesSolosCollection(gameCreatedObj);
 
       await ongoingGamesInsert.save();
 

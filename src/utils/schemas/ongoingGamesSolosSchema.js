@@ -7,14 +7,6 @@ const playerObject = {
   _id: false,
 };
 
-const teamObject = {
-  name: String,
-  captain: String,
-  players: [{
-    type: String
-  }]
-}
-
 const schema = new mongoose.Schema(
   {
     queueSize: Number,
@@ -22,8 +14,8 @@ const schema = new mongoose.Schema(
     gamemode: String,
     time: Date,
     channelId: String,
-    team1: [playerObject || teamObject],
-    team2: [playerObject || teamObject],
+    team1: [playerObject],
+    team2: [playerObject],
     voiceChannelIds: [
       {
         channelName: String,
@@ -33,7 +25,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "ongoing_games", versionKey: false }
+  { collection: "ongoing_games_solos", versionKey: false }
 );
 
-module.exports = mongoose.model("ongoing_games", schema);
+module.exports = mongoose.model("ongoing_games_solos", schema);

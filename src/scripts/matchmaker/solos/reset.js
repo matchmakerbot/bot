@@ -1,8 +1,15 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, fetchGames, joinTeam1And2 } = require("../utils");
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  finishedGames,
+  fetchGamesSolos,
+  joinTeam1And2,
+  getQueueArray,
+} = require("../utils");
 
-const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema");
+const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
@@ -37,7 +44,7 @@ const execute = async (message, queueSize) => {
 
   switch (secondArg) {
     case "channel": {
-      const fetchGamesByChannelId = await OngoingGamesCollection.find({
+      const fetchGamesByChannelId = await OngoingGamesSolosCollection.find({
         gamemode: "3v3",
         channelId,
       });
@@ -97,7 +104,7 @@ const execute = async (message, queueSize) => {
     }
 
     case "player": {
-      const findUserInGame = (await fetchGames(queueSize))
+      const findUserInGame = (await fetchGamesSolos(queueSize))
         .map((e) => joinTeam1And2(e))
         .flat()
         .map((e) => e.id)

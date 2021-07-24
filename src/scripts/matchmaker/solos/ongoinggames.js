@@ -1,13 +1,13 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchGames } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchGamesSolos } = require("../utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const games = await fetchGames(message.channel.id);
+  const games = await fetchGamesSolos(message.channel.id);
   if (games.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 

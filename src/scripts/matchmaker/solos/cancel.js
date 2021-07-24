@@ -4,24 +4,24 @@ const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   joinTeam1And2,
-  fetchGames,
+  fetchGamesSolos,
   includesUserId,
   cancelQueue,
   deletableChannels,
 } = require("../utils");
 
-const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema");
+const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const gameList = await fetchGames(message.channel.id);
+  const gameList = await fetchGamesSolos(message.channel.id);
 
   const userId = message.author.id;
 
-  if (Object.keys(gameList).length === 0) {
+  if (gameList.length === 0) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     message.channel.send(wrongEmbed);
@@ -34,7 +34,7 @@ const execute = async (message, queueSize) => {
     message.channel.send(wrongEmbed);
     return;
   }
-  
+
   const games = gameList.find((game) => includesUserId(joinTeam1And2(game), userId));
 
   const { gameId } = games;
@@ -69,7 +69,7 @@ const execute = async (message, queueSize) => {
 
     delete cancelQueue[gameId];
 
-    await OngoingGamesCollection.deleteOne({
+    await OngoingGamesSolosCollection.deleteOne({
       queueSize,
       gameId,
     });

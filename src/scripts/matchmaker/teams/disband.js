@@ -6,7 +6,7 @@ const {
   EMBED_COLOR_ERROR,
   fetchTeamByGuildAndUserId,
   fetchTeamsByGuildIdAndName,
-  fetchGames,
+  fetchGamesTeams,
   includesUserId,
   joinTeam1And2,
 } = require("../utils");
@@ -34,7 +34,7 @@ const execute = async (message) => {
       return;
     }
 
-    const gamesList = fetchGames(message.channel.id);
+    const gamesList = fetchGamesTeams(message.channel.id);
 
     if (gamesList.find((game) => includesUserId(joinTeam1And2(game), message.author.id)) == null) {
       wrongEmbed.setTitle(":x: Team is in the middle of a game!");
@@ -56,7 +56,7 @@ const execute = async (message) => {
     return;
   }
 
-  const gamesList = fetchGames(message.channel.id);
+  const gamesList = fetchGamesTeams(message.channel.id);
 
   if (gamesList.find((game) => includesUserId(joinTeam1And2(game), message.author.id)) == null) {
     wrongEmbed.setTitle(":x: Team is in the middle of a game!");

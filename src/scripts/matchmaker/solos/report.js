@@ -1,13 +1,13 @@
 const Discord = require("discord.js");
 
-const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
+const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   includesUserId,
   joinTeam1And2,
-  fetchGames,
+  fetchGamesSolos,
   finishedGames,
   messageEndswith,
   deletableChannels,
@@ -23,7 +23,7 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  const storedGames = await fetchGames(message.channel.id);
+  const storedGames = await fetchGamesSolos(message.channel.id);
 
   if (!includesUserId(storedGames.map((e) => joinTeam1And2(e)).flat(), userId)) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
@@ -58,7 +58,7 @@ const execute = async (message, queueSize) => {
 
   finishedGames.push(games);
 
-  await OngoingGamesCollection.deleteOne({
+  await OngoingGamesSolosCollection.deleteOne({
     queueSize,
     gameId: games.gameId,
   });

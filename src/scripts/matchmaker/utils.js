@@ -1,6 +1,8 @@
 const client = require("../../utils/createClientInstance.js");
 
-const OngoingGamesCollection = require("../../utils/schemas/ongoingGamesSchema.js");
+const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
+
+const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTeamsSchema.js");
 
 const MatchmakerCollection = require("../../utils/schemas/matchmakerUsersSchema");
 
@@ -47,8 +49,19 @@ const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
   return user;
 };
 
-const fetchGames = async (channelId) => {
-  const games = await OngoingGamesCollection.find(
+const fetchGamesSolos = async (channelId) => {
+  const games = await OngoingGamesSolosCollection.find(
+    channelId != null
+      ? {
+          channelId,
+        }
+      : {}
+  );
+  return games;
+};
+
+const fetchGamesTeams = async (channelId) => {
+  const games = await OngoingGamesTeamsCollection.find(
     channelId != null
       ? {
           channelId,
@@ -217,11 +230,12 @@ const fetchTeamsByGuildIdAndName = async (guildId, name) => {
 };
 
 module.exports = {
+  fetchGamesTeams,
   fetchTeamsByGuildIdAndName,
   fetchTeamsByGuildId,
   fetchTeamByGuildAndUserId,
   fetchFromId,
-  fetchGames,
+  fetchGamesSolos,
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   getQueueArray,
