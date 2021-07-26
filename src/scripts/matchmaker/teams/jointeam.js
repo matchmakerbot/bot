@@ -62,6 +62,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "jointeam",
-  description: "6man bot",
+  description: "Join a team that invited you, usage: !jointeam Maniacs",
   execute,
 };

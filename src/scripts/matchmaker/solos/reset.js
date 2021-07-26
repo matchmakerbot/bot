@@ -167,6 +167,7 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "reset",
-  description: "6man bot",
+  description:
+    "Resets the score of an individual player (!reset player <discordid>) or the whole channel where this command is inserted (!reset channel",
   execute,
 };

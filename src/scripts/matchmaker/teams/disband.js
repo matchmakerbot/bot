@@ -91,6 +91,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "disband",
-  description: "6man bot",
+  description: "Deletes your team, admins can also delete a team by typing !disband teamname",
   execute,
 };

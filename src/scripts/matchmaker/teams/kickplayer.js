@@ -65,6 +65,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "kickplayer",
-  description: "6man bot",
+  description: "Kicks a player from your team, usage:!kickplayer @dany or !kickplayer discordid",
   execute,
 };

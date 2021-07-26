@@ -16,6 +16,6 @@ const execute = (message, queueSize) => {
 
 module.exports = {
   name: "status",
-  description: "6man bot",
+  description: "Check the queue status",
   execute,
 };

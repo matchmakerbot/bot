@@ -54,6 +54,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "leave",
-  description: "6man bot",
+  description: "Leave the queue",
   execute,
 };

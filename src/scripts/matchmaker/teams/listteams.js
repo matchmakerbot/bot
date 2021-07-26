@@ -37,6 +37,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "listteams",
-  description: "6man bot",
+  description: "Lists all the team in a guild. Usage: !listteam 1 for the first page, and so on",
   execute,
 };

@@ -20,42 +20,20 @@ const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/solos/time
 
 const { prefix } = process.env;
 
-const commandFiles = fs.readdirSync("./src/scripts/").filter((file) => file.endsWith(".js"));
+const commandFiles = fs
+  .readdirSync("./src/scripts/")
+  .filter((file) => file.endsWith(".js"))
+  .map((e) => e.replace(".js", ""));
 
 const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/solos/")
-  .filter((file) => file.endsWith(".js"));
+  .filter((file) => file.endsWith(".js"))
+  .map((e) => e.replace(".js", ""));
 
 const commandFilesMatchmakerTeams = fs
   .readdirSync("./src/scripts/matchmaker/teams/")
-  .filter((file) => file.endsWith(".js"));
-
-const queueCommandsSolos = [
-  "q",
-  "status",
-  "leave",
-  "report",
-  "score",
-  "cancel",
-  "reset",
-  "game",
-  "ongoinggames",
-  "revertgame",
-];
-
-const queueCommandsTeams = [
-  ...queueCommandsSolos,
-  "createteam",
-  "invite",
-  "disband",
-  "jointeam",
-  "pendinginvites",
-  "leaveteam",
-  "whois",
-  "kickplayer",
-  "giveownership",
-  "listteams",
-];
+  .filter((file) => file.endsWith(".js"))
+  .map((e) => e.replace(".js", ""));
 
 client.commands = new Discord.Collection();
 
@@ -68,7 +46,7 @@ const NewGuild = (guildId) => {
 };
 
 commandFiles.forEach((file) => {
-  const command = require(`../scripts/${file}`);
+  const command = require(`../scripts/${file}.js`);
   if (typeof command.name === "string") {
     client.commands.set(command.name, command);
   } else if (command.name instanceof Array) {
@@ -79,12 +57,12 @@ commandFiles.forEach((file) => {
 });
 
 commandFilesMatchmakerSolos.forEach((file) => {
-  const command = require(`../scripts/matchmaker/solos/${file}`);
+  const command = require(`../scripts/matchmaker/solos/${file}.js`);
   client.commands.set(command.name, command);
 });
 
 commandFilesMatchmakerTeams.forEach((file) => {
-  const command = require(`../scripts/matchmaker/teams/${file}`);
+  const command = require(`../scripts/matchmaker/teams/${file}.js`);
   client.commands.set(command.name, command);
 });
 
@@ -142,11 +120,11 @@ const createBotInstance = async () => {
 
       if (message.guild === undefined) return;
 
-      if (queueCommandsTeams.includes(command) || queueCommandsSolos.includes(command)) {
+      if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
         if (queueTypeObject[message.channel.id] == null) {
           const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
-          if (typeof guildsInfo.channels[message.channel.id].queueSize !== "number") {
+          if (guildsInfo.channels[message.channel.id]?.queueType == null) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
               ":x: You must select your queue size and gamemode in this channel !queueType number gamemode, for example !queueType 6 solos or !queueType 8 teams\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"
@@ -155,27 +133,17 @@ const createBotInstance = async () => {
             message.channel.send(embed);
             return;
           }
-          if (
-            (!queueCommandsSolos.includes(command) && guildsInfo.channels[message.channel.id].queueType === "solos") ||
-            (!queueCommandsTeams.includes(command) && guildsInfo.channels[message.channel.id].queueType === "teams")
-          )
-            return;
-          await require(`../scripts/matchmaker/${
-            guildsInfo.channels[message.channel.id].queueType
-          }/${command}`).execute(message, guildsInfo.channels[message.channel.id].queueSize);
-
           queueTypeObject[message.channel.id] = guildsInfo.channels[message.channel.id];
-
-          return;
         }
 
         if (
-          (!queueCommandsSolos.includes(command) && queueTypeObject[message.channel.id].queueType === "solos") ||
-          (!queueCommandsTeams.includes(command) && queueTypeObject[message.channel.id].queueType === "teams")
+          (!commandFilesMatchmakerSolos.includes(command) &&
+            queueTypeObject[message.channel.id].queueType === "solos") ||
+          (!commandFilesMatchmakerTeams.includes(command) && queueTypeObject[message.channel.id].queueType === "teams")
         )
           return;
 
-        await require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueType}/${command}.js`).execute(
+        require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueType}/${command}.js`).execute(
           message,
           queueTypeObject[message.channel.id].queueSize
         );
@@ -183,7 +151,7 @@ const createBotInstance = async () => {
         return;
       }
 
-      await client.commands.get(command).execute(message);
+      client.commands.get(command).execute(message);
     });
     console.log("Successfully created socket Client.on -> Message");
   } catch (e) {

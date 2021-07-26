@@ -44,6 +44,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "whois",
-  description: "6man bot",
+  description: "Check for team members, usage: !whois Maniacs",
   execute,
 };

@@ -161,6 +161,7 @@ const execute = async (message) => {
 
 module.exports = {
   name: "score",
-  description: "6man bot",
+  description:
+    "Checks your current score. Usage: !score channel to check score in the channel youre in, !score channel (channelid)to check the score in a specific channel, just add a number after it to select a page",
   execute,
 };

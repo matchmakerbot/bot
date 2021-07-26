@@ -91,6 +91,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "giveownership",
-  description: "6man bot",
+  description: "Gives team ownership to a specific user. Usage: !giveownership @dany",
   execute,
 };

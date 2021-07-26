@@ -64,6 +64,7 @@ const execute = async (message) => {
 
 module.exports = {
   name: "createteam",
-  description: "6man bot",
+  description:
+    "Creates a team, usage: !createteam Maniacs, the bot then creates a role with the teams name and assigns a Team Captain role to the person that created the team",
   execute,
 };

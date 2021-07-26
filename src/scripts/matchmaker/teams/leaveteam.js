@@ -42,6 +42,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "leaveteam",
-  description: "6man bot",
+  description: "Leave your team",
   execute,
 };

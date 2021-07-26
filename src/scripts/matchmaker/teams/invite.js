@@ -63,6 +63,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "invite",
-  description: "6man bot",
+  description: "Invites an user, usage: !invite @dany",
   execute,
 };

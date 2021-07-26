@@ -80,6 +80,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "cancel",
-  description: "6man bot",
+  description: "Cancel the game (Only use this in the case of someone not playing etc...)",
   execute,
 };

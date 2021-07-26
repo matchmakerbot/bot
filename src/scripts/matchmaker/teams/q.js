@@ -319,6 +319,7 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "q",
-  description: "6man bot",
+  description:
+    "Sign up for the next queue, to do this do !q and tag your other teammates other teammates(depending on the qeueSize) example: !q @Dany @Johny @Tony @David (removes team after 45 minutes if no game has been made)",
   execute,
 };

@@ -25,6 +25,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "pendinginvites",
-  description: "6man bot",
+  description: "Check who invited you!",
   execute,
 };

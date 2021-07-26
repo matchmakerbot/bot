@@ -56,6 +56,7 @@ const execute = async (message) => {
 
 module.exports = {
   name: "revertgame",
-  description: "6man bot",
+  description:
+    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores",
   execute,
 };

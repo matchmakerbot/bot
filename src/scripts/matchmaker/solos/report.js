@@ -77,6 +77,7 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "report",
-  description: "6man bot",
+  description:
+    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: !report win OR !report lose",
   execute,
 };
