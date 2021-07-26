@@ -577,6 +577,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "q",
-  description: "Sign up for the next queue (removes player after 45 minutes if no game has been made)",
+  description: "Enter the queue (removes player after 45 minutes if no game has been made)",
   execute,
 };

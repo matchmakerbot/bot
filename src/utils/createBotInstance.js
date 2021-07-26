@@ -94,7 +94,7 @@ const createBotInstance = async () => {
         }`
       );
 
-      client.user.setActivity("!helpsolosmatchmaking", {
+      client.user.setActivity("!help", {
         type: "STREAMING",
         url: "https://www.twitch.tv/tweenoTV",
       });
@@ -124,7 +124,7 @@ const createBotInstance = async () => {
         if (queueTypeObject[message.channel.id] == null) {
           const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
-          if (guildsInfo.channels[message.channel.id]?.queueType == null) {
+          if (guildsInfo?.channels[message.channel.id]?.queueType == null) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
               ":x: You must select your queue size and gamemode in this channel !queueType number gamemode, for example !queueType 6 solos or !queueType 8 teams\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"
