@@ -45,16 +45,12 @@ const execute = async (message) => {
     return;
   }
 
-  const foundGuild = guildTeams.find((e) => e.name === messageArgs(message));
-
-  foundGuild.members.push(message.author.id);
-
   await TeamsCollection.update(
     {
-      id: message.guild.id,
+      guildId: message.guild.id,
       name: messageArgs(message),
     },
-    foundGuild
+    { $push: { members: message.author.id } }
   );
 
   invites[messageArgs(message)].splice(invites[messageArgs(message)].indexOf(message.author.id), 1);

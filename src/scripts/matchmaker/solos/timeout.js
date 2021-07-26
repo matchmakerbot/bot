@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const client = require("../../../utils/createClientInstance.js");
 
-const { EMBED_COLOR_WARNING, channelQueues, deletableChannels, fetchGames } = require("../utils");
+const { EMBED_COLOR_WARNING, channelQueues, deletableChannels, fetchGamesSolos } = require("../utils");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
@@ -60,7 +60,7 @@ const updateUsers = async () => {
 const updateOngoingGames = async () => {
   const promises = [];
   // future: only fetch games that happenned more than 3 hours ago
-  const ongoingGames = await fetchGames();
+  const ongoingGames = await fetchGamesSolos();
   if (ongoingGames.length === 0) {
     return;
   }

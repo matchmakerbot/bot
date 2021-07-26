@@ -37,7 +37,7 @@ const execute = async (message) => {
       .map((e) => e.members)
       .flat()
       .includes(message.author.id) ||
-    guildTeams.map((e) => e.captains).includes(message.author.id)
+    guildTeams.map((e) => e.captain).includes(message.author.id)
   ) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 

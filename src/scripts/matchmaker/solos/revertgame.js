@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, assignWinLostOrRevert } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, assignWinLostOrRevertSolo } = require("../utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -14,19 +14,22 @@ const execute = async (message) => {
   if (message.content.split(" ").length === 1 || message.content.split(" ").length === 2) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (!message.member.hasPermission("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (!finishedGames.map((e) => e.gameId).includes(Number(secondArg))) {
     wrongEmbed.setTitle(":x: No game with that Id has been played");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   const selectedGame = finishedGames.find((e) => e.gameId === Number(secondArg));
@@ -34,15 +37,17 @@ const execute = async (message) => {
   if (selectedGame.channelId !== channelId) {
     wrongEmbed.setTitle(":x: That game hasn't been played in this channel");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (thirdArg === "revert" || thirdArg === "cancel") {
-    await assignWinLostOrRevert(selectedGame, thirdArg);
+    await assignWinLostOrRevertSolo(selectedGame, thirdArg);
   } else {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   const indexSelectedGame = finishedGames.indexOf(selectedGame);
@@ -51,7 +56,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === "revert" ? "reverted" : "cancelled"}!`);
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

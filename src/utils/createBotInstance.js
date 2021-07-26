@@ -6,13 +6,13 @@ const fs = require("fs");
 
 const Discord = require("discord.js");
 
-const client = require("./createClientInstance.js");
-
 const fastify = require("fastify")({
   logger: true,
 });
 
-const { queueSizeObject } = require("./cache");
+const client = require("./createClientInstance.js");
+
+const { queueSizeObject: queueTypeObject } = require("./cache");
 
 const GuildsCollection = require("./schemas/guildsSchema");
 
@@ -22,9 +22,15 @@ const { prefix } = process.env;
 
 const commandFiles = fs.readdirSync("./src/scripts/").filter((file) => file.endsWith(".js"));
 
-const commandFilesMatchmaker = fs.readdirSync("./src/scripts/matchmaker/solos/").filter((file) => file.endsWith(".js"));
+const commandFilesMatchmakerSolos = fs
+  .readdirSync("./src/scripts/matchmaker/solos/")
+  .filter((file) => file.endsWith(".js"));
 
-const queueCommands = [
+const commandFilesMatchmakerTeams = fs
+  .readdirSync("./src/scripts/matchmaker/teams/")
+  .filter((file) => file.endsWith(".js"));
+
+const queueCommandsSolos = [
   "q",
   "status",
   "leave",
@@ -34,6 +40,11 @@ const queueCommands = [
   "reset",
   "game",
   "ongoinggames",
+  "revertgame",
+];
+
+const queueCommandsTeams = [
+  ...queueCommandsSolos,
   "createteam",
   "invite",
   "disband",
@@ -42,10 +53,8 @@ const queueCommands = [
   "leaveteam",
   "whois",
   "kickplayer",
-  "r",
-  "c",
-  "revertgame",
   "giveownership",
+  "listteams",
 ];
 
 client.commands = new Discord.Collection();
@@ -69,8 +78,13 @@ commandFiles.forEach((file) => {
   }
 });
 
-commandFilesMatchmaker.forEach((file) => {
+commandFilesMatchmakerSolos.forEach((file) => {
   const command = require(`../scripts/matchmaker/solos/${file}`);
+  client.commands.set(command.name, command);
+});
+
+commandFilesMatchmakerTeams.forEach((file) => {
+  const command = require(`../scripts/matchmaker/teams/${file}`);
   client.commands.set(command.name, command);
 });
 
@@ -79,7 +93,7 @@ const createBotInstance = async () => {
     reply.send("alive");
   });
 
-  fastify.listen(3000, "0.0.0.0", (err, address) => {
+  fastify.listen(3000, "0.0.0.0", (err) => {
     if (err) throw err;
   });
   startIntervalMatchmakerBot();
@@ -128,28 +142,43 @@ const createBotInstance = async () => {
 
       if (message.guild === undefined) return;
 
-      if (queueCommands.includes(command)) {
-        if (queueSizeObject[message.channel.id] == null) {
+      if (queueCommandsTeams.includes(command) || queueCommandsSolos.includes(command)) {
+        if (queueTypeObject[message.channel.id] == null) {
           const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
-          if (typeof guildsInfo.channels[message.channel.id] !== "number") {
+          if (typeof guildsInfo.channels[message.channel.id].queueSize !== "number") {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x: Hi! The bot has changed! Now you must first select your queue size in this channel using !queuesize number , for example !queueSize 6\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"
+              ":x: You must select your queue size and gamemode in this channel !queueType number gamemode, for example !queueType 6 solos or !queueType 8 teams\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"
             );
 
             message.channel.send(embed);
             return;
           }
+          if (
+            (!queueCommandsSolos.includes(command) && guildsInfo.channels[message.channel.id].queueType === "solos") ||
+            (!queueCommandsTeams.includes(command) && guildsInfo.channels[message.channel.id].queueType === "teams")
+          )
+            return;
+          await require(`../scripts/matchmaker/${
+            guildsInfo.channels[message.channel.id].queueType
+          }/${command}`).execute(message, guildsInfo.channels[message.channel.id].queueSize);
 
-          await client.commands.get(command).execute(message, guildsInfo.channels[message.channel.id]);
-
-          queueSizeObject[message.channel.id] = guildsInfo.channels[message.channel.id];
+          queueTypeObject[message.channel.id] = guildsInfo.channels[message.channel.id];
 
           return;
         }
 
-        await client.commands.get(command).execute(message, queueSizeObject[message.channel.id]);
+        if (
+          (!queueCommandsSolos.includes(command) && queueTypeObject[message.channel.id].queueType === "solos") ||
+          (!queueCommandsTeams.includes(command) && queueTypeObject[message.channel.id].queueType === "teams")
+        )
+          return;
+
+        await require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueType}/${command}.js`).execute(
+          message,
+          queueTypeObject[message.channel.id].queueSize
+        );
 
         return;
       }

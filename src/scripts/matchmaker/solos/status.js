@@ -11,7 +11,7 @@ const execute = (message, queueSize) => {
 
   correctEmbed.setDescription(queueArray.map((e) => e.name).join(", "));
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

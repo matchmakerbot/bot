@@ -9,37 +9,33 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchTeam = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  // const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
+  // const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
 
   // check if is in queue
 
-  if (fetchTeam == null) {
+  if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
     return message.channel.send(wrongEmbed);
   }
 
-  if (fetchTeam.captain === message.author.id) {
+  if (fetchedTeam.captain === message.author.id) {
     wrongEmbed.setTitle(":x: You are the captain, to delete the team do !disband");
 
     return message.channel.send(wrongEmbed);
   }
 
-  fetchTeam.members.splice(fetchTeam.members.indexOf(message.author.id), 1);
-
   await TeamsCollection.update(
     {
-      id: message.guild.id,
-      name: fetchTeam.name,
+      guildId: message.guild.id,
+      name: fetchedTeam.name,
     },
-    {
-      fetchTeam,
-    }
+    { $pull: { members: message.author.id } }
   );
 
-  correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just left ${fetchTeam.name}`);
+  correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just left ${fetchedTeam.name}`);
 
   return message.channel.send(correctEmbed);
 };

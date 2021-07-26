@@ -7,12 +7,19 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchedTeam = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  if (message.mentions.members.first() == null) {
+    wrongEmbed.setTitle(":x: Please mention the user");
+
+    message.channel.send(wrongEmbed);
+    return;
+  }
+
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
   const pingedUser = message.mentions.members.first().user.id;
 
-  if (message.mentions.members.first() == null) {
-    wrongEmbed.setTitle(":x: Please mention the user");
+  if (fetchedTeam == null) {
+    wrongEmbed.setTitle(":x: You do not belong to a team!");
 
     message.channel.send(wrongEmbed);
     return;
@@ -36,7 +43,7 @@ const execute = async (message) => {
     return;
   }
 
-  const userTeam = fetchTeamByGuildAndUserId(message.guild.id, pingedUser);
+  const userTeam = await fetchTeamByGuildAndUserId(message.guild.id, pingedUser);
 
   if (userTeam != null) {
     wrongEmbed.setTitle(":x: User already belongs to a team!");

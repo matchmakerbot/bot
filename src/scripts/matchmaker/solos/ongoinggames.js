@@ -11,7 +11,8 @@ const execute = async (message) => {
   if (games.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
   // support more games
   for (let i = 0; i < 6; i++) {
@@ -34,7 +35,7 @@ const execute = async (message) => {
 
     correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
   }
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

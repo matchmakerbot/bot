@@ -7,11 +7,18 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchTeam = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
   const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
 
-  if (fetchTeam.captain !== message.author.id) {
+  if (fetchedTeam == null) {
+    wrongEmbed.setTitle(":x: You do not belong to a team!");
+
+    message.channel.send(wrongEmbed);
+    return;
+  }
+
+  if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
     message.channel.send(wrongEmbed);
@@ -32,10 +39,10 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (queueArray[0].name === fetchTeam.name) {
+  if (queueArray[0].name === fetchedTeam.name) {
     queueArray.splice(0, queueArray.length);
 
-    correctEmbed.setTitle(`:white_check_mark: ${fetchTeam.name} left the queue! 0/2`);
+    correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} left the queue! 0/2`);
 
     message.channel.send(correctEmbed);
   } else {

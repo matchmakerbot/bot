@@ -13,10 +13,10 @@ const {
   fetchTeamByGuildAndUserId,
   channelQueues,
   getQueueArray,
-  fetchGames,
   shuffle,
   gameCount,
   fetchFromId,
+  fetchGamesTeams,
 } = require("../utils");
 
 const execute = async (message, queueSize) => {
@@ -26,46 +26,60 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  const fetchTeam = fetchTeamByGuildAndUserId(channelId, message.author.id);
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
   const queueArray = getQueueArray(queueSize, message.channel.id, channelId, "teams");
 
-  if (fetchTeam.captain !== message.author.id) {
-    wrongEmbed.setTitle(":x: You are not the captain/dont belong to a team!");
+  if (fetchedTeam == null) {
+    wrongEmbed.setTitle(":x: You don't belong to a team!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  if (queueArray[0].name === fetchTeam.name) {
+  if (fetchedTeam.captain !== message.author.id) {
+    wrongEmbed.setTitle(":x: You are not the captain!");
+
+    message.channel.send(wrongEmbed);
+    return;
+  }
+
+  if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: You're already in the queue");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  // test
-
-  if (channelQueues.map((e) => e.teams).flat()) {
+  if (
+    channelQueues
+      .filter((e) => e.type === "teams")
+      .map((e) => e.players)
+      .flat()
+      .map((e) => e.name)
+      .flat()
+      .includes(fetchedTeam.name)
+  ) {
     wrongEmbed.setTitle(":x: You're already queued in another channel!");
 
     message.channel.send(wrongEmbed);
     return;
   }
-  const ongoingGames = fetchGames();
+  const ongoingGames = await fetchGamesTeams();
 
   // also wrong lol
+  if (ongoingGames != null) {
+    for (const games of ongoingGames) {
+      if (games.map((e) => e.name).includes(fetchedTeam.name) && games.guildId === channelId) {
+        wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-  for (const games of ongoingGames) {
-    if (games.map((e) => e.name).includes(fetchTeam.name) && games.guildId === channelId) {
-      wrongEmbed.setTitle(":x: You are in the middle of a game!");
-
-      message.channel.send(wrongEmbed);
-      return;
+        message.channel.send(wrongEmbed);
+        return;
+      }
     }
   }
 
-  if (fetchTeam.members.length < queueSize / 2) {
+  if (fetchedTeam.members.length + 1 < queueSize / 2 || (fetchedTeam.members.length === 0 && queueSize !== 2)) {
     wrongEmbed.setTitle(
       `:x: You need at least ${queueSize / 2} members on your team to join the queue (including you)`
     );
@@ -84,7 +98,7 @@ const execute = async (message, queueSize) => {
   let isInTeam = true;
 
   message.mentions.members.forEach((e) => {
-    if (!fetchTeam.members.includes(e.user.id)) {
+    if (!fetchedTeam.members.includes(e.user.id)) {
       wrongEmbed.setTitle(`:x: ${e.user.username} is not on your team!`);
 
       message.channel.send(wrongEmbed);
@@ -95,8 +109,8 @@ const execute = async (message, queueSize) => {
   if (!isInTeam) return;
 
   const toPush = {
-    name: fetchTeam.name,
-    captain: fetchTeam.captain,
+    name: fetchedTeam.name,
+    captain: fetchedTeam.captain,
     members: [...message.mentions.members.map((e) => e.user.id)],
     time: new Date(),
   };

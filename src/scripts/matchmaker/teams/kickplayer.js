@@ -9,9 +9,9 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchTeam = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  if (fetchTeam == null) {
+  if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
     message.channel.send(wrongEmbed);
@@ -27,14 +27,14 @@ const execute = async (message) => {
 
   const kickedUser = message.mentions.members.first().user;
 
-  if (fetchTeam.captain !== message.author.id) {
+  if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  if (!fetchTeam.members.includes(kickedUser.id)) {
+  if (!fetchedTeam.members.includes(kickedUser.id)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     message.channel.send(wrongEmbed);
@@ -48,18 +48,16 @@ const execute = async (message) => {
     return;
   }
 
-  fetchTeam.members.splice(fetchTeam.members.indexOf(kickedUser.id), 1);
-
   await TeamsCollection.update(
     {
-      id: message.guild.id,
-      name: fetchTeam.name,
+      guildId: message.guild.id,
+      name: fetchedTeam.name,
     },
-    fetchTeam
+    { $pull: { members: kickedUser.id } }
   );
 
   correctEmbed.setTitle(
-    `:white_check_mark: ${message.author.username} just kicked ${kickedUser.username} from ${fetchTeam.name}`
+    `:white_check_mark: ${message.author.username} just kicked ${kickedUser.username} from ${fetchedTeam.name}`
   );
 
   message.channel.send(correctEmbed);

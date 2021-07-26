@@ -18,7 +18,7 @@ const execute = async (message) => {
     case "me": {
       const user = await MatchmakerCollection.findOne({
         id: userId,
-        servers: {
+        channels: {
           $elemMatch: {
             channelId,
           },
@@ -32,7 +32,7 @@ const execute = async (message) => {
         return;
       }
 
-      const scoreDirectory = user.servers[user.servers.map((e) => e.channelId).indexOf(channelId)];
+      const scoreDirectory = user.channels[user.channels.map((e) => e.channelId).indexOf(channelId)];
 
       correctEmbed.addField("Wins:", scoreDirectory.wins);
 
@@ -53,7 +53,7 @@ const execute = async (message) => {
     case "channel": {
       const getScore = async (id, arg) => {
         const storedUsers = await MatchmakerCollection.find({
-          servers: {
+          channels: {
             $elemMatch: {
               channelId: id,
             },
@@ -61,9 +61,9 @@ const execute = async (message) => {
         });
         const storedUsersList = storedUsers.filter(
           (a) =>
-            a.servers.map((e) => e.channelId).indexOf(id) !== -1 &&
-            a.servers[a.servers.map((e) => e.channelId).indexOf(id)].wins +
-              a.servers[a.servers.map((e) => e.channelId).indexOf(id)].losses !==
+            a.channels.map((e) => e.channelId).indexOf(id) !== -1 &&
+            a.channels[a.channels.map((e) => e.channelId).indexOf(id)].wins +
+              a.channels[a.channels.map((e) => e.channelId).indexOf(id)].losses !==
               0
         );
 
@@ -87,11 +87,11 @@ const execute = async (message) => {
         }
 
         storedUsersList.sort((a, b) => {
-          const indexA = a.servers.map((e) => e.channelId).indexOf(id);
+          const indexA = a.channels.map((e) => e.channelId).indexOf(id);
 
-          const indexB = b.servers.map((e) => e.channelId).indexOf(id);
+          const indexB = b.channels.map((e) => e.channelId).indexOf(id);
 
-          return b.servers[indexB].mmr - a.servers[indexA].mmr;
+          return b.channels[indexB].mmr - a.channels[indexA].mmr;
         });
 
         if (!Number.isNaN(arg) && arg > 0) {
@@ -102,16 +102,16 @@ const execute = async (message) => {
 
               break;
             }
-            for (const servers of storedUsersList[indexes].servers) {
-              if (servers.channelId === id) {
+            for (const channels of storedUsersList[indexes].channels) {
+              if (channels.channelId === id) {
                 correctEmbed.addField(
                   // eslint-disable-next-line no-await-in-loop
                   (await fetchFromId(storedUsersList[indexes].id, wrongEmbed, message)).username,
-                  `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${
-                    Number.isNaN(Math.floor((servers.wins / (servers.wins + servers.losses)) * 100))
+                  `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
+                    Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))
                       ? "0"
-                      : Math.floor((servers.wins / (servers.wins + servers.losses)) * 100)
-                  }% | MMR: ${servers.mmr}`
+                      : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)
+                  }% | MMR: ${channels.mmr}`
                 );
 
                 correctEmbed.setFooter(`Showing page ${arg}/${Math.ceil(storedUsersList.length / 10)}`);
@@ -124,16 +124,16 @@ const execute = async (message) => {
               correctEmbed.addField("No more members to list in this page!", "Encourage your friends to play!");
               break;
             }
-            for (const servers of storedUsersList[i].servers) {
-              if (servers.channelId === id) {
+            for (const channels of storedUsersList[i].channels) {
+              if (channels.channelId === id) {
                 correctEmbed.addField(
                   // eslint-disable-next-line no-await-in-loop
                   (await fetchFromId(storedUsersList[i].id, wrongEmbed, message)).username,
-                  `Wins: ${servers.wins} | Losses: ${servers.losses} | Winrate: ${
-                    Number.isNaN(Math.floor((servers.wins / (servers.wins + servers.losses)) * 100))
+                  `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
+                    Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))
                       ? "0"
-                      : Math.floor((servers.wins / (servers.wins + servers.losses)) * 100)
-                  }% | MMR: ${servers.mmr}`
+                      : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)
+                  }% | MMR: ${channels.mmr}`
                 );
 
                 correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(storedUsersList.length / 10)}`);

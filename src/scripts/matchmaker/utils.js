@@ -78,7 +78,7 @@ const messageEndswith = (message) => {
 
 const getQueueArray = (queueSize, channelId, guildId, type) => {
   for (const item of channelQueues) {
-    if (item.channelId === channelId) {
+    if (item.channelId === channelId && item.type === type) {
       return item.players;
     }
   }
@@ -92,91 +92,129 @@ const getQueueArray = (queueSize, channelId, guildId, type) => {
   return channelQueues[channelQueues.length - 1].players;
 };
 
-const assignWinLoseDb = async (user, game, score) => {
-  const storedUserDb = await MatchmakerCollection.findOne({
-    id: user.id,
-  });
+const assignWinLoseDb = async (user, game, score, type) => {
+  const storedDb =
+    type === "solos"
+      ? await MatchmakerCollection.findOne({
+          id: user.id,
+        })
+      : await TeamsCollection.findOne({
+          name: user.name,
+          guildId: user.guildId,
+        });
 
-  const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
+  const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
 
-  const sort = `servers.${channelPos}.${score}`;
+  const sort = `channels.${channelPos}.${score}`;
 
-  const mmr = `servers.${channelPos}.mmr`;
+  const mmr = `channels.${channelPos}.mmr`;
 
-  await MatchmakerCollection.update(
-    {
-      id: user.id,
+  const set = {
+    $set: {
+      [sort]: storedDb.channels[channelPos][score] + 1,
+      [mmr]: score === WINS ? storedDb.channels[channelPos].mmr + 10 : storedDb.channels[channelPos].mmr - 10,
     },
-    {
-      $set: {
-        [sort]: storedUserDb.servers[channelPos][score] + 1,
-        [mmr]: score === WINS ? storedUserDb.servers[channelPos].mmr + 10 : storedUserDb.servers[channelPos].mmr - 10,
+  };
+
+  if (type === "solos") {
+    await MatchmakerCollection.update(
+      {
+        id: user.id,
       },
-    }
-  );
+      set
+    );
+  } else {
+    await TeamsCollection.update(
+      {
+        name: user.name,
+        guildId: user.guildId,
+      },
+      set
+    );
+  }
 };
 
-const revertGame = async (user, game, param, team) => {
-  const storedUserDb = await MatchmakerCollection.findOne({
-    id: user.id,
-  });
+const revertGame = async (user, game, param, team, type) => {
+  const storedDb = await MatchmakerCollection.findOne(
+    type === "solos"
+      ? {
+          id: user.id,
+        }
+      : { name: user.name, guildId: user.guildId }
+  );
 
-  const channelPos = storedUserDb.servers.map((e) => e.channelId).indexOf(game.channelId);
+  const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
 
-  const win = `servers.${channelPos}.wins`;
+  const win = `channels.${channelPos}.wins`;
 
-  const lose = `servers.${channelPos}.losses`;
+  const lose = `channels.${channelPos}.losses`;
 
   const winsOrLosses =
     (game.winningTeam === 0 && team === TEAM1) || (game.winningTeam === 1 && team === TEAM2) ? "wins" : "losses";
 
-  const sort = `servers.${channelPos}.${winsOrLosses}`;
+  const sort = `channels.${channelPos}.${winsOrLosses}`;
 
-  const mmr = `servers.${channelPos}.mmr`;
+  const mmr = `channels.${channelPos}.mmr`;
 
   switch (param) {
     case "revert": {
-      await MatchmakerCollection.update(
-        {
-          id: user.id,
+      const set = {
+        $set: {
+          [win]:
+            winsOrLosses === "wins" ? storedDb.channels[channelPos].wins - 1 : storedDb.channels[channelPos].wins + 1,
+
+          [lose]:
+            winsOrLosses === "wins"
+              ? storedDb.channels[channelPos].losses + 1
+              : storedDb.channels[channelPos].losses - 1,
+
+          [mmr]:
+            winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 20 : storedDb.channels[channelPos].mmr + 20,
         },
-        {
-          $set: {
-            [win]:
-              winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].wins - 1
-                : storedUserDb.servers[channelPos].wins + 1,
-
-            [lose]:
-              winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].losses + 1
-                : storedUserDb.servers[channelPos].losses - 1,
-
-            [mmr]:
-              winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].mmr - 20
-                : storedUserDb.servers[channelPos].mmr + 20,
+      };
+      if (type === "solos") {
+        await MatchmakerCollection.update(
+          {
+            id: user.id,
           },
-        }
-      );
+          set
+        );
+      } else {
+        await TeamsCollection.update(
+          {
+            name: user.name,
+            guildId: user.guildId,
+          },
+          set
+        );
+      }
       break;
     }
     case "cancel": {
-      await MatchmakerCollection.update(
-        {
-          id: user.id,
-        },
-        {
-          $set: {
-            [sort]: storedUserDb.servers[channelPos][winsOrLosses] - 1,
+      const set = {
+        $set: {
+          [sort]: storedDb.channels[channelPos][winsOrLosses] - 1,
 
-            [mmr]:
-              winsOrLosses === "wins"
-                ? storedUserDb.servers[channelPos].mmr - 10
-                : storedUserDb.servers[channelPos].mmr + 10,
+          [mmr]:
+            winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 10 : storedDb.channels[channelPos].mmr + 10,
+        },
+      };
+      if (type === "solos") {
+        await MatchmakerCollection.update(
+          {
+            id: user.id,
           },
-        }
-      );
+          set
+        );
+      } else {
+        await TeamsCollection.update(
+          {
+            name: user.name,
+            guildId: user.guildId,
+          },
+          set
+        );
+      }
       break;
     }
     default:
@@ -184,21 +222,33 @@ const revertGame = async (user, game, param, team) => {
   }
 };
 
-const assignWinLostOrRevert = async (game, param) => {
+const assignWinLostOrRevertSolo = async (game, param) => {
   const promises = [];
   for (const user of game.team1) {
     if (param === "Finished") {
-      promises.push(assignWinLoseDb(user, game, game.winningTeam === 0 ? WINS : LOSSES));
+      promises.push(assignWinLoseDb(user, game, game.winningTeam === 0 ? WINS : LOSSES), "solos");
     } else {
-      promises.push(revertGame(user, game, param, TEAM1));
+      promises.push(revertGame(user, game, param, TEAM1), "solos");
     }
   }
   for (const user of game.team2) {
     if (param === "Finished") {
-      promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES));
+      promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES), "solos");
     } else {
-      promises.push(revertGame(user, game, param, TEAM2));
+      promises.push(revertGame(user, game, param, TEAM2), "solos");
     }
+  }
+  await Promise.all(promises);
+};
+
+const assignWinLostOrRevertTeams = async (game, param) => {
+  const promises = [];
+  if (param === "Finished") {
+    promises.push(assignWinLoseDb(game.team1, game, game.winningTeam === 0 ? WINS : LOSSES), "teams");
+    promises.push(assignWinLoseDb(game.team2, game, game.winningTeam === 1 ? WINS : LOSSES), "teams");
+  } else {
+    promises.push(revertGame(game.team1, game, param, TEAM1), "teams");
+    promises.push(revertGame(game.team2, game, param, TEAM2), "teams");
   }
   await Promise.all(promises);
 };
@@ -209,7 +259,8 @@ const includesUserId = (array, userId) => {
 
 const fetchTeamByGuildAndUserId = async (guildId, userId) => {
   const team = await TeamsCollection.findOne({
-    $and: [{ guildId }, { $or: [{ captain: userId }, { players: { $contains: userId } }] }],
+    guildId,
+    $or: [{ captain: userId }, { members: userId }],
   });
   return team;
 };
@@ -229,7 +280,12 @@ const fetchTeamsByGuildIdAndName = async (guildId, name) => {
   return team;
 };
 
+const messageArgs = (message) => {
+  return message.content.split(" ").slice(1).join(" ");
+};
+
 module.exports = {
+  assignWinLostOrRevertTeams,
   fetchGamesTeams,
   fetchTeamsByGuildIdAndName,
   fetchTeamsByGuildId,
@@ -245,11 +301,12 @@ module.exports = {
   deletableChannels,
   cancelQueue,
   revertGame,
-  assignWinLostOrRevert,
+  assignWinLostOrRevertSolo,
   EMBED_COLOR_WARNING,
   channelQueues,
   includesUserId,
   joinTeam1And2,
   gameCount,
   invites,
+  messageArgs,
 };

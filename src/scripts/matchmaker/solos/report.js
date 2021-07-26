@@ -11,7 +11,7 @@ const {
   finishedGames,
   messageEndswith,
   deletableChannels,
-  assignWinLostOrRevert,
+  assignWinLostOrRevertSolo,
 } = require("../utils");
 
 const execute = async (message, queueSize) => {
@@ -28,20 +28,23 @@ const execute = async (message, queueSize) => {
   if (!includesUserId(storedGames.map((e) => joinTeam1And2(e)).flat(), userId)) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
   const games = storedGames.find((game) => includesUserId(joinTeam1And2(game), userId));
 
   if (games.channelId !== channelId) {
     wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
     wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
   if (
     (games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win") ||
@@ -54,7 +57,7 @@ const execute = async (message, queueSize) => {
 
   const typeFunc = "Finished";
 
-  await assignWinLostOrRevert(games, typeFunc);
+  await assignWinLostOrRevertSolo(games, typeFunc);
 
   finishedGames.push(games);
 
@@ -69,7 +72,7 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

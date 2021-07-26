@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const client = require("../../../utils/createClientInstance.js");
+const client = require("../../../../utils/createClientInstance.js");
 
 const valorantMaps = ["Haven", "Bind", "Split"];
 

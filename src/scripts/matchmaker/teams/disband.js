@@ -19,7 +19,7 @@ const execute = async (message) => {
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   if (messageArgs(message) !== "") {
-    if (message.member.hasPermission("ADMINISTRATOR")) {
+    if (!message.member.hasPermission("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have administrator permission to delete said team");
 
       message.channel.send(wrongEmbed);
@@ -34,9 +34,9 @@ const execute = async (message) => {
       return;
     }
 
-    const gamesList = fetchGamesTeams(message.channel.id);
-
-    if (gamesList.find((game) => includesUserId(joinTeam1And2(game), message.author.id)) == null) {
+    const gamesList = await fetchGamesTeams(message.channel.id);
+    // wrong
+    if (gamesList.find((game) => includesUserId(joinTeam1And2(game), message.author.id)) != null) {
       wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
       message.channel.send(wrongEmbed);
@@ -56,25 +56,25 @@ const execute = async (message) => {
     return;
   }
 
-  const gamesList = fetchGamesTeams(message.channel.id);
+  const gamesList = await fetchGamesTeams(message.channel.id);
 
-  if (gamesList.find((game) => includesUserId(joinTeam1And2(game), message.author.id)) == null) {
+  if (gamesList.find((game) => includesUserId(joinTeam1And2(game), message.author.id)) != null) {
     wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  const team = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  if (team == null) {
+  if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  if (team.captain !== message.author.id) {
+  if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
     message.channel.send(wrongEmbed);
@@ -82,9 +82,9 @@ const execute = async (message) => {
   }
   // remove from queue
 
-  await TeamsCollection.deleteOne(team);
+  await TeamsCollection.deleteOne(fetchedTeam);
 
-  correctEmbed.setTitle(`:white_check_mark: ${team.name} Deleted!`);
+  correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} Deleted!`);
 
   message.channel.send(correctEmbed);
 };

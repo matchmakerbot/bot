@@ -38,7 +38,8 @@ const discordEmbed = new Discord.MessageEmbed()
   .addField(
     "!revertgame",
     "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores"
-  );
+  )
+  .addField("!listteams", "Lists all the team in a guild. Usage: !listteam 1 for the first page, and so on");
 
 module.exports = {
   name: "helpteammatchmaking",

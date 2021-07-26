@@ -4,7 +4,7 @@ const schema = new mongoose.Schema(
   {
     id: String,
     name: String,
-    servers: [
+    channels: [
       {
         channelId: String,
         wins: Number,
@@ -14,7 +14,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "sixman", versionKey: false, minimize: false }
+  { collection: "matchmaking", versionKey: false, minimize: false }
 );
 
-module.exports = mongoose.model("sixman", schema);
+module.exports = mongoose.model("matchmaking", schema);

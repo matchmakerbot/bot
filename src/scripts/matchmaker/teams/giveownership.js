@@ -7,7 +7,7 @@ const {
   EMBED_COLOR_ERROR,
   fetchTeamByGuildAndUserId,
   getQueueArray,
-  fetchGames,
+  fetchGamesTeams,
 } = require("../utils");
 
 const execute = async (message, queueSize) => {
@@ -15,11 +15,16 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchedTeam = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const gameList = fetchGames();
+  const gameList = await fetchGamesTeams();
 
-  const pingedUser = message.mentions.members.first().user.id;
+  if (fetchedTeam == null) {
+    wrongEmbed.setTitle(":x: You do not belong to a team!");
+
+    message.channel.send(wrongEmbed);
+    return;
+  }
 
   if (message.mentions.members.first() == null) {
     wrongEmbed.setTitle(":x: Please tag the user");
@@ -28,9 +33,11 @@ const execute = async (message, queueSize) => {
     return;
   }
 
+  const pingedUser = message.mentions.members.first().user.id;
+
   const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
 
-  if (queueArray[0].name === fetchedTeam.name) {
+  if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: Please leave the queue first!");
 
     message.channel.send(wrongEmbed);
@@ -62,11 +69,9 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  fetchedTeam.captain = pingedUser;
-
   fetchedTeam.members.push(message.author.id);
 
-  fetchedTeam.members.splice(fetchedTeam.members.indexOf(pingedUser, 1));
+  fetchedTeam.members.splice(fetchedTeam.members.indexOf(pingedUser), 1);
 
   correctEmbed.setTitle(`:white_check_mark: Given ownership to ${message.mentions.members.first().user.username}`);
 
@@ -75,7 +80,10 @@ const execute = async (message, queueSize) => {
       guildId: message.guild.id,
       name: fetchedTeam.name,
     },
-    fetchedTeam
+    {
+      captain: pingedUser,
+      members: fetchedTeam.members,
+    }
   );
 
   message.channel.send(correctEmbed);

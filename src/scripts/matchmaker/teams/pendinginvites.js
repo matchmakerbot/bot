@@ -12,14 +12,15 @@ const execute = async (message) => {
   if (pendingInvites.length === 0) {
     wrongEmbed.setTitle(":x: You have no pending invites.");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
-  wrongEmbed.setTitle("Pending Invites:");
+  correctEmbed.setTitle("Pending Invites:");
 
   correctEmbed.setDescription(pendingInvites.join(", "), "Show what you can do in order to get more invites!");
 
-  return message.channel.send(wrongEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

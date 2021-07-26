@@ -17,12 +17,12 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const teamData = fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const teamData = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const gameList = fetchGamesTeams();
+  const gameList = await fetchGamesTeams();
 
   if (teamData == null) {
-    wrongEmbed.setTitle(":x: You're not in a team.");
+    wrongEmbed.setTitle(":x: You do not belong to a team");
 
     message.channel.send(wrongEmbed);
     return;

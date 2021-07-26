@@ -157,7 +157,15 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (includesUserId(channelQueues.map((e) => e.players).flat(), userId)) {
+  if (
+    includesUserId(
+      channelQueues
+        .filter((e) => e.type === "solos")
+        .map((e) => e.players)
+        .flat(),
+      userId
+    )
+  ) {
     const channelQueued = (
       await client.channels.fetch(channelQueues.find((e) => includesUserId(e.players, userId)).channelId)
     ).name;
@@ -219,7 +227,7 @@ const execute = async (message, queueSize) => {
             const newUser = {
               id: user.id,
               name: user.name,
-              servers: [
+              channels: [
                 {
                   channelId,
                   wins: 0,
@@ -232,14 +240,14 @@ const execute = async (message, queueSize) => {
             const matchmakerInsert = new MatchmakerCollection(newUser);
 
             await matchmakerInsert.save();
-          } else if (!storedUser.servers.map((e) => e.channelId).includes(channelId)) {
+          } else if (!storedUser.channels.map((e) => e.channelId).includes(channelId)) {
             await MatchmakerCollection.update(
               {
                 id: user.id,
               },
               {
                 $push: {
-                  servers: {
+                  channels: {
                     channelId,
                     wins: 0,
                     losses: 0,

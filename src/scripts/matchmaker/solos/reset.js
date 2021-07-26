@@ -27,49 +27,53 @@ const execute = async (message, queueSize) => {
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (message.content.split(" ").length === 1) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (!message.member.hasPermission("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   switch (secondArg) {
     case "channel": {
       const fetchGamesByChannelId = await OngoingGamesSolosCollection.find({
-        gamemode: "3v3",
         channelId,
       });
 
       if (fetchGamesByChannelId.length !== 0) {
         wrongEmbed.setTitle(":x: There are users in game!");
 
-        return message.channel.send(wrongEmbed);
+        message.channel.send(wrongEmbed);
+        return;
       }
 
       if (message.content.split(" ").length !== 2) {
         wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-        return message.channel.send(wrongEmbed);
+        message.channel.send(wrongEmbed);
+        return;
       }
       const promises = [];
       await MatchmakerCollection.find({
-        servers: {
+        channels: {
           $elemMatch: {
             channelId,
           },
         },
       }).then(async (storedUsers) => {
         for (const user of storedUsers) {
-          const channelPos = user.servers
+          const channelPos = user.channels
             .map((e) => e)
             .map((e) => e.channelId)
             .indexOf(channelId);
@@ -81,7 +85,7 @@ const execute = async (message, queueSize) => {
               },
               {
                 $pull: {
-                  servers: {
+                  channels: {
                     channelId,
                   },
                 },
@@ -100,7 +104,8 @@ const execute = async (message, queueSize) => {
       }
       correctEmbed.setTitle(":white_check_mark: Channel score reset!");
 
-      return message.channel.send(correctEmbed);
+      message.channel.send(correctEmbed);
+      return;
     }
 
     case "player": {
@@ -112,13 +117,15 @@ const execute = async (message, queueSize) => {
       if (findUserInGame) {
         wrongEmbed.setTitle(":x: User is in the middle of a game!");
 
-        return message.channel.send(wrongEmbed);
+        message.channel.send(wrongEmbed);
+        return;
       }
 
       if (message.content.split(" ").length !== 3) {
         wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-        return message.channel.send(wrongEmbed);
+        message.channel.send(wrongEmbed);
+        return;
       }
 
       const player = await MatchmakerCollection.findOne({
@@ -128,7 +135,8 @@ const execute = async (message, queueSize) => {
       if (player.length === 0) {
         wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!");
 
-        return message.channel.send(wrongEmbed);
+        message.channel.send(wrongEmbed);
+        return;
       }
 
       await MatchmakerCollection.update(
@@ -137,7 +145,7 @@ const execute = async (message, queueSize) => {
         },
         {
           $pull: {
-            servers: {
+            channels: {
               channelId,
             },
           },
@@ -146,12 +154,13 @@ const execute = async (message, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Player's score reset!");
 
-      return message.channel.send(correctEmbed);
+      message.channel.send(correctEmbed);
+      break;
     }
     default: {
       wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-      return message.channel.send(wrongEmbed);
+      message.channel.send(wrongEmbed);
     }
   }
 };
