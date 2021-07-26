@@ -132,7 +132,7 @@ const createBotInstance = async () => {
         if (queueSizeObject[message.channel.id] == null) {
           const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
-          if (typeof guildsInfo.channels[message.channel.id] !== "number") {
+          if (typeof guildsInfo?.channels[message.channel.id] !== "number") {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
               ":x: Hi! The bot has changed! Now you must first select your queue size in this channel using !queuesize number , for example !queueSize 6\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"

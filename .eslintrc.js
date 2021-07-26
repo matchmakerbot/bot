@@ -17,6 +17,7 @@ module.exports = {
   ],
   parserOptions: {
     sourceType: "module",
+    ecmaVersion: 2020,
   },
   rules: {
     "no-console": "off", // i will eventually add a logger

@@ -43,7 +43,7 @@ const execute = async (message) => {
 
   const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
 
-  if (guildsInfo.channels[message.channel.id] != null) {
+  if (guildsInfo?.channels[message.channel.id] != null) {
     for (const queue of channelQueues) {
       if (queue.players.length === queue.queueSize) {
         wrongEmbed.setTitle("Cannot change queue size once a game has been made");
