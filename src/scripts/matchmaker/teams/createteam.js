@@ -1,6 +1,12 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, fetchTeamsByGuildId } = require("../utils");
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  messageArgs,
+  fetchTeamByGuildIdAndName,
+  fetchTeamByGuildAndUserId,
+} = require("../utils");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
@@ -23,22 +29,18 @@ const execute = async (message) => {
     return;
   }
 
-  const guildTeams = await fetchTeamsByGuildId(message.guild.id);
+  const teamByName = await fetchTeamByGuildIdAndName(message.guild.id, messageArgs(message));
 
-  if (guildTeams.map((e) => e.name).includes(messageArgs(message))) {
+  if (teamByName != null) {
     wrongEmbed.setTitle(":x: Name already in use");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  if (
-    guildTeams
-      .map((e) => e.members)
-      .flat()
-      .includes(message.author.id) ||
-    guildTeams.map((e) => e.captain).includes(message.author.id)
-  ) {
+  const teamById = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+
+  if (teamById != null) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
     message.channel.send(wrongEmbed);

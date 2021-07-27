@@ -91,6 +91,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "giveownership",
-  description: "Gives team ownership to a specific user. Usage: !giveownership @dany",
+  description: "Gives team ownership to a specific user. Usage: !giveownership @dany or !giveownership discordid",
   execute,
 };

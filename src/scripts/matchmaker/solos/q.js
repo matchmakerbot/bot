@@ -18,6 +18,7 @@ const {
   fetchGamesSolos,
   EMBED_COLOR_WARNING,
   gameCount,
+  shuffle,
 } = require("../utils");
 
 const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
@@ -38,27 +39,6 @@ const filterReactionrorc = (reaction, user, queueArray, rorcCount) => {
 
 const filterReactionCaptains = (reaction, user) =>
   user.id !== "571839826744180736" && reactEmojisCaptains.includes(reaction.emoji.name);
-
-const shuffle = (array) => {
-  const arrayToShuffle = array;
-  let currentIndex = array.length;
-  let temporaryValue;
-  let randomIndex;
-
-  while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-
-    currentIndex--;
-
-    temporaryValue = array[currentIndex];
-
-    arrayToShuffle[currentIndex] = array[randomIndex];
-
-    arrayToShuffle[randomIndex] = temporaryValue;
-  }
-
-  return arrayToShuffle;
-};
 
 const choose2Players = async (dm, team, queue, captainsObject, message) => {
   if (queue.length < 2) return false;

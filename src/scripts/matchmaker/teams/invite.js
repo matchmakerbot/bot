@@ -1,7 +1,16 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, fetchFromId, invites } = require("../utils");
-// send pm to user
+const client = require("../../../utils/createClientInstance.js");
+
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  fetchTeamByGuildAndUserId,
+  fetchFromId,
+  invites,
+  EMBED_COLOR_WARNING,
+} = require("../utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -37,7 +46,7 @@ const execute = async (message) => {
   }
 
   if (invites[fetchedTeam.name].includes(pingedUser)) {
-    wrongEmbed.setTitle(`:x: ${(await fetchFromId(pingedUser)).username} was already invited`);
+    wrongEmbed.setTitle(`:x: ${(await fetchFromId(pingedUser))?.username} was already invited`);
 
     message.channel.send(wrongEmbed);
     return;
@@ -55,6 +64,26 @@ const execute = async (message) => {
   correctEmbed.setTitle(
     `:white_check_mark: Invited ${message.mentions.members.first().user.username} to ${fetchedTeam.name}!`
   );
+  const pmEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
+  const fetchedUser = await client.users.fetch(pingedUser);
+  try {
+    pmEmbed.setTitle(
+      `You have been invited to join ${fetchedTeam.name}. Please do !jointeam ${fetchedTeam.name} to join the team`
+    );
+    await fetchedUser.send(pmEmbed);
+  } catch (error) {
+    const errorEmbed = new Discord.MessageEmbed()
+      .setColor(EMBED_COLOR_WARNING)
+      .setTitle(
+        `:x: Couldn't sent message to ${
+          (await fetchFromId(pingedUser))?.username
+        }, please check if your DM'S aren't set to friends only.`
+      );
+
+    console.error(error);
+
+    message.channel.send(errorEmbed);
+  }
 
   invites[fetchedTeam.name].push(pingedUser);
 
@@ -63,6 +92,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "invite",
-  description: "Invites an user, usage: !invite @dany",
+  description: "Invites an user, usage: !invite @dany or !invite discordid",
   execute,
 };

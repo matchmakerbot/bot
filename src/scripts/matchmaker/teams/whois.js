@@ -3,7 +3,7 @@ const Discord = require("discord.js");
 const {
   EMBED_COLOR_CHECK,
   messageArgs,
-  fetchTeamsByGuildIdAndName,
+  fetchTeamByGuildIdAndName,
   fetchFromId,
   EMBED_COLOR_ERROR,
 } = require("../utils");
@@ -20,7 +20,7 @@ const execute = async (message) => {
     return;
   }
 
-  const fetchedTeam = await fetchTeamsByGuildIdAndName(message.guild.id, messageArgs(message));
+  const fetchedTeam = await fetchTeamByGuildIdAndName(message.guild.id, messageArgs(message));
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: This team doesn't exist");
@@ -33,8 +33,8 @@ const execute = async (message) => {
 
   correctEmbed.addField(
     "Members:",
-    `${(await fetchFromId(fetchedTeam.captain)).username} (Captain), ${await fetchedTeam.members.reduce(
-      async (acc, curr) => `${acc}${(await fetchFromId(curr)).username}, `,
+    `${(await fetchFromId(fetchedTeam.captain))?.username} (Captain), ${await fetchedTeam.members.reduce(
+      async (acc, curr) => `${acc}${(await fetchFromId(curr))?.username}, `,
       ""
     )}`
   );

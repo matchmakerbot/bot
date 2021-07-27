@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId /* getQueueArray */ } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, channelQueues } = require("../utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -11,20 +11,31 @@ const execute = async (message) => {
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  // const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
-
-  // check if is in queue
-
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (fetchedTeam.captain === message.author.id) {
     wrongEmbed.setTitle(":x: You are the captain, to delete the team do !disband");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
+  }
+
+  const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
+
+  for (const channel of channels) {
+    if (channel.players[0].name === fetchedTeam.name) {
+      channel.players.splice(0, channel.players.length);
+
+      wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members left`);
+
+      message.channel.send(wrongEmbed);
+      return;
+    }
   }
 
   await TeamsCollection.update(
@@ -37,7 +48,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just left ${fetchedTeam.name}`);
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {

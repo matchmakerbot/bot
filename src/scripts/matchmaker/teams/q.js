@@ -67,15 +67,18 @@ const execute = async (message, queueSize) => {
   }
   const ongoingGames = await fetchGamesTeams();
 
-  // also wrong lol
   if (ongoingGames != null) {
-    for (const games of ongoingGames) {
-      if (games.map((e) => e.name).includes(fetchedTeam.name) && games.guildId === channelId) {
-        wrongEmbed.setTitle(":x: You are in the middle of a game!");
+    if (
+      ongoingGames
+        .map((e) => [e.team1, e.team2])
+        .flat()
+        .map((e) => e.name)
+        .includes(fetchedTeam.name)
+    ) {
+      wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-        message.channel.send(wrongEmbed);
-        return;
-      }
+      message.channel.send(wrongEmbed);
+      return;
     }
   }
 
@@ -117,7 +120,7 @@ const execute = async (message, queueSize) => {
 
   queueArray.push(toPush);
 
-  correctEmbed.setTitle(`:white_check_mark: Added to queue! 1/2`);
+  correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/2`);
 
   message.channel.send(correctEmbed);
 
@@ -132,6 +135,7 @@ const execute = async (message, queueSize) => {
         gameId: gameCount.value,
         time: new Date(),
         channelId,
+        guildId: message.guild.id,
         team1: queueArray[0],
         team2: queueArray[1],
         voiceChannelIds: [],
@@ -140,13 +144,13 @@ const execute = async (message, queueSize) => {
       for (const team of queueArray) {
         const dbRequest = TeamsCollection.findOne({
           name: team.name,
-          guild: message.guild.id,
+          guildId: message.guild.id,
         }).then(async (storedTeam) => {
           if (!storedTeam.channels.map((e) => e.channelId).includes(channelId)) {
             await TeamsCollection.update(
               {
                 name: team.name,
-                guild: message.guild.id,
+                guildId: message.guild.id,
               },
               {
                 $push: {
@@ -177,7 +181,7 @@ const execute = async (message, queueSize) => {
         },
       ];
 
-      for (const id of gameCreatedObj.team1) {
+      for (const id of [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.members]) {
         permissionOverwritesTeam1.push({
           id,
           allow: "CONNECT",
@@ -207,7 +211,7 @@ const execute = async (message, queueSize) => {
         },
       ];
 
-      for (const id of gameCreatedObj.team2) {
+      for (const id of [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.members]) {
         permissionOverwritesTeam2.push({
           id,
           allow: "CONNECT",
@@ -239,14 +243,14 @@ const execute = async (message, queueSize) => {
         .addField("Game is ready:", `Game ID is: ${gameCreatedObj.gameId}`)
         .addField(
           `:small_orange_diamond: Team ${gameCreatedObj.team1.name}`,
-          `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.reduce(
+          `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
             (acc = "", curr) => `${acc}<@${curr}>, `,
             ""
           )}>`
         )
         .addField(
           `:small_blue_diamond: Team ${gameCreatedObj.team2.name}`,
-          `<@${gameCreatedObj.team2.captain}>, ${gameCreatedObj.team2.reduce(
+          `<@${gameCreatedObj.team2.captain}>, ${gameCreatedObj.team2.members.reduce(
             (acc = "", curr) => `${acc}<@${curr}>, `,
             ""
           )}>`
@@ -258,9 +262,16 @@ const execute = async (message, queueSize) => {
         .setColor(EMBED_COLOR_CHECK)
         .addField("Name:", valuesforpm.name)
         .addField("Password:", valuesforpm.password)
-        .addField("You have to:", `Join match(Created by ${await fetchFromId(gameCreatedObj.team1.captain).username}`);
+        .addField(
+          "You have to:",
+          `Join match(Created by ${(await fetchFromId(gameCreatedObj.team1.captain))?.username})`
+        );
 
-      for (const id of [...gameCreatedObj.team1.members, ...gameCreatedObj.team2.members, gameCreatedObj.captain]) {
+      for (const id of [
+        ...gameCreatedObj.team1.members,
+        ...gameCreatedObj.team2.members,
+        gameCreatedObj.team2.captain,
+      ]) {
         const fetchedUser = client.users
           .fetch(id)
           .then(async (user) => {
@@ -271,7 +282,7 @@ const execute = async (message, queueSize) => {
                 .setColor(EMBED_COLOR_WARNING)
                 .setTitle(
                   `:x: Couldn't sent message to ${
-                    fetchFromId(id).username
+                    (await fetchFromId(id))?.username
                   }, please check if your DM'S aren't set to friends only.`
                 );
 

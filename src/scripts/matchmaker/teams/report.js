@@ -1,12 +1,10 @@
 const Discord = require("discord.js");
 
-const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
+const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
-  includesUserId,
-  joinTeam1And2,
   fetchGamesTeams,
   finishedGames,
   messageEndswith,
@@ -24,7 +22,7 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  const storedGames = await fetchGamesTeams(message.channel.id);
+  const ongoingGames = await fetchGamesTeams(message.channel.id);
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
@@ -41,19 +39,20 @@ const execute = async (message) => {
     message.channel.send(wrongEmbed);
     return;
   }
+
   if (
-    !storedGames
-      .map((e) => joinTeam1And2(e))
+    !ongoingGames
+      .map((e) => [e.team1.name, e.team2.name])
       .flat()
-      .map((e) => e.captain)
-      .includes(userId)
+      .includes(fetchedTeam.name)
   ) {
-    wrongEmbed.setTitle(":x: You aren't in a game!");
+    wrongEmbed.setTitle(":x: You aren't in a game");
 
     message.channel.send(wrongEmbed);
     return;
   }
-  const game = storedGames.find((e) => includesUserId(joinTeam1And2(e), userId));
+
+  const game = ongoingGames.find((d) => [d.team1.name, d.team2.name].includes(fetchedTeam.name));
 
   if (game.channelId !== channelId) {
     wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");

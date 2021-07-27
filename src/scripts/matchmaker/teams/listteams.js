@@ -28,7 +28,7 @@ const execute = async (message) => {
     }
 
     // eslint-disable-next-line no-await-in-loop
-    correctEmbed.addField(`Name: ${teams[i].name}`, `Captain: ${(await fetchFromId(teams[i].captain)).username}`);
+    correctEmbed.addField(`Name: ${teams[i].name}`, `Captain: ${(await fetchFromId(teams[i].captain))?.username}`);
 
     correctEmbed.setFooter(`Showing page ${secondArg}/${Math.ceil(teams.length / 10)}`);
   }

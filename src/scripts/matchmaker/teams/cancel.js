@@ -6,8 +6,6 @@ const {
   EMBED_COLOR_ERROR,
   fetchTeamByGuildAndUserId,
   cancelQueue,
-  joinTeam1And2,
-  includesUserId,
   OngoingGamesCollection,
   deletableChannels,
 } = require("../utils");
@@ -17,9 +15,11 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const teamData = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const userId = message.author.id;
 
-  const gameList = await fetchGamesTeams();
+  const teamData = await fetchTeamByGuildAndUserId(message.guild.id, userId);
+
+  const gameList = await fetchGamesTeams(message.guild.id);
 
   if (teamData == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
@@ -28,21 +28,21 @@ const execute = async (message) => {
     return;
   }
 
-  if (teamData.captain !== message.author.id) {
+  if (teamData.captain !== userId) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  if (teamData.find((e) => e.captain === message.author.id) == null) {
+  if (teamData.find((e) => e.captain === userId) == null) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  const games = gameList.find((game) => includesUserId(joinTeam1And2(game), message.author.id));
+  const games = gameList.find((game) => game.team1.captain === userId || game.team2.captain === userId);
 
   const { gameId } = games;
 

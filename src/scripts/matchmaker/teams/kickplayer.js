@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, channelQueues } = require("../utils");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
@@ -46,6 +46,19 @@ const execute = async (message) => {
 
     message.channel.send(wrongEmbed);
     return;
+  }
+
+  const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
+
+  for (const channel of channels) {
+    if (channel.players[0].name === fetchedTeam.name) {
+      channel.players.splice(0, channel.players.length);
+
+      wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members left`);
+
+      message.channel.send(wrongEmbed);
+      return;
+    }
   }
 
   await TeamsCollection.update(

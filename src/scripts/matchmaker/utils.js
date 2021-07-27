@@ -1,5 +1,7 @@
 const client = require("../../utils/createClientInstance.js");
 
+const mongoose = require("mongoose");
+
 const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
 
 const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTeamsSchema.js");
@@ -7,6 +9,7 @@ const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTea
 const MatchmakerCollection = require("../../utils/schemas/matchmakerUsersSchema");
 
 const TeamsCollection = require("../../utils/schemas/teamsSchema");
+const { mongo } = require("mongoose");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -20,7 +23,7 @@ const LOSSES = "losses";
 
 const EMBED_COLOR_CHECK = "#77B255";
 
-const EMBED_COLOR_WARNING = "#77B255";
+const EMBED_COLOR_WARNING = "#B78727";
 
 const finishedGames = [];
 
@@ -60,14 +63,8 @@ const fetchGamesSolos = async (channelId) => {
   return games;
 };
 
-const fetchGamesTeams = async (channelId) => {
-  const games = await OngoingGamesTeamsCollection.find(
-    channelId != null
-      ? {
-          channelId,
-        }
-      : {}
-  );
+const fetchGamesTeams = async (channelId, guildId) => {
+  const games = await OngoingGamesTeamsCollection.find({channelId:mongoose.Schema.Types.any});
   return games;
 };
 
@@ -100,7 +97,7 @@ const assignWinLoseDb = async (user, game, score, type) => {
         })
       : await TeamsCollection.findOne({
           name: user.name,
-          guildId: user.guildId,
+          guildId: game.guildId,
         });
 
   const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
@@ -127,7 +124,7 @@ const assignWinLoseDb = async (user, game, score, type) => {
     await TeamsCollection.update(
       {
         name: user.name,
-        guildId: user.guildId,
+        guildId: game.guildId,
       },
       set
     );
@@ -135,13 +132,15 @@ const assignWinLoseDb = async (user, game, score, type) => {
 };
 
 const revertGame = async (user, game, param, team, type) => {
-  const storedDb = await MatchmakerCollection.findOne(
+  const storedDb =
     type === "solos"
-      ? {
+      ? await MatchmakerCollection.findOne({
           id: user.id,
-        }
-      : { name: user.name, guildId: user.guildId }
-  );
+        })
+      : await TeamsCollection.findOne({
+          name: user.name,
+          guildId: game.guildId,
+        });
 
   const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
 
@@ -183,7 +182,7 @@ const revertGame = async (user, game, param, team, type) => {
         await TeamsCollection.update(
           {
             name: user.name,
-            guildId: user.guildId,
+            guildId: game.guildId,
           },
           set
         );
@@ -210,7 +209,7 @@ const revertGame = async (user, game, param, team, type) => {
         await TeamsCollection.update(
           {
             name: user.name,
-            guildId: user.guildId,
+            guildId: game.guildId,
           },
           set
         );
@@ -244,11 +243,11 @@ const assignWinLostOrRevertSolo = async (game, param) => {
 const assignWinLostOrRevertTeams = async (game, param) => {
   const promises = [];
   if (param === "Finished") {
-    promises.push(assignWinLoseDb(game.team1, game, game.winningTeam === 0 ? WINS : LOSSES), "teams");
-    promises.push(assignWinLoseDb(game.team2, game, game.winningTeam === 1 ? WINS : LOSSES), "teams");
+    promises.push(assignWinLoseDb(game.team1, game, game.winningTeam === 0 ? WINS : LOSSES, "teams"));
+    promises.push(assignWinLoseDb(game.team2, game, game.winningTeam === 1 ? WINS : LOSSES, "teams"));
   } else {
-    promises.push(revertGame(game.team1, game, param, TEAM1), "teams");
-    promises.push(revertGame(game.team2, game, param, TEAM2), "teams");
+    promises.push(revertGame(game.team1, game, param, TEAM1, "teams"));
+    promises.push(revertGame(game.team2, game, param, TEAM2, "teams"));
   }
   await Promise.all(promises);
 };
@@ -272,7 +271,7 @@ const fetchTeamsByGuildId = async (guildId) => {
   return team;
 };
 
-const fetchTeamsByGuildIdAndName = async (guildId, name) => {
+const fetchTeamByGuildIdAndName = async (guildId, name) => {
   const team = await TeamsCollection.findOne({
     guildId,
     name,
@@ -284,10 +283,31 @@ const messageArgs = (message) => {
   return message.content.split(" ").slice(1).join(" ");
 };
 
+const shuffle = (array) => {
+  const arrayToShuffle = array;
+  let currentIndex = array.length;
+  let temporaryValue;
+  let randomIndex;
+
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+
+    currentIndex--;
+
+    temporaryValue = array[currentIndex];
+
+    arrayToShuffle[currentIndex] = array[randomIndex];
+
+    arrayToShuffle[randomIndex] = temporaryValue;
+  }
+
+  return arrayToShuffle;
+};
+
 module.exports = {
   assignWinLostOrRevertTeams,
   fetchGamesTeams,
-  fetchTeamsByGuildIdAndName,
+  fetchTeamByGuildIdAndName,
   fetchTeamsByGuildId,
   fetchTeamByGuildAndUserId,
   fetchFromId,
@@ -309,4 +329,5 @@ module.exports = {
   gameCount,
   invites,
   messageArgs,
+  shuffle,
 };
