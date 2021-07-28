@@ -17,8 +17,6 @@ const execute = async (message, queueSize) => {
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const gameList = await fetchGamesTeams();
-
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
@@ -44,9 +42,11 @@ const execute = async (message, queueSize) => {
     return;
   }
 
+  const gameList = await fetchGamesTeams(null, message.guild.id);
+
   for (const game of gameList) {
     if (game.type === "teams") {
-      if (game.map((e) => e.name).includes(fetchedTeam.name) && game.guild === message.guild.id) {
+      if (game.map((e) => e.name).includes(fetchedTeam.name)) {
         wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
         message.channel.send(wrongEmbed);

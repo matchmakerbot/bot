@@ -1,7 +1,5 @@
 const client = require("../../utils/createClientInstance.js");
 
-const mongoose = require("mongoose");
-
 const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
 
 const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTeamsSchema.js");
@@ -9,7 +7,6 @@ const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTea
 const MatchmakerCollection = require("../../utils/schemas/matchmakerUsersSchema");
 
 const TeamsCollection = require("../../utils/schemas/teamsSchema");
-const { mongo } = require("mongoose");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -64,7 +61,10 @@ const fetchGamesSolos = async (channelId) => {
 };
 
 const fetchGamesTeams = async (channelId, guildId) => {
-  const games = await OngoingGamesTeamsCollection.find({channelId:mongoose.Schema.Types.any});
+  const obj = {};
+  if (channelId != null) obj.channelId = channelId;
+  if (guildId != null) obj.guildId = guildId;
+  const games = await OngoingGamesTeamsCollection.find(obj);
   return games;
 };
 

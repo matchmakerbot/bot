@@ -104,7 +104,8 @@ const execute = async (message, queueSize) => {
 
     case "team": {
       const teamName = message.content.split(" ").splice(0, 2).join(" ");
-      const ongoingGames = await fetchGamesTeams(queueSize);
+
+      const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
       if (
         ongoingGames

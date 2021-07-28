@@ -34,16 +34,14 @@ const execute = async (message) => {
       return;
     }
 
-    const ongoingGames = await fetchGamesTeams();
-//wrong, its checking for all guilds
-    if (ongoingGames != null) {
-      for (const games of ongoingGames) {
-        if (games.map((e) => e.name).includes(messageArgs(message))) {
-          wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+    const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
-          message.channel.send(wrongEmbed);
-          return;
-        }
+    for (const games of ongoingGames) {
+      if (games.map((e) => e.name).includes(messageArgs(message))) {
+        wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+
+        message.channel.send(wrongEmbed);
+        return;
       }
     }
 
@@ -69,18 +67,16 @@ const execute = async (message) => {
     return;
   }
 
-  const ongoingGames = await fetchGamesTeams();
+  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  if (ongoingGames != null) {
-    for (const games of ongoingGames) {
-      if (games.map((e) => e.name).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: You are in the middle of a game!");
+  for (const games of ongoingGames) {
+    if (games.map((e) => e.name).includes(messageArgs(message))) {
+      wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-        message.channel.send(wrongEmbed);
-        return;
-      }
+      message.channel.send(wrongEmbed);
+      return;
     }
   }
 

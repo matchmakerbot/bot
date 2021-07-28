@@ -462,7 +462,7 @@ const execute = async (message) => {
         }
 
         for (const games of ongoingGames) {
-          if (games.map((e) => e.name).includes(messageArgs(message)) && games[2].guild === message.guild.id) {
+          if (games.map((e) => e.name).includes(messageArgs(message))) {
             wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
             return message.channel.send(wrongEmbed);
