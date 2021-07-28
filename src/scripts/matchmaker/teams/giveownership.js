@@ -42,17 +42,19 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const gameList = await fetchGamesTeams(null, message.guild.id);
+  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
-  for (const game of gameList) {
-    if (game.type === "teams") {
-      if (game.map((e) => e.name).includes(fetchedTeam.name)) {
-        wrongEmbed.setTitle(":x: You are in the middle of a game!");
+  if (
+    ongoingGames
+      .map((e) => [e.team1, e.team2])
+      .flat()
+      .map((e) => e.name)
+      .includes(fetchedTeam.name)
+  ) {
+    wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-        message.channel.send(wrongEmbed);
-        return;
-      }
-    }
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
@@ -91,6 +93,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "giveownership",
-  description: "Gives team ownership to a specific user. Usage: !giveownership @dany or !giveownership discordid",
+  description: "Gives team ownership to a specific user. Usage: !giveownership @dany or !giveownership",
   execute,
 };

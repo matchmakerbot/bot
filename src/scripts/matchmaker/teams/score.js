@@ -100,7 +100,6 @@ const execute = async (message) => {
         for (const channels of storedUsersList[indexes].channels) {
           if (channels.channelId === channelId) {
             correctEmbed.addField(
-              // eslint-disable-next-line no-await-in-loop
               storedUsersList[indexes].name,
               `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
                 Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))

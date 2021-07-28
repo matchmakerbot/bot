@@ -6,7 +6,6 @@ const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   fetchTeamByGuildAndUserId,
-  fetchFromId,
   invites,
   EMBED_COLOR_WARNING,
 } = require("../utils");
@@ -46,7 +45,7 @@ const execute = async (message) => {
   }
 
   if (invites[fetchedTeam.name].includes(pingedUser)) {
-    wrongEmbed.setTitle(`:x: ${(await fetchFromId(pingedUser))?.username} was already invited`);
+    wrongEmbed.setTitle(`:x: <@${pingedUser}> was already invited`);
 
     message.channel.send(wrongEmbed);
     return;
@@ -74,11 +73,7 @@ const execute = async (message) => {
   } catch (error) {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
-      .setTitle(
-        `:x: Couldn't sent message to ${
-          (await fetchFromId(pingedUser))?.username
-        }, please check if your DM'S aren't set to friends only.`
-      );
+      .setTitle(`:x: Couldn't sent message to <@${pingedUser}>, please check if your DM'S aren't set to friends only.`);
 
     console.error(error);
 
@@ -92,6 +87,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "invite",
-  description: "Invites an user, usage: !invite @dany or !invite discordid",
+  description: "Invites an user, usage: !invite @dany",
   execute,
 };

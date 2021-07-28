@@ -5,11 +5,15 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, channel
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
 const execute = async (message) => {
+  let isUsingDiscordId = false;
+
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+
+  const [, secondArg] = message.content.split(" ");
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
@@ -19,13 +23,10 @@ const execute = async (message) => {
   }
 
   if (message.mentions.members.first() == null) {
-    wrongEmbed.setTitle(":x: Please mention the user");
-
-    message.channel.send(wrongEmbed);
-    return;
+    isUsingDiscordId = true;
   }
 
-  const kickedUser = message.mentions.members.first().user;
+  const kickedUser = isUsingDiscordId ? secondArg : message.mentions.members.first().user.id;
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
@@ -34,14 +35,14 @@ const execute = async (message) => {
     return;
   }
 
-  if (!fetchedTeam.members.includes(kickedUser.id)) {
+  if (!fetchedTeam.members.includes(kickedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     message.channel.send(wrongEmbed);
     return;
   }
 
-  if (kickedUser.id === message.author.id) {
+  if (kickedUser === message.author.id) {
     wrongEmbed.setTitle(":x: You cannot kick yourself dummy!");
 
     message.channel.send(wrongEmbed);
@@ -57,7 +58,6 @@ const execute = async (message) => {
       wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members left`);
 
       message.channel.send(wrongEmbed);
-      return;
     }
   }
 
@@ -66,11 +66,13 @@ const execute = async (message) => {
       guildId: message.guild.id,
       name: fetchedTeam.name,
     },
-    { $pull: { members: kickedUser.id } }
+    { $pull: { members: kickedUser } }
   );
 
   correctEmbed.setTitle(
-    `:white_check_mark: ${message.author.username} just kicked ${kickedUser.username} from ${fetchedTeam.name}`
+    `:white_check_mark: ${message.author.username} just kicked ${
+      isUsingDiscordId ? secondArg : message.mentions.members.first().user.id
+    } from ${fetchedTeam.name}`
   );
 
   message.channel.send(correctEmbed);

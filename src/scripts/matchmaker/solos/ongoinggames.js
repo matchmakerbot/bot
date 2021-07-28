@@ -25,11 +25,11 @@ const execute = async (message) => {
 
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
     correctEmbed.addField(
-      ":small_orange_diamond: -Team 1-",
+      ":small_orange_diamond: Team 1",
       game.team1.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
     );
     correctEmbed.addField(
-      ":small_blue_diamond: -Team 2-",
+      ":small_blue_diamond: Team 2",
       game.team2.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
     );
 

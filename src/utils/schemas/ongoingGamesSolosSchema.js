@@ -14,6 +14,7 @@ const schema = new mongoose.Schema(
     gamemode: String,
     time: Date,
     channelId: String,
+    guildId: String,
     team1: [playerObject],
     team2: [playerObject],
     voiceChannelIds: [

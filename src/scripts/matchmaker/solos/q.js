@@ -140,7 +140,7 @@ const execute = async (message, queueSize) => {
   if (
     includesUserId(
       channelQueues
-        .filter((e) => e.type === "solos")
+        .filter((e) => e.queueType === "solos" && e.guildId === message.guild.id)
         .map((e) => e.players)
         .flat(),
       userId
@@ -194,6 +194,7 @@ const execute = async (message, queueSize) => {
         gameId: gameCount.value,
         time: new Date(),
         channelId,
+        guildId: message.guild.id,
         team1: [],
         team2: [],
         voiceChannelIds: [],

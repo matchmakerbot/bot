@@ -34,7 +34,6 @@ const execute = async (message) => {
       wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members left`);
 
       message.channel.send(wrongEmbed);
-      return;
     }
   }
 

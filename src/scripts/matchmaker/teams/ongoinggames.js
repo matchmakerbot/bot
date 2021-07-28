@@ -25,17 +25,17 @@ const execute = async (message) => {
 
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
     correctEmbed.addField(
-      ":small_orange_diamond: -Team 1-",
-      game.team1.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
+      `:small_orange_diamond: Team ${game.team1.name}`,
+      `<@${game.team1.captain}>, ${game.team1.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
     );
     correctEmbed.addField(
-      ":small_blue_diamond: -Team 2-",
-      game.team2.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
+      `:small_blue_diamond: Team ${game.team2.name}`,
+      `<@${game.team2.captain}>, ${game.team2.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
     );
 
     correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(ongoingGames.length / 10)}`);
   }
-  return message.channel.send(wrongEmbed);
+  return message.channel.send(correctEmbed);
 };
 
 module.exports = {

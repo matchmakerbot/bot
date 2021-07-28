@@ -103,7 +103,9 @@ const execute = async (message, queueSize) => {
     }
 
     case "team": {
-      const teamName = message.content.split(" ").splice(0, 2).join(" ");
+      let teamName = message.content.split(" ");
+      teamName.splice(0, 2);
+      teamName = teamName.join(" ");
 
       const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
@@ -130,8 +132,8 @@ const execute = async (message, queueSize) => {
         guildId: message.guild.id,
       });
 
-      if (player.length === 0) {
-        wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!");
+      if (player == null) {
+        wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
         message.channel.send(wrongEmbed);
         return;
@@ -151,7 +153,7 @@ const execute = async (message, queueSize) => {
         }
       );
 
-      correctEmbed.setTitle(":white_check_mark: Player's score reset!");
+      correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 
       message.channel.send(correctEmbed);
       break;

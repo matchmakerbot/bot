@@ -36,13 +36,17 @@ const execute = async (message) => {
 
     const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
-    for (const games of ongoingGames) {
-      if (games.map((e) => e.name).includes(messageArgs(message))) {
-        wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+    if (
+      ongoingGames
+        .map((e) => [e.team1, e.team2])
+        .flat()
+        .map((e) => e.name)
+        .includes(messageArgs(message))
+    ) {
+      wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-        message.channel.send(wrongEmbed);
-        return;
-      }
+      message.channel.send(wrongEmbed);
+      return;
     }
 
     const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
@@ -50,6 +54,10 @@ const execute = async (message) => {
     for (const channel of channels) {
       if (channel.players[0].name === messageArgs(message)) {
         channel.players.splice(0, channel.players.length);
+
+        wrongEmbed.setTitle(`:x: ${messageArgs(message)} was kicked from the queue since they were disbanded`);
+
+        message.channel.send(wrongEmbed);
       }
     }
 
@@ -71,15 +79,6 @@ const execute = async (message) => {
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  for (const games of ongoingGames) {
-    if (games.map((e) => e.name).includes(messageArgs(message))) {
-      wrongEmbed.setTitle(":x: You are in the middle of a game!");
-
-      message.channel.send(wrongEmbed);
-      return;
-    }
-  }
-
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
@@ -94,11 +93,27 @@ const execute = async (message) => {
     return;
   }
 
+  if (
+    ongoingGames
+      .map((e) => [e.team1, e.team2])
+      .flat()
+      .map((e) => e.name)
+      .includes(fetchedTeam.name)
+  ) {
+    wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
+
+    message.channel.send(wrongEmbed);
+    return;
+  }
+
   const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
 
   for (const channel of channels) {
     if (channel.players[0].name === fetchedTeam.name) {
       channel.players.splice(0, channel.players.length);
+      wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since they were disbanded`);
+
+      message.channel.send(wrongEmbed);
     }
   }
 

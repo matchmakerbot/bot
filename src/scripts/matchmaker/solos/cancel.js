@@ -63,9 +63,11 @@ const execute = async (message, queueSize) => {
   message.channel.send(correctEmbed);
 
   if (cancelqueuearray.length === queueSize / 2 + 1) {
+    const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
+
     deletableChannels.push(...games.voiceChannelIds);
 
-    correctEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
+    newCorrectEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
 
     delete cancelQueue[gameId];
 
@@ -74,7 +76,7 @@ const execute = async (message, queueSize) => {
       gameId,
     });
 
-    message.channel.send(correctEmbed);
+    message.channel.send(newCorrectEmbed);
   }
 };
 

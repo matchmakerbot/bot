@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamsByGuildId, fetchFromId } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamsByGuildId } = require("../utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -27,8 +27,7 @@ const execute = async (message) => {
       break;
     }
 
-    // eslint-disable-next-line no-await-in-loop
-    correctEmbed.addField(`Name: ${teams[i].name}`, `Captain: ${(await fetchFromId(teams[i].captain))?.username}`);
+    correctEmbed.addField(`Name: ${teams[i].name}`, `Captain: <@${teams[i].captain}>`);
 
     correctEmbed.setFooter(`Showing page ${secondArg}/${Math.ceil(teams.length / 10)}`);
   }

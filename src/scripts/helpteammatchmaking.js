@@ -15,7 +15,10 @@ const execute = (message) => {
     .setAuthor("MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
     .setColor("#F8534F")
     .setTitle("For solos matchmaking help, please type !helpsolosmatchmaking")
-    .addField("!queueType", "Sets the queuetype , for example !queuetype 6 solos for 3v3 games");
+    .addField(
+      "!queueType",
+      "Sets the queuetype , for example !queuetype 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games"
+    );
   commandFilesMatchmakerSolos.forEach((file) => {
     const command = require(`./matchmaker/teams/${file}`);
     if (command.name != null) {

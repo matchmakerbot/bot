@@ -5,7 +5,7 @@ const OngoingGamesTeamsSchema = require("../../../utils/schemas/ongoingGamesTeam
 const client = require("../../../utils/createClientInstance.js");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
-// when checking for the members id, make the members array have their name etc so that way u dont have to fetch it later on
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -15,7 +15,6 @@ const {
   getQueueArray,
   shuffle,
   gameCount,
-  fetchFromId,
   fetchGamesTeams,
 } = require("../utils");
 
@@ -28,7 +27,7 @@ const execute = async (message, queueSize) => {
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, channelId, "teams");
+  const queueArray = getQueueArray(queueSize, channelId, message.guild.id, "teams");
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You don't belong to a team!");
@@ -53,7 +52,7 @@ const execute = async (message, queueSize) => {
 
   if (
     channelQueues
-      .filter((e) => e.type === "teams")
+      .filter((e) => e.queueType === "teams" && e.guildId === message.guild.id)
       .map((e) => e.players)
       .flat()
       .map((e) => e.name)
@@ -65,21 +64,20 @@ const execute = async (message, queueSize) => {
     message.channel.send(wrongEmbed);
     return;
   }
-  const ongoingGames = await fetchGamesTeams();
 
-  if (ongoingGames != null) {
-    if (
-      ongoingGames
-        .map((e) => [e.team1, e.team2])
-        .flat()
-        .map((e) => e.name)
-        .includes(fetchedTeam.name)
-    ) {
-      wrongEmbed.setTitle(":x: You are in the middle of a game!");
+  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
-      message.channel.send(wrongEmbed);
-      return;
-    }
+  if (
+    ongoingGames
+      .map((e) => [e.team1, e.team2])
+      .flat()
+      .map((e) => e.name)
+      .includes(fetchedTeam.name)
+  ) {
+    wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
+
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (fetchedTeam.members.length + 1 < queueSize / 2 || (fetchedTeam.members.length === 0 && queueSize !== 2)) {
@@ -262,10 +260,7 @@ const execute = async (message, queueSize) => {
         .setColor(EMBED_COLOR_CHECK)
         .addField("Name:", valuesforpm.name)
         .addField("Password:", valuesforpm.password)
-        .addField(
-          "You have to:",
-          `Join match(Created by ${(await fetchFromId(gameCreatedObj.team1.captain))?.username})`
-        );
+        .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
 
       for (const id of [
         ...gameCreatedObj.team1.members,
@@ -281,9 +276,7 @@ const execute = async (message, queueSize) => {
               const errorEmbed = new Discord.MessageEmbed()
                 .setColor(EMBED_COLOR_WARNING)
                 .setTitle(
-                  `:x: Couldn't sent message to ${
-                    (await fetchFromId(id))?.username
-                  }, please check if your DM'S aren't set to friends only.`
+                  `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
                 );
 
               console.error(error);
@@ -306,9 +299,7 @@ const execute = async (message, queueSize) => {
         const errorEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_ERROR)
           .setTitle(
-            `:x: Couldn't sent message to ${fetchFromId(
-              gameCreatedObj.team1.captain
-            )}, please check if your DM'S aren't set to friends only.`
+            `:x: Couldn't sent message to <@${gameCreatedObj.team1.captain}>, please check if your DM'S aren't set to friends only.`
           );
 
         message.channel.send(errorEmbed);

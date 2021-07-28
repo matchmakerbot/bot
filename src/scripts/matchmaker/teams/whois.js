@@ -4,14 +4,16 @@ const {
   EMBED_COLOR_CHECK,
   messageArgs,
   fetchTeamByGuildIdAndName,
-  fetchFromId,
   EMBED_COLOR_ERROR,
+  fetchTeamByGuildAndUserId,
 } = require("../utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
+
+  const [, secondArg] = message.content.split(" ");
 
   if (messageArgs(message) == null) {
     wrongEmbed.setTitle(":x: Please specify the team.");
@@ -20,7 +22,10 @@ const execute = async (message) => {
     return;
   }
 
-  const fetchedTeam = await fetchTeamByGuildIdAndName(message.guild.id, messageArgs(message));
+  const fetchedTeam =
+    secondArg == null
+      ? await fetchTeamByGuildAndUserId(message.guild.id, message.author.id)
+      : await fetchTeamByGuildIdAndName(message.guild.id, messageArgs(message));
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: This team doesn't exist");
@@ -33,10 +38,7 @@ const execute = async (message) => {
 
   correctEmbed.addField(
     "Members:",
-    `${(await fetchFromId(fetchedTeam.captain))?.username} (Captain), ${await fetchedTeam.members.reduce(
-      async (acc, curr) => `${acc}${(await fetchFromId(curr))?.username}, `,
-      ""
-    )}`
+    `<@${fetchedTeam.captain}> (Captain), ${fetchedTeam.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
   );
 
   message.channel.send(correctEmbed);
@@ -44,6 +46,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "whois",
-  description: "Check for team members, usage: !whois Maniacs",
+  description: "Check for team members, usage: !whois Maniacs, or !whois to check your team",
   execute,
 };

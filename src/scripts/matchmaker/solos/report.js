@@ -25,13 +25,23 @@ const execute = async (message, queueSize) => {
 
   const storedGames = await fetchGamesSolos(message.channel.id);
 
-  if (!includesUserId(storedGames.map((e) => joinTeam1And2(e)).flat(), userId)) {
+  if (
+    !includesUserId(
+      storedGames
+        .filter((e) => e.guildId === message.guild.id)
+        .map((e) => joinTeam1And2(e))
+        .flat(),
+      userId
+    )
+  ) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     message.channel.send(wrongEmbed);
     return;
   }
-  const games = storedGames.find((game) => includesUserId(joinTeam1And2(game), userId));
+  const games = storedGames
+    .filter((e) => e.guildId === message.guild.id)
+    .find((game) => includesUserId(joinTeam1And2(game), userId));
 
   if (games.channelId !== channelId) {
     wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");

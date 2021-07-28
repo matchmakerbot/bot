@@ -6,9 +6,7 @@ const fs = require("fs");
 
 const Discord = require("discord.js");
 
-const fastify = require("fastify")({
-  logger: true,
-});
+const fastify = require("fastify")();
 
 const client = require("./createClientInstance.js");
 
@@ -99,6 +97,8 @@ const createBotInstance = async () => {
         url: "https://www.twitch.tv/tweenoTV",
       });
     });
+    console.log(`Scripts loaded: ${[...client.commands].length}`);
+
     console.log("Successfully created socket Client.Once -> Ready");
   } catch (e) {
     console.log("Error creating event listener Client.once -> Ready");

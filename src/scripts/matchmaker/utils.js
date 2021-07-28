@@ -73,9 +73,9 @@ const messageEndswith = (message) => {
   return split[split.length - 1];
 };
 
-const getQueueArray = (queueSize, channelId, guildId, type) => {
+const getQueueArray = (queueSize, channelId, guildId, queueType) => {
   for (const item of channelQueues) {
-    if (item.channelId === channelId && item.type === type) {
+    if (item.channelId === channelId && item.queueType === queueType) {
       return item.players;
     }
   }
@@ -83,15 +83,15 @@ const getQueueArray = (queueSize, channelId, guildId, type) => {
     channelId,
     guildId,
     queueSize,
-    type,
+    queueType,
     players: [],
   });
   return channelQueues[channelQueues.length - 1].players;
 };
 
-const assignWinLoseDb = async (user, game, score, type) => {
+const assignWinLoseDb = async (user, game, score, queueType) => {
   const storedDb =
-    type === "solos"
+    queueType === "solos"
       ? await MatchmakerCollection.findOne({
           id: user.id,
         })
@@ -113,7 +113,7 @@ const assignWinLoseDb = async (user, game, score, type) => {
     },
   };
 
-  if (type === "solos") {
+  if (queueType === "solos") {
     await MatchmakerCollection.update(
       {
         id: user.id,
@@ -131,9 +131,9 @@ const assignWinLoseDb = async (user, game, score, type) => {
   }
 };
 
-const revertGame = async (user, game, param, team, type) => {
+const revertGame = async (user, game, param, team, queueType) => {
   const storedDb =
-    type === "solos"
+    queueType === "solos"
       ? await MatchmakerCollection.findOne({
           id: user.id,
         })
@@ -171,7 +171,7 @@ const revertGame = async (user, game, param, team, type) => {
             winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 20 : storedDb.channels[channelPos].mmr + 20,
         },
       };
-      if (type === "solos") {
+      if (queueType === "solos") {
         await MatchmakerCollection.update(
           {
             id: user.id,
@@ -198,7 +198,7 @@ const revertGame = async (user, game, param, team, type) => {
             winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 10 : storedDb.channels[channelPos].mmr + 10,
         },
       };
-      if (type === "solos") {
+      if (queueType === "solos") {
         await MatchmakerCollection.update(
           {
             id: user.id,

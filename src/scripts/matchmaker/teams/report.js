@@ -68,8 +68,8 @@ const execute = async (message) => {
     return;
   }
   if (
-    (game.team1.captain && messageEndswith(message) === "win") ||
-    (game.team2.captain && messageEndswith(message) === "lose")
+    (game.team1.captain === message.author.id && messageEndswith(message) === "win") ||
+    (game.team2.captain === message.author.id && messageEndswith(message) === "lose")
   ) {
     game.winningTeam = 0;
   } else {
