@@ -1,6 +1,10 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, assignWinLostOrRevertTeams } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, revertGame } = require("../utils");
+
+const TEAM1 = "team1";
+
+const TEAM2 = "team2";
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -42,7 +46,13 @@ const execute = async (message) => {
   }
 
   if (thirdArg === "revert" || thirdArg === "cancel") {
-    await assignWinLostOrRevertTeams(selectedGame, thirdArg);
+    const promises = [];
+
+    promises.push(revertGame(selectedGame.team1, selectedGame, thirdArg, TEAM1));
+
+    promises.push(revertGame(selectedGame.team2, selectedGame, thirdArg, TEAM2));
+
+    await Promise.all(promises);
   } else {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
@@ -62,6 +72,6 @@ const execute = async (message) => {
 module.exports = {
   name: "revertgame",
   description:
-    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores",
+    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores (I know this name is shit plz give better options)",
   execute,
 };

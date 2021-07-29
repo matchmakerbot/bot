@@ -1,6 +1,10 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, assignWinLostOrRevertSolo } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, revertGame } = require("../utils");
+
+const TEAM1 = "team1";
+
+const TEAM2 = "team2";
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -42,7 +46,17 @@ const execute = async (message) => {
   }
 
   if (thirdArg === "revert" || thirdArg === "cancel") {
-    await assignWinLostOrRevertSolo(selectedGame, thirdArg);
+    const promises = [];
+
+    for (const user of selectedGame.team1) {
+      promises.push(revertGame(user, selectedGame, thirdArg, TEAM1));
+    }
+
+    for (const user of selectedGame.team2) {
+      promises.push(revertGame(user, selectedGame, thirdArg, TEAM2));
+    }
+
+    await Promise.all(promises);
   } else {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 

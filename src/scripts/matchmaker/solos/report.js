@@ -11,7 +11,7 @@ const {
   finishedGames,
   messageEndswith,
   deletableChannels,
-  assignWinLostOrRevertSolo,
+  assignWinLoseDb,
 } = require("../utils");
 
 const execute = async (message, queueSize) => {
@@ -39,11 +39,11 @@ const execute = async (message, queueSize) => {
     message.channel.send(wrongEmbed);
     return;
   }
-  const games = storedGames
+  const game = storedGames
     .filter((e) => e.guildId === message.guild.id)
-    .find((game) => includesUserId(joinTeam1And2(game), userId));
+    .find((e) => includesUserId(joinTeam1And2(e), userId));
 
-  if (games.channelId !== channelId) {
+  if (game.channelId !== channelId) {
     wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
 
     message.channel.send(wrongEmbed);
@@ -57,26 +57,34 @@ const execute = async (message, queueSize) => {
     return;
   }
   if (
-    (games.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win") ||
-    (games.team2.map((e) => e.id).includes(userId) && messageEndswith(message) === "lose")
+    (game.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win") ||
+    (game.team2.map((e) => e.id).includes(userId) && messageEndswith(message) === "lose")
   ) {
-    games.winningTeam = 0;
+    game.winningTeam = 0;
   } else {
-    games.winningTeam = 1;
+    game.winningTeam = 1;
   }
 
-  const typeFunc = "Finished";
+  const promises = [];
 
-  await assignWinLostOrRevertSolo(games, typeFunc);
+  for (const user of game.team1) {
+    promises.push(assignWinLoseDb(user, game));
+  }
 
-  finishedGames.push(games);
+  for (const user of game.team2) {
+    promises.push(assignWinLoseDb(user, game));
+  }
+
+  await Promise.all(promises);
+
+  finishedGames.push(game);
 
   await OngoingGamesSolosCollection.deleteOne({
     queueSize,
-    gameId: games.gameId,
+    gameId: game.gameId,
   });
 
-  games.voiceChannelIds.forEach((channel) => {
+  game.voiceChannelIds.forEach((channel) => {
     deletableChannels.push(channel);
   });
 

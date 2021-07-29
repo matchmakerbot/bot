@@ -89,9 +89,9 @@ const getQueueArray = (queueSize, channelId, guildId, queueType) => {
   return channelQueues[channelQueues.length - 1].players;
 };
 
-const assignWinLoseDb = async (user, game, score, queueType) => {
+const assignWinLoseDb = async (user, game) => {
   const storedDb =
-    queueType === "solos"
+    game.queueType === "solos"
       ? await MatchmakerCollection.findOne({
           id: user.id,
         })
@@ -101,6 +101,8 @@ const assignWinLoseDb = async (user, game, score, queueType) => {
         });
 
   const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
+
+  const score = game.winningTeam === 1 ? WINS : LOSSES;
 
   const sort = `channels.${channelPos}.${score}`;
 
@@ -113,7 +115,7 @@ const assignWinLoseDb = async (user, game, score, queueType) => {
     },
   };
 
-  if (queueType === "solos") {
+  if (game.queueType === "solos") {
     await MatchmakerCollection.update(
       {
         id: user.id,
@@ -131,9 +133,9 @@ const assignWinLoseDb = async (user, game, score, queueType) => {
   }
 };
 
-const revertGame = async (user, game, param, team, queueType) => {
+const revertGame = async (user, game, param, team) => {
   const storedDb =
-    queueType === "solos"
+    game.queueType === "solos"
       ? await MatchmakerCollection.findOne({
           id: user.id,
         })
@@ -171,7 +173,7 @@ const revertGame = async (user, game, param, team, queueType) => {
             winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 20 : storedDb.channels[channelPos].mmr + 20,
         },
       };
-      if (queueType === "solos") {
+      if (game.queueType === "solos") {
         await MatchmakerCollection.update(
           {
             id: user.id,
@@ -198,7 +200,7 @@ const revertGame = async (user, game, param, team, queueType) => {
             winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 10 : storedDb.channels[channelPos].mmr + 10,
         },
       };
-      if (queueType === "solos") {
+      if (game.queueType === "solos") {
         await MatchmakerCollection.update(
           {
             id: user.id,
@@ -219,37 +221,6 @@ const revertGame = async (user, game, param, team, queueType) => {
     default:
       console.log("Invalid param");
   }
-};
-
-const assignWinLostOrRevertSolo = async (game, param) => {
-  const promises = [];
-  for (const user of game.team1) {
-    if (param === "Finished") {
-      promises.push(assignWinLoseDb(user, game, game.winningTeam === 0 ? WINS : LOSSES), "solos");
-    } else {
-      promises.push(revertGame(user, game, param, TEAM1), "solos");
-    }
-  }
-  for (const user of game.team2) {
-    if (param === "Finished") {
-      promises.push(assignWinLoseDb(user, game, game.winningTeam === 1 ? WINS : LOSSES), "solos");
-    } else {
-      promises.push(revertGame(user, game, param, TEAM2), "solos");
-    }
-  }
-  await Promise.all(promises);
-};
-
-const assignWinLostOrRevertTeams = async (game, param) => {
-  const promises = [];
-  if (param === "Finished") {
-    promises.push(assignWinLoseDb(game.team1, game, game.winningTeam === 0 ? WINS : LOSSES, "teams"));
-    promises.push(assignWinLoseDb(game.team2, game, game.winningTeam === 1 ? WINS : LOSSES, "teams"));
-  } else {
-    promises.push(revertGame(game.team1, game, param, TEAM1, "teams"));
-    promises.push(revertGame(game.team2, game, param, TEAM2, "teams"));
-  }
-  await Promise.all(promises);
 };
 
 const includesUserId = (array, userId) => {
@@ -305,7 +276,6 @@ const shuffle = (array) => {
 };
 
 module.exports = {
-  assignWinLostOrRevertTeams,
   fetchGamesTeams,
   fetchTeamByGuildIdAndName,
   fetchTeamsByGuildId,
@@ -321,7 +291,6 @@ module.exports = {
   deletableChannels,
   cancelQueue,
   revertGame,
-  assignWinLostOrRevertSolo,
   EMBED_COLOR_WARNING,
   channelQueues,
   includesUserId,

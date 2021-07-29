@@ -9,7 +9,7 @@ const {
   finishedGames,
   messageEndswith,
   deletableChannels,
-  assignWinLostOrRevertTeams,
+  assignWinLoseDb,
   fetchTeamByGuildAndUserId,
 } = require("../utils");
 
@@ -76,9 +76,11 @@ const execute = async (message) => {
     game.winningTeam = 1;
   }
 
-  const typeFunc = "Finished";
+  const promises = [];
 
-  await assignWinLostOrRevertTeams(game, typeFunc);
+  promises.push(assignWinLoseDb(game.team1, game));
+
+  promises.push(assignWinLoseDb(game.team2, game));
 
   finishedGames.push(game);
 
