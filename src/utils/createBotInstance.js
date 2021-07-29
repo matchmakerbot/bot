@@ -10,7 +10,7 @@ const fastify = require("fastify")();
 
 const client = require("./createClientInstance.js");
 
-const { queueSizeObject: queueTypeObject } = require("./cache");
+const { queueTypeObject } = require("./cache");
 
 const GuildsCollection = require("./schemas/guildsSchema");
 
@@ -162,7 +162,7 @@ const createBotInstance = async () => {
   try {
     client.on("guildCreate", async (guild) => {
       console.log(`Joined ${guild.name}`);
-      const guildsInfo = await GuildsCollection.find({ id: guild.id });
+      const guildsInfo = await GuildsCollection.findOne({ id: guild.id });
 
       if (guildsInfo == null) {
         const insertedGuild = new GuildsCollection(NewGuild(guild.id));

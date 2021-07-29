@@ -1,3 +1,3 @@
-const queueSizeObject = {};
+const queueTypeObject = {};
 
-module.exports = { queueSizeObject };
+module.exports = { queueTypeObject };

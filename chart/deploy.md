@@ -1,0 +1,1 @@
+helm upgrade matchmakerbot ./chart --install --atomic --namespace matchmaker --timeout 1m

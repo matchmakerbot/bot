@@ -1,0 +1,53 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  lint:
+    name: Run eslint
+    runs-on: ubuntu-latest
+    container:
+      image: node
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        uses: borales/actions-yarn@v2.1.0
+        with:
+          cmd: install
+      - name: Lint
+        uses: borales/actions-yarn@v2.1.0
+        with:
+          cmd: lint
+  build:
+    name: Build docker container
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to github docker
+        run: docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build docker image
+        run: docker build -t matchmakerbot .
+      - name: Docker tag
+        run: docker tag matchmakerbot ${{ secrets.DOCKER_USER }}/matchmaker-bot:test
+      - name: Push docker image
+        run: docker push ${{ secrets.DOCKER_USER }}/matchmaker-bot:test
+  deploy:
+    name: Deploy to kubernetes
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+      - name: Save kubeconfig
+        uses: digitalocean/action-doctl@master
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        with:
+          args: kubernetes cluster kubeconfig show k8s-bandsy > $GITHUB_WORKSPACE/.kubeconfig
+      - name: Install helm
+        run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
+      - name: Update deployment
+        run: helm upgrade matchmakerbot ./chart --install --atomic --namespace matchmaker --timeout 1m --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig --set-string sha=${{ github.sha }} --set-string bot.token="${{ secrets.BOT_TOKEN }}" --set-string mongo.cert="${{ secrets.MONGO_CERT }}" --set-string mongo.key="${{ secrets.MONGO_KEY }}"

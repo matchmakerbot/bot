@@ -272,8 +272,10 @@ const execute = async (message, queueSize) => {
           time: 20000,
         })
         .then((collected) => {
-          // eslint-disable-next-line no-underscore-dangle,no-unused-expressions,no-return-assign
-          collected.forEach((e) => (e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count)));
+          collected.forEach((e) => {
+            // eslint-disable-next-line no-underscore-dangle,no-unused-expressions
+            e._emoji.name === "🇷" ? (rorcCount.r = e.count) : (rorcCount.c = e.count);
+          });
         });
 
       if (rorcCount.r === rorcCount.c) {
