@@ -14,7 +14,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "matchmaking", versionKey: false, minimize: false }
+  { collection: "solos", versionKey: false, minimize: false }
 );
 
-module.exports = mongoose.model("matchmaking", schema);
+module.exports = mongoose.model("solos", schema);

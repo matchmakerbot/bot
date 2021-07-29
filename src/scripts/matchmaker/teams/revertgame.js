@@ -48,9 +48,9 @@ const execute = async (message) => {
   if (thirdArg === "revert" || thirdArg === "cancel") {
     const promises = [];
 
-    promises.push(revertGame(selectedGame.team1, selectedGame, thirdArg, TEAM1));
+    promises.push(revertGame(selectedGame.team1, selectedGame, thirdArg, TEAM1, "teams"));
 
-    promises.push(revertGame(selectedGame.team2, selectedGame, thirdArg, TEAM2));
+    promises.push(revertGame(selectedGame.team2, selectedGame, thirdArg, TEAM2, "teams"));
 
     await Promise.all(promises);
   } else {

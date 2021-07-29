@@ -476,7 +476,7 @@ const execute = async (message, queueSize) => {
       await ongoingGamesInsert.save();
 
       const discordEmbed1 = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
+        .setColor(EMBED_COLOR_CHECK)
         .addField("Game is ready:", `Game Id is: ${gameCreatedObj.gameId}`)
         .addField(
           ":small_orange_diamond: -Team 1-",
@@ -489,7 +489,7 @@ const execute = async (message, queueSize) => {
       message.channel.send(discordEmbed1);
 
       const JoinMatchEmbed = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
+        .setColor(EMBED_COLOR_CHECK)
         .addField("Name:", valuesforpm.name)
         .addField("Password:", valuesforpm.password)
         .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].name})`);
@@ -523,7 +523,7 @@ const execute = async (message, queueSize) => {
       await Promise.all(promises);
 
       const CreateMatchEmbed = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
+        .setColor(EMBED_COLOR_CHECK)
         .addField("Name:", valuesforpm.name)
         .addField("Password:", valuesforpm.password)
         .addField("You have to:", "Create Custom Match");

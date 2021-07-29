@@ -14,7 +14,7 @@ const {
   assignWinLoseDb,
 } = require("../utils");
 
-const execute = async (message, queueSize) => {
+const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -68,11 +68,11 @@ const execute = async (message, queueSize) => {
   const promises = [];
 
   for (const user of game.team1) {
-    promises.push(assignWinLoseDb(user, game));
+    promises.push(assignWinLoseDb(user, game, "solos"));
   }
 
   for (const user of game.team2) {
-    promises.push(assignWinLoseDb(user, game));
+    promises.push(assignWinLoseDb(user, game, "solos"));
   }
 
   await Promise.all(promises);
@@ -80,7 +80,6 @@ const execute = async (message, queueSize) => {
   finishedGames.push(game);
 
   await OngoingGamesSolosCollection.deleteOne({
-    queueSize,
     gameId: game.gameId,
   });
 

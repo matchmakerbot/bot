@@ -49,11 +49,11 @@ const execute = async (message) => {
     const promises = [];
 
     for (const user of selectedGame.team1) {
-      promises.push(revertGame(user, selectedGame, thirdArg, TEAM1));
+      promises.push(revertGame(user, selectedGame, thirdArg, TEAM1, "solos"));
     }
 
     for (const user of selectedGame.team2) {
-      promises.push(revertGame(user, selectedGame, thirdArg, TEAM2));
+      promises.push(revertGame(user, selectedGame, thirdArg, TEAM2, "solos"));
     }
 
     await Promise.all(promises);

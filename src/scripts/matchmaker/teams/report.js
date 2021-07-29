@@ -78,9 +78,9 @@ const execute = async (message) => {
 
   const promises = [];
 
-  promises.push(assignWinLoseDb(game.team1, game));
+  promises.push(assignWinLoseDb(game.team1, game, "teams"));
 
-  promises.push(assignWinLoseDb(game.team2, game));
+  promises.push(assignWinLoseDb(game.team2, game, "teams"));
 
   finishedGames.push(game);
 
