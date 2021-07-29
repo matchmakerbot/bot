@@ -40,7 +40,16 @@ const sentences = [
   "Stop Saving for Retirement. Start spending that money on whiskey.",
   "Legally change yourself to a female so that you have a longer life expectancy",
   "Spice up any Social media comment with random quotation marks: \n “Congrats“ on your baby. \n Congrats on “your“ baby. \n Congrats on your “baby“.",
-  "To save money on wet wipes, and to be more environmentally friendly, piss on toilet paper"
+  "To save money on wet wipes, and to be more environmentally friendly, piss on toilet paper",
+  "Did you know a motorcycle engine uses much more gas when going uphill rather than downhill ? You can save significant quantity of gas by pushing your motorcycle.",
+  "Having a dirty house and feeling too lazy to clean your house.? Did you know your local council will send someone to clean your house if you are morbidly obese and unfit to clean your house.?What you waiting for?Pile on the pounds for a free house clean!",
+  "Getting bacon on your burger at Five Guys costs extra, but it doesn't cost extra to get bacon in your milkshake. So get a milkshake and take the bacon out to put on your burger.",
+  "Getting electrocuted will rid of any microchips the government might have planted in your arm by frying them.",
+  "If you live in a place where prostitution isn’t legal, but pornography is, just film it. The prostitute is an actor or actress now, and that’s legal.",
+  "You cant get down if you're always high",
+  "Use white car painting to make your teeth shiny and bright",
+  "Fold up an extra glass screen protector so you always have a spare",
+  "If you ever have a bit too much to drink and do something that you then regret, you can forget about it by getting even MORE drunk and do something even worse.",
 ];
 
 function lptrandom() {
