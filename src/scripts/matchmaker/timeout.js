@@ -73,9 +73,9 @@ const updateOngoingGames = async () => {
   const currentTimeMS = Date.now();
 
   for (const game of [
-    ongoingGamesSolos.filter((game1) => currentTimeMS - game1.time > MAX_GAME_LENGTH_MS),
-    ongoingGamesTeams.filter((game1) => currentTimeMS - game1.time > MAX_GAME_LENGTH_MS),
-  ]) {
+    ongoingGamesSolos.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
+    ongoingGamesTeams.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
+  ].flat()) {
     const channelNotif = client.channels
       .fetch(game.channelId)
       .then(async (e) => {

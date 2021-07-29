@@ -14,7 +14,7 @@ const { queueSizeObject: queueTypeObject } = require("./cache");
 
 const GuildsCollection = require("./schemas/guildsSchema");
 
-const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/solos/timeout");
+const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
 const { prefix } = process.env;
 

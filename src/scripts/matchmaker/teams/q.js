@@ -113,7 +113,7 @@ const execute = async (message, queueSize) => {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
     members: [...message.mentions.members.map((e) => e.user.id)],
-    time: new Date(),
+    date: new Date(),
   };
 
   queueArray.push(toPush);
@@ -131,7 +131,7 @@ const execute = async (message, queueSize) => {
       const gameCreatedObj = {
         queueSize,
         gameId: gameCount.value,
-        time: new Date(),
+        date: new Date(),
         channelId,
         guildId: message.guild.id,
         team1: queueArray[0],
@@ -234,6 +234,16 @@ const execute = async (message, queueSize) => {
 
       const ongoingGamesInsert = new OngoingGamesTeamsSchema(gameCreatedObj);
 
+      message.channel.send(
+        `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
+          (acc = "", curr) => `${acc}<@${curr}>, `,
+          ""
+        )} <@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
+          (acc = "", curr) => `${acc}<@${curr}>, `,
+          ""
+        )} `
+      );
+
       await ongoingGamesInsert.save();
 
       const discordEmbed1 = new Discord.MessageEmbed()
@@ -244,14 +254,14 @@ const execute = async (message, queueSize) => {
           `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
             (acc = "", curr) => `${acc}<@${curr}>, `,
             ""
-          )}>`
+          )}`
         )
         .addField(
           `:small_blue_diamond: Team ${gameCreatedObj.team2.name}`,
           `<@${gameCreatedObj.team2.captain}>, ${gameCreatedObj.team2.members.reduce(
             (acc = "", curr) => `${acc}<@${curr}>, `,
             ""
-          )}>`
+          )}`
         );
 
       message.channel.send(discordEmbed1);

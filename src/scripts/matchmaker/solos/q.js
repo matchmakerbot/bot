@@ -192,7 +192,7 @@ const execute = async (message, queueSize) => {
       const gameCreatedObj = {
         queueSize,
         gameId: gameCount.value,
-        time: new Date(),
+        date: new Date(),
         channelId,
         guildId: message.guild.id,
         team1: [],

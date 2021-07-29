@@ -15,7 +15,7 @@ const schema = new mongoose.Schema(
     queueSize: Number,
     gameId: Number,
     gamemode: String,
-    time: Date,
+    date: Date,
     channelId: String,
     guildId: String,
     team1: teamObject,
