@@ -2,8 +2,14 @@ const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema(
   {
-    id: String,
+    guildId: String,
     name: String,
+    captain: String,
+    members: [
+      {
+        type: String,
+      },
+    ],
     channels: [
       {
         channelId: String,
@@ -14,7 +20,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "solos", versionKey: false, minimize: false }
+  { collection: "teams", versionKey: false, minimize: false }
 );
 
-module.exports = mongoose.model("solos", schema);
+module.exports = mongoose.model("teams", schema);

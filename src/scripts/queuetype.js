@@ -11,7 +11,7 @@ const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F");
 const correctEmbed = new Discord.MessageEmbed().setColor("#77B255");
 
 const execute = async (message) => {
-  const secondArg = message.content.split(" ")[1];
+  const [, queueSize, queueType] = message.content.split(" ");
 
   const a = `channels.${message.channel.id}`;
 
@@ -21,7 +21,7 @@ const execute = async (message) => {
     return message.channel.send(wrongEmbed);
   }
 
-  const intGamemode = Number(secondArg);
+  const intGamemode = Number(queueSize);
 
   if (Number.isNaN(intGamemode)) {
     wrongEmbed.setTitle("Invalid parameter");
@@ -52,18 +52,27 @@ const execute = async (message) => {
       }
       if (queue.channelId === message.channel.id) {
         queue.queueSize = intGamemode;
-        queueSizeObject[message.channel.id] = intGamemode;
+        queue.queueSize = queueType;
         queue.players.splice(0, queue.players.length);
       }
     }
   }
+
+  if (queueSizeObject[message.channel.id] == null) {
+    queueSizeObject[message.channel.id] = {};
+  }
+  queueSizeObject[message.channel.id].queueSize = intGamemode;
+  queueSizeObject[message.channel.id].queueType = queueType;
   await GuildsCollection.updateOne(
     {
       id: message.guild.id,
     },
     {
       $set: {
-        [a]: intGamemode,
+        [a]: {
+          queueType,
+          queueSize: Number(queueSize),
+        },
       },
     }
   );
@@ -74,6 +83,6 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "queuesize",
+  name: "queuetype",
   execute,
 };

@@ -1,8 +1,8 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchFromId } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId } = require("../utils");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -16,23 +16,16 @@ const execute = async (message) => {
   const userId = message.author.id;
   switch (secondArg) {
     case "me": {
-      const user = await MatchmakerCollection.findOne({
-        id: userId,
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      });
+      const team = await fetchTeamByGuildAndUserId(message.guild.id, userId);
 
-      if (user == null) {
+      if (team == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
         message.channel.send(wrongEmbed);
         return;
       }
 
-      const scoreDirectory = user.channels[user.channels.map((e) => e.channelId).indexOf(channelId)];
+      const scoreDirectory = team.channels[team.channels.map((e) => e.channelId).indexOf(channelId)];
 
       correctEmbed.addField("Wins:", scoreDirectory.wins);
 
@@ -52,7 +45,7 @@ const execute = async (message) => {
     }
     case "channel": {
       let funcArg = thirdArg;
-      const storedUsers = await MatchmakerCollection.find({
+      const storedUsers = await TeamsCollection.find({
         channels: {
           $elemMatch: {
             channelId,
@@ -97,7 +90,6 @@ const execute = async (message) => {
       if (Number.isNaN(Number(thirdArg)) || thirdArg == null || thirdArg < 1) {
         funcArg = 1;
       }
-
       let indexes = 10 * (funcArg - 1);
       for (indexes; indexes < 10 * funcArg; indexes++) {
         if (storedUsersList[indexes] == null) {
@@ -108,8 +100,7 @@ const execute = async (message) => {
         for (const channels of storedUsersList[indexes].channels) {
           if (channels.channelId === channelId) {
             correctEmbed.addField(
-              // eslint-disable-next-line no-await-in-loop
-              (await fetchFromId(storedUsersList[indexes].id, wrongEmbed, message))?.username,
+              storedUsersList[indexes].name,
               `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
                 Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))
                   ? "0"
@@ -121,9 +112,9 @@ const execute = async (message) => {
           }
         }
       }
-
       message.channel.send(correctEmbed);
-      break;
+
+      return;
     }
     default: {
       wrongEmbed.setTitle("Invalid Parameters");

@@ -48,13 +48,9 @@ const execute = async (message) => {
   if (thirdArg === "revert" || thirdArg === "cancel") {
     const promises = [];
 
-    for (const user of selectedGame.team1) {
-      promises.push(revertGame(user, selectedGame, thirdArg, TEAM1, "solos"));
-    }
+    promises.push(revertGame(selectedGame.team1, selectedGame, thirdArg, TEAM1, "teams"));
 
-    for (const user of selectedGame.team2) {
-      promises.push(revertGame(user, selectedGame, thirdArg, TEAM2, "solos"));
-    }
+    promises.push(revertGame(selectedGame.team2, selectedGame, thirdArg, TEAM2, "teams"));
 
     await Promise.all(promises);
   } else {
@@ -76,6 +72,6 @@ const execute = async (message) => {
 module.exports = {
   name: "revertgame",
   description:
-    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores",
+    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores (I know this name is shit plz give better options)",
   execute,
 };

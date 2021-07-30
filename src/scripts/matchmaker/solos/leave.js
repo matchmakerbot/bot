@@ -7,20 +7,22 @@ const execute = (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
   const index = queueArray.map((e) => e.id).indexOf(message.author.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   if (index === -1) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    return message.channel.send(wrongEmbed);
+    message.channel.send(wrongEmbed);
+    return;
   }
 
   queueArray.splice(index, 1);
@@ -29,11 +31,11 @@ const execute = (message, queueSize) => {
     `:white_check_mark: ${message.author.username} left the queue! ${queueArray.length}/${queueSize}`
   );
 
-  return message.channel.send(correctEmbed);
+  message.channel.send(correctEmbed);
 };
 
 module.exports = {
-  name: "leave",
+  name: "Leave the queue",
   description: "6man bot",
   execute,
 };

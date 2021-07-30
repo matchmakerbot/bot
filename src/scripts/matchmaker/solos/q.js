@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const client = require("../../../utils/createClientInstance.js");
 
-const OngoingGamesCollection = require("../../../utils/schemas/ongoingGamesSchema.js");
+const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 // make mmr based system (the worse the team is the higher mmr they win if they win the match and vice versa,) not just add 13 and subtract 10 like a retard
@@ -15,15 +15,15 @@ const {
   includesUserId,
   channelQueues,
   joinTeam1And2,
-  fetchGames,
+  fetchGamesSolos,
   EMBED_COLOR_WARNING,
+  gameCount,
+  shuffle,
 } = require("../utils");
 
 const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
 const reactEmojisrorc = ["🇨", "🇷"];
-
-let gameCount = 0;
 
 const filterReactionrorc = (reaction, user, queueArray, rorcCount) => {
   if (
@@ -39,27 +39,6 @@ const filterReactionrorc = (reaction, user, queueArray, rorcCount) => {
 
 const filterReactionCaptains = (reaction, user) =>
   user.id !== "571839826744180736" && reactEmojisCaptains.includes(reaction.emoji.name);
-
-const shuffle = (array) => {
-  const arrayToShuffle = array;
-  let currentIndex = array.length;
-  let temporaryValue;
-  let randomIndex;
-
-  while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-
-    currentIndex--;
-
-    temporaryValue = array[currentIndex];
-
-    arrayToShuffle[currentIndex] = array[randomIndex];
-
-    arrayToShuffle[randomIndex] = temporaryValue;
-  }
-
-  return arrayToShuffle;
-};
 
 const choose2Players = async (dm, team, queue, captainsObject, message) => {
   if (queue.length < 2) return false;
@@ -147,7 +126,7 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
-  const queueArray = getQueueArray(queueSize, message.channel.id);
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
   const channelId = message.channel.id;
 
@@ -158,7 +137,15 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (includesUserId(channelQueues.map((e) => e.players).flat(), userId)) {
+  if (
+    includesUserId(
+      channelQueues
+        .filter((e) => e.queueType === "solos" && e.guildId === message.guild.id)
+        .map((e) => e.players)
+        .flat(),
+      userId
+    )
+  ) {
     const channelQueued = (
       await client.channels.fetch(channelQueues.find((e) => includesUserId(e.players, userId)).channelId)
     ).name;
@@ -168,7 +155,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const storedGames = await fetchGames();
+  const storedGames = await fetchGamesSolos();
 
   for (const game of storedGames) {
     if (includesUserId(joinTeam1And2(game), userId)) {
@@ -200,13 +187,14 @@ const execute = async (message, queueSize) => {
 
   if (queueArray.length === queueSize) {
     try {
-      gameCount++;
+      gameCount.value++;
 
       const gameCreatedObj = {
         queueSize,
-        gameId: gameCount,
-        time: new Date(),
+        gameId: gameCount.value,
+        date: new Date(),
         channelId,
+        guildId: message.guild.id,
         team1: [],
         team2: [],
         voiceChannelIds: [],
@@ -220,7 +208,7 @@ const execute = async (message, queueSize) => {
             const newUser = {
               id: user.id,
               name: user.name,
-              servers: [
+              channels: [
                 {
                   channelId,
                   wins: 0,
@@ -233,14 +221,14 @@ const execute = async (message, queueSize) => {
             const matchmakerInsert = new MatchmakerCollection(newUser);
 
             await matchmakerInsert.save();
-          } else if (!storedUser.servers.map((e) => e.channelId).includes(channelId)) {
+          } else if (!storedUser.channels.map((e) => e.channelId).includes(channelId)) {
             await MatchmakerCollection.update(
               {
                 id: user.id,
               },
               {
                 $push: {
-                  servers: {
+                  channels: {
                     channelId,
                     wins: 0,
                     losses: 0,
@@ -485,12 +473,12 @@ const execute = async (message, queueSize) => {
         channel: channelId,
       });
 
-      const ongoingGamesInsert = new OngoingGamesCollection(gameCreatedObj);
+      const ongoingGamesInsert = new OngoingGamesSolosCollection(gameCreatedObj);
 
       await ongoingGamesInsert.save();
 
       const discordEmbed1 = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
+        .setColor(EMBED_COLOR_CHECK)
         .addField("Game is ready:", `Game Id is: ${gameCreatedObj.gameId}`)
         .addField(
           ":small_orange_diamond: -Team 1-",
@@ -503,7 +491,7 @@ const execute = async (message, queueSize) => {
       message.channel.send(discordEmbed1);
 
       const JoinMatchEmbed = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
+        .setColor(EMBED_COLOR_CHECK)
         .addField("Name:", valuesforpm.name)
         .addField("Password:", valuesforpm.password)
         .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].name})`);
@@ -537,7 +525,7 @@ const execute = async (message, queueSize) => {
       await Promise.all(promises);
 
       const CreateMatchEmbed = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
+        .setColor(EMBED_COLOR_CHECK)
         .addField("Name:", valuesforpm.name)
         .addField("Password:", valuesforpm.password)
         .addField("You have to:", "Create Custom Match");
@@ -572,6 +560,6 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "q",
-  description: "6man bot",
+  description: "Enter the queue (removes player after 45 minutes if no game has been made)",
   execute,
 };
