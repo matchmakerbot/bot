@@ -1,5 +1,5 @@
 #Eu FROM node:12.19.0-buster
-FROM node:12.19.0-buster
+FROM node:14-buster
 
 #app dir
 WORKDIR /app
