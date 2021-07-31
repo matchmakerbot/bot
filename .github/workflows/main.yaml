@@ -32,9 +32,9 @@ jobs:
       - name: Build docker image
         run: docker build -t matchmakerbot .
       - name: Docker tag
-        run: docker tag matchmakerbot ${{ secrets.DOCKER_USER }}/matchmaker-bot:test
+        run: docker tag matchmakerbot ${{ secrets.DOCKER_USER }}/matchmaker-bot:latest
       - name: Push docker image
-        run: docker push ${{ secrets.DOCKER_USER }}/matchmaker-bot:test
+        run: docker push ${{ secrets.DOCKER_USER }}/matchmaker-bot:latest
   deploy:
     name: Deploy to kubernetes
     runs-on: ubuntu-latest
