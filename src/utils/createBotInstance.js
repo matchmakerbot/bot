@@ -127,7 +127,7 @@ const createBotInstance = async () => {
           if (guildsInfo?.channels[message.channel.id]?.queueType == null) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x: You must select your queue size and gamemode in this channel !queueType number gamemode, for example !queueType 6 solos or !queueType 8 teams\n Please read the following pastebin for changelog https://pastebin.com/N9kq20LS"
+              ":x:You need to set the queueType for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !helpsolosmatchmaking or !helpteamsmatchmaking"
             );
 
             message.channel.send(embed);
