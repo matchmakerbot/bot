@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const GuildsCollection = require("../utils/schemas/guildsSchema");
 
-const { queueSizeObject } = require("../utils/cache");
+const { queueTypeObject } = require("../utils/cache");
 
 const { channelQueues } = require("./matchmaker/utils");
 
@@ -58,11 +58,11 @@ const execute = async (message) => {
     }
   }
 
-  if (queueSizeObject[message.channel.id] == null) {
-    queueSizeObject[message.channel.id] = {};
+  if (queueTypeObject[message.channel.id] == null) {
+    queueTypeObject[message.channel.id] = {};
   }
-  queueSizeObject[message.channel.id].queueSize = intGamemode;
-  queueSizeObject[message.channel.id].queueType = queueType;
+  queueTypeObject[message.channel.id].queueSize = intGamemode;
+  queueTypeObject[message.channel.id].queueType = queueType;
   await GuildsCollection.updateOne(
     {
       id: message.guild.id,
