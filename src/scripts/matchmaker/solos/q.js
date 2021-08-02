@@ -7,7 +7,6 @@ const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGames
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 // make mmr based system (the worse the team is the higher mmr they win if they win the match and vice versa,) not just add 13 and subtract 10 like a retard
 // 2 players with highest mmr are the captains
-// balance randoms by mmr
 const {
   EMBED_COLOR_CHECK,
   getQueueArray,

@@ -99,7 +99,6 @@ const assignWinLoseDb = async (user, game, queueType) => {
           name: user.name,
           guildId: game.guildId,
         });
-  console.log(game);
 
   const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
 

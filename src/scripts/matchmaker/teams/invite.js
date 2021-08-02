@@ -45,7 +45,7 @@ const execute = async (message) => {
   }
 
   if (invites[fetchedTeam.name].includes(pingedUser)) {
-    wrongEmbed.setTitle(`:x: <@${pingedUser}> was already invited`);
+    wrongEmbed.setTitle(`:x: ${message.mentions.members.first().user.username} was already invited`);
 
     message.channel.send(wrongEmbed);
     return;
