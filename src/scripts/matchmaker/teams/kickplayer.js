@@ -52,7 +52,7 @@ const execute = async (message) => {
   const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
 
   for (const channel of channels) {
-    if (channel.players[0].name === fetchedTeam.name) {
+    if (channel.players[0]?.name === fetchedTeam.name) {
       channel.players.splice(0, channel.players.length);
 
       wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members left`);
