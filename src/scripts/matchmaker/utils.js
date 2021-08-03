@@ -89,7 +89,7 @@ const getQueueArray = (queueSize, channelId, guildId, queueType) => {
   return channelQueues[channelQueues.length - 1].players;
 };
 
-const assignWinLoseDb = async (user, game, queueType) => {
+const assignWinLoseDb = async (user, game, queueType, team) => {
   const storedDb =
     queueType === "solos"
       ? await MatchmakerCollection.findOne({
@@ -102,7 +102,8 @@ const assignWinLoseDb = async (user, game, queueType) => {
 
   const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
 
-  const score = game.winningTeam === 1 ? WINS : LOSSES;
+  const score =
+    (game.winningTeam === 0 && team === TEAM1) || (game.winningTeam === 1 && team === TEAM2) ? WINS : LOSSES;
 
   const sort = `channels.${channelPos}.${score}`;
 
@@ -151,7 +152,7 @@ const revertGame = async (user, game, param, team, queueType) => {
   const lose = `channels.${channelPos}.losses`;
 
   const winsOrLosses =
-    (game.winningTeam === 0 && team === TEAM1) || (game.winningTeam === 1 && team === TEAM2) ? "wins" : "losses";
+    (game.winningTeam === 0 && team === TEAM1) || (game.winningTeam === 1 && team === TEAM2) ? WINS : LOSSES;
 
   const sort = `channels.${channelPos}.${winsOrLosses}`;
 
@@ -299,4 +300,6 @@ module.exports = {
   invites,
   messageArgs,
   shuffle,
+  TEAM1,
+  TEAM2,
 };

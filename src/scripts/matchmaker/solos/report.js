@@ -12,6 +12,8 @@ const {
   messageEndswith,
   deletableChannels,
   assignWinLoseDb,
+  TEAM1,
+  TEAM2,
 } = require("../utils");
 
 const execute = async (message) => {
@@ -68,11 +70,11 @@ const execute = async (message) => {
   const promises = [];
 
   for (const user of game.team1) {
-    promises.push(assignWinLoseDb(user, game, "solos"));
+    promises.push(assignWinLoseDb(user, game, "solos", TEAM1));
   }
 
   for (const user of game.team2) {
-    promises.push(assignWinLoseDb(user, game, "solos"));
+    promises.push(assignWinLoseDb(user, game, "solos", TEAM2));
   }
 
   await Promise.all(promises);

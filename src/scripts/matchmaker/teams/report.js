@@ -11,6 +11,8 @@ const {
   deletableChannels,
   assignWinLoseDb,
   fetchTeamByGuildAndUserId,
+  TEAM1,
+  TEAM2,
 } = require("../utils");
 
 const execute = async (message) => {
@@ -78,9 +80,9 @@ const execute = async (message) => {
 
   const promises = [];
 
-  promises.push(assignWinLoseDb(game.team1, game, "teams"));
+  promises.push(assignWinLoseDb(game.team1, game, "teams", TEAM1));
 
-  promises.push(assignWinLoseDb(game.team2, game, "teams"));
+  promises.push(assignWinLoseDb(game.team2, game, "teams", TEAM2));
 
   finishedGames.push(game);
 

@@ -6,6 +6,8 @@ const { queueTypeObject } = require("../utils/cache");
 
 const { channelQueues } = require("./matchmaker/utils");
 
+const queueTypes = ["solos", "teams"];
+
 const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F");
 
 const correctEmbed = new Discord.MessageEmbed().setColor("#77B255");
@@ -37,6 +39,12 @@ const execute = async (message) => {
 
   if (intGamemode < 2 || intGamemode > 12) {
     wrongEmbed.setTitle("QueueSize must range between 2 and 12");
+
+    return message.channel.send(wrongEmbed);
+  }
+
+  if (!queueTypes.includes(queueType)) {
+    wrongEmbed.setTitle("Invalid queueType, please use either solos or teams");
 
     return message.channel.send(wrongEmbed);
   }
