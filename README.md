@@ -1,15 +1,14 @@
-# Wanna play agaisnt friends but no way to set it up? Want to build a gaming community?
+# Wanna play against friends but no way to set it up? Want to build a competitive community?
 
 Hi there. I'm Tweeno and I've developed a Matchmaking/Pugs/Scrims bot that can be used in any discord.
 
-The bot creates teams of 3 or 5, randomized, with random captains or even Pre made teams // currently disabled.
+The bot creates teams with a size defined by you, so it can be 3v3, 5v5 etc..., randomized, with random captains or even Pre made teams, where users can create their own team, invite players and play agaisnt others.
 The bot comes with its own Leaderboard, based on a mmr system.
 
-## How to play ?
-Once enough players have queued up using the correct command, the bot will ask you to pick between random teams or captain mode.
+# How to play ?
+Once enough players have queued up using the correct command, the bot will ask you to pick between random teams or captain mode, or if you're playing in the teams mode, this gets skipped..
 
-The bot will then create the teams and 2 different voice chats for each team to join.
-Then you play the game, as a normal private game.
+The bot will then create the teams and 2 different voice chats for each team to join, and then you play the game, as a normal private game.
 
 Once the game has been completed, one player reports a win or loss to the bot. the bot will then automaticly give or take mmr from each player, dependent on wich team they were on, if abused, admins can revert the game.
 
