@@ -27,6 +27,13 @@ const execute = async (message) => {
 
       const scoreDirectory = team.channels[team.channels.map((e) => e.channelId).indexOf(channelId)];
 
+      if (scoreDirectory == null) {
+        wrongEmbed.setTitle(":x: You haven't played any games yet!");
+
+        message.channel.send(wrongEmbed);
+        return;
+      }
+
       correctEmbed.addField("Wins:", scoreDirectory.wins);
 
       correctEmbed.addField("Losses:", scoreDirectory.losses);
