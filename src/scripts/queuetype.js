@@ -60,7 +60,7 @@ const execute = async (message) => {
       }
       if (queue.channelId === message.channel.id) {
         queue.queueSize = intGamemode;
-        queue.queueSize = queueType;
+        queue.queueType = queueType;
         queue.players.splice(0, queue.players.length);
       }
     }

@@ -8,10 +8,6 @@ const discordEmbed = new Discord.MessageEmbed()
   )
   .setColor("#F8534F")
   .setTitle("For MatchMaking related commands, please use the command !helpsolosmatchmaking or !helpteamsmatchmaking")
-  .addField("!lpt", "`Gives you a nice life pro tip.`")
-  .addField("!gayrandom", "`Tells you how gay you are`")
-  .addField("!randomword", "`Says a random word from the oxford dictionary. Current count: 458570 words.`")
-  .addField("!reddit", "`Allows you to search posts with images on any given subreddit (Example = !reddit memes)`")
   .addField("!credits", "`Just some credits :p`")
   .setTimestamp();
 

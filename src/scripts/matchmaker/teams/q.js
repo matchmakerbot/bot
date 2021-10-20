@@ -289,8 +289,6 @@ const execute = async (message, queueSize) => {
                   `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
                 );
 
-              console.error(error);
-
               message.channel.send(errorEmbed);
             }
           })

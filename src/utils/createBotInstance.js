@@ -150,8 +150,11 @@ const createBotInstance = async () => {
 
         return;
       }
-
-      client.commands.get(command).execute(message);
+      try {
+        client.commands.get(command).execute(message);
+      } catch (e) {
+        console.log(e);
+      }
     });
     console.log("Successfully created socket Client.on -> Message");
   } catch (e) {
