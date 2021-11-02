@@ -4,6 +4,8 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, channel
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   let isUsingDiscordId = false;
 
@@ -18,7 +20,7 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -31,21 +33,21 @@ const execute = async (message) => {
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!fetchedTeam.members.includes(kickedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (kickedUser === message.author.id) {
     wrongEmbed.setTitle(":x: You cannot kick yourself dummy!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -57,7 +59,7 @@ const execute = async (message) => {
 
       wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members left`);
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
     }
   }
 
@@ -75,7 +77,7 @@ const execute = async (message) => {
     } from ${fetchedTeam.name}`
   );
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

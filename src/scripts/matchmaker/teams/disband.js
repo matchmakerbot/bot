@@ -13,6 +13,8 @@ const {
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -22,7 +24,7 @@ const execute = async (message) => {
     if (!message.member.hasPermission("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have administrator permission to delete said team");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
       return;
     }
     const team = await fetchTeamByGuildIdAndName(message.guild.id, messageArgs(message));
@@ -30,7 +32,7 @@ const execute = async (message) => {
     if (team == null) {
       wrongEmbed.setTitle(":x: Team not found");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
       return;
     }
 
@@ -45,7 +47,7 @@ const execute = async (message) => {
     ) {
       wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
       return;
     }
 
@@ -57,7 +59,7 @@ const execute = async (message) => {
 
         wrongEmbed.setTitle(`:x: ${messageArgs(message)} was kicked from the queue since they were disbanded`);
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
       }
     }
 
@@ -71,7 +73,7 @@ const execute = async (message) => {
 
     correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Deleted!`);
 
-    message.channel.send(correctEmbed);
+    sendMessage(message, correctEmbed);
     return;
   }
 
@@ -82,14 +84,14 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -102,7 +104,7 @@ const execute = async (message) => {
   ) {
     wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -113,7 +115,7 @@ const execute = async (message) => {
       channel.players.splice(0, channel.players.length);
       wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since they were disbanded`);
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
     }
   }
 
@@ -125,7 +127,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} Deleted!`);
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

@@ -4,6 +4,8 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamsByGuildId, messageArgs, 
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -20,28 +22,28 @@ const execute = async (message) => {
   ) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!guildTeams.map((e) => e.name).includes(messageArgs(message))) {
     wrongEmbed.setTitle(":x: This team doesn't exist");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!Object.keys(invites).includes(messageArgs(message))) {
     wrongEmbed.setTitle(":x: This team didn't invite anyone!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!invites[messageArgs(message)].includes(message.author.id)) {
     wrongEmbed.setTitle(":x: This team didn't invite you!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -57,7 +59,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${messageArgs(message)}!`);
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

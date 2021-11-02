@@ -1,5 +1,7 @@
 const Discord = require("discord.js");
 
+const { sendMessage } = require("../utils/utils");
+
 const discordEmbed = new Discord.MessageEmbed()
 
   .setAuthor(
@@ -15,6 +17,6 @@ module.exports = {
   name: "help",
   description: "Gives you a nice command list",
   execute(message) {
-    message.channel.send(discordEmbed);
+    sendMessage(message, discordEmbed);
   },
 };

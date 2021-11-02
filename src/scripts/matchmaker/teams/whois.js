@@ -8,6 +8,8 @@ const {
   fetchTeamByGuildAndUserId,
 } = require("../utils");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -18,7 +20,7 @@ const execute = async (message) => {
   if (messageArgs(message) == null) {
     wrongEmbed.setTitle(":x: Please specify the team.");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -30,7 +32,7 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: This team doesn't exist");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -41,7 +43,7 @@ const execute = async (message) => {
     `<@${fetchedTeam.captain}> (Captain), ${fetchedTeam.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
   );
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

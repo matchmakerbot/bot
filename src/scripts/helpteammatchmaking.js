@@ -6,6 +6,8 @@ const Discord = require("discord.js");
 
 const fs = require("fs");
 
+const { sendMessage } = require("../utils/utils");
+
 const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/teams")
   .filter((file) => file.endsWith(".js"));
@@ -29,7 +31,7 @@ const execute = (message) => {
     "Info for teams:",
     " ONLY the captain has acess to some commands like !q, !leave!, !cancel etc..."
   );
-  message.channel.send(discordEmbed);
+  sendMessage(message, discordEmbed);
 };
 module.exports = {
   name: "helpteamsmatchmaking",

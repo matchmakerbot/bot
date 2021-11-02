@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const { sendMessage } = require("../../../utils/utils");
 
 const { EMBED_COLOR_CHECK, getQueueArray } = require("../utils");
 
@@ -11,7 +12,7 @@ const execute = (message, queueSize) => {
 
   correctEmbed.setDescription(queueArray.map((e) => e.name).join(", "));
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

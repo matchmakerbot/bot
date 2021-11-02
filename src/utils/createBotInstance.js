@@ -16,6 +16,8 @@ const GuildsCollection = require("./schemas/guildsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
+const { sendMessage } = require("./utils");
+
 const { prefix } = process.env;
 
 const commandFiles = fs
@@ -130,7 +132,7 @@ const createBotInstance = async () => {
               ":x:You need to set the queueType for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !helpsolosmatchmaking or !helpteamsmatchmaking"
             );
 
-            message.channel.send(embed);
+            sendMessage(message, embed);
             return;
           }
           queueTypeObject[message.channel.id] = guildsInfo.channels[message.channel.id];

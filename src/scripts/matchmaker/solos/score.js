@@ -3,6 +3,7 @@ const Discord = require("discord.js");
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchFromId } = require("../utils");
 
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const { sendMessage } = require("../../../utils/utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -28,7 +29,7 @@ const execute = async (message) => {
       if (user == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -47,7 +48,7 @@ const execute = async (message) => {
 
       correctEmbed.addField("MMR:", scoreDirectory.mmr);
 
-      message.channel.send(correctEmbed);
+      sendMessage(message, correctEmbed);
       return;
     }
     case "channel": {
@@ -75,14 +76,14 @@ const execute = async (message) => {
       ) {
         wrongEmbed.setTitle(":x: This channel does not belong to this server!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
       if (storedUsersList.length === 0) {
         wrongEmbed.setTitle(":x: No games have been played in here!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -122,13 +123,13 @@ const execute = async (message) => {
         }
       }
 
-      message.channel.send(correctEmbed);
+      sendMessage(message, correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle("Invalid Parameters");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
     }
   }
 };

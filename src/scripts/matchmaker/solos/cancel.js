@@ -12,6 +12,8 @@ const {
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -24,14 +26,14 @@ const execute = async (message, queueSize) => {
   if (gameList.length === 0) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!includesUserId(gameList.map((e) => joinTeam1And2(e)).flat(), userId)) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -48,7 +50,7 @@ const execute = async (message, queueSize) => {
   if (cancelqueuearray.includes(userId)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -60,7 +62,7 @@ const execute = async (message, queueSize) => {
     })`
   );
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 
   if (cancelqueuearray.length === queueSize / 2 + 1) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -76,7 +78,7 @@ const execute = async (message, queueSize) => {
       gameId,
     });
 
-    message.channel.send(newCorrectEmbed);
+    sendMessage(message, newCorrectEmbed);
   }
 };
 

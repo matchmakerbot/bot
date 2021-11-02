@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchGamesTeams } = require("../utils");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -12,7 +14,7 @@ const execute = async (message) => {
   if (ongoingGames.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 
-    return message.channel.send(wrongEmbed);
+    return sendMessage(message, wrongEmbed);
   }
 
   for (let i = 0; i < 6; i++) {
@@ -35,7 +37,7 @@ const execute = async (message) => {
 
     correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(ongoingGames.length / 10)}`);
   }
-  return message.channel.send(correctEmbed);
+  return sendMessage(message, correctEmbed);
 };
 
 module.exports = {

@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, getQueueArray, fetchGamesTeams } = require("../utils");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
@@ -20,21 +22,21 @@ const execute = async (message, queueSize) => {
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (message.content.split(" ").length === 1) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!message.member.hasPermission("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -47,14 +49,14 @@ const execute = async (message, queueSize) => {
       if (fetchGamesByChannelId.length !== 0) {
         wrongEmbed.setTitle(":x: There are users in game!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
       if (message.content.split(" ").length !== 2) {
         wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
       const promises = [];
@@ -98,7 +100,7 @@ const execute = async (message, queueSize) => {
       }
       correctEmbed.setTitle(":white_check_mark: Channel score reset!");
 
-      message.channel.send(correctEmbed);
+      sendMessage(message, correctEmbed);
       break;
     }
 
@@ -117,13 +119,13 @@ const execute = async (message, queueSize) => {
       ) {
         wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(wrongEmbed);
         return;
       }
       if (message.content.split(" ").length !== 3) {
         wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(wrongEmbed);
         return;
       }
 
@@ -135,7 +137,7 @@ const execute = async (message, queueSize) => {
       if (player == null) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(wrongEmbed);
         return;
       }
 
@@ -155,13 +157,13 @@ const execute = async (message, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 
-      message.channel.send(correctEmbed);
+      sendMessage(correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(wrongEmbed);
     }
   }
 };

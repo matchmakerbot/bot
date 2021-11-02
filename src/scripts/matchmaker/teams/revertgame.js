@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, revertGame } = require("../utils");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const TEAM1 = "team1";
 
 const TEAM2 = "team2";
@@ -18,21 +20,21 @@ const execute = async (message) => {
   if (message.content.split(" ").length === 1 || message.content.split(" ").length === 2) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!message.member.hasPermission("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!finishedGames.map((e) => e.gameId).includes(Number(secondArg))) {
     wrongEmbed.setTitle(":x: No game with that Id has been played");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -41,7 +43,7 @@ const execute = async (message) => {
   if (selectedGame.channelId !== channelId) {
     wrongEmbed.setTitle(":x: That game hasn't been played in this channel");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -56,7 +58,7 @@ const execute = async (message) => {
   } else {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -66,7 +68,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === "revert" ? "reverted" : "cancelled"}!`);
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

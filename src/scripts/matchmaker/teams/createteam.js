@@ -10,6 +10,8 @@ const {
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -18,14 +20,14 @@ const execute = async (message) => {
   if (messageArgs(message).length > 31) {
     wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (messageArgs(message).length < 2) {
     wrongEmbed.setTitle(":x: Name too short! Minimum characters allowed are 3.");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -34,7 +36,7 @@ const execute = async (message) => {
   if (teamByName != null) {
     wrongEmbed.setTitle(":x: Name already in use");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -43,7 +45,7 @@ const execute = async (message) => {
   if (teamById != null) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -61,7 +63,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Created!`);
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

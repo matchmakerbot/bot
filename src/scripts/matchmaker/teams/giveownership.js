@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -20,14 +22,14 @@ const execute = async (message, queueSize) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (message.mentions.members.first() == null) {
     wrongEmbed.setTitle(":x: Please tag the user");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -38,7 +40,7 @@ const execute = async (message, queueSize) => {
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: Please leave the queue first!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -53,21 +55,21 @@ const execute = async (message, queueSize) => {
   ) {
     wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (!fetchedTeam.members.includes(pingedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -88,7 +90,7 @@ const execute = async (message, queueSize) => {
     }
   );
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

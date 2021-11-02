@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const client = require("../../../utils/createClientInstance.js");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -18,7 +20,7 @@ const execute = async (message) => {
   if (message.mentions.members.first() == null) {
     wrongEmbed.setTitle(":x: Please mention the user");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -29,14 +31,14 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -47,7 +49,7 @@ const execute = async (message) => {
   if (invites[fetchedTeam.name].includes(pingedUser)) {
     wrongEmbed.setTitle(`:x: ${message.mentions.members.first().user.username} was already invited`);
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -56,7 +58,7 @@ const execute = async (message) => {
   if (userTeam != null) {
     wrongEmbed.setTitle(":x: User already belongs to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -77,12 +79,12 @@ const execute = async (message) => {
 
     console.error(error);
 
-    message.channel.send(errorEmbed);
+    sendMessage(message, errorEmbed);
   }
 
   invites[fetchedTeam.name].push(pingedUser);
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

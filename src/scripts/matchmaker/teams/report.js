@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -31,14 +33,14 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== userId) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -50,7 +52,7 @@ const execute = async (message) => {
   ) {
     wrongEmbed.setTitle(":x: You aren't in a game");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -59,14 +61,14 @@ const execute = async (message) => {
   if (game.channelId !== channelId) {
     wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
     wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
   if (
@@ -96,7 +98,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

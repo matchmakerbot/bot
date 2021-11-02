@@ -1,5 +1,7 @@
 const Discord = require("discord.js");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, getQueueArray } = require("../utils");
 
 const execute = async (message, queueSize) => {
@@ -14,28 +16,28 @@ const execute = async (message, queueSize) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (queueArray.length === 2) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (queueArray.length === 0) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -44,11 +46,11 @@ const execute = async (message, queueSize) => {
 
     correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} left the queue! 0/2`);
 
-    message.channel.send(correctEmbed);
+    sendMessage(message, correctEmbed);
   } else {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
   }
 };
 

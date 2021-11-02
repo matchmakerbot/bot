@@ -11,6 +11,8 @@ const {
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -25,14 +27,14 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== userId) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(wrongEmbed);
     return;
   }
 
@@ -44,7 +46,7 @@ const execute = async (message) => {
   ) {
     wrongEmbed.setTitle(":x: Team is not in game");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(wrongEmbed);
     return;
   }
 
@@ -61,7 +63,7 @@ const execute = async (message) => {
   if (cancelQueueArray.includes(fetchedTeam.name)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(wrongEmbed);
     return;
   }
 
@@ -71,7 +73,7 @@ const execute = async (message) => {
     `:exclamation: ${fetchedTeam.name} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`
   );
 
-  message.channel.send(correctEmbed);
+  sendMessage(correctEmbed);
 
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -86,7 +88,7 @@ const execute = async (message) => {
       gameId,
     });
 
-    message.channel.send(newCorrectEmbed);
+    sendMessage(newCorrectEmbed);
   }
 };
 

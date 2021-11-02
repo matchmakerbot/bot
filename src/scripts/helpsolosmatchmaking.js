@@ -6,6 +6,8 @@ const Discord = require("discord.js");
 
 const fs = require("fs");
 
+const { sendMessage } = require("../utils/utils");
+
 const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/solos")
   .filter((file) => file.endsWith(".js"));
@@ -26,7 +28,7 @@ const execute = (message) => {
       discordEmbed.addField(`!${command.name}`, command.description);
     }
   });
-  message.channel.send(discordEmbed);
+  sendMessage(message, discordEmbed);
 };
 
 module.exports = {

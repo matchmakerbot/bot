@@ -1,5 +1,7 @@
 const Discord = require("discord.js");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../utils");
 
 const execute = (message, queueSize) => {
@@ -14,14 +16,14 @@ const execute = (message, queueSize) => {
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (index === -1) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -31,7 +33,7 @@ const execute = (message, queueSize) => {
     `:white_check_mark: ${message.author.username} left the queue! ${queueArray.length}/${queueSize}`
   );
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

@@ -6,6 +6,8 @@ const client = require("../../../utils/createClientInstance.js");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -32,21 +34,21 @@ const execute = async (message, queueSize) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You don't belong to a team!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== message.author.id) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: You're already in the queue");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -61,7 +63,7 @@ const execute = async (message, queueSize) => {
   ) {
     wrongEmbed.setTitle(":x: You're already queued in another channel!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -76,7 +78,7 @@ const execute = async (message, queueSize) => {
   ) {
     wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -85,14 +87,14 @@ const execute = async (message, queueSize) => {
       `:x: You need at least ${queueSize / 2} members on your team to join the queue (including you)`
     );
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (message.content.split(" ").length !== queueSize / 2) {
     wrongEmbed.setTitle(`:x: Please tag ${queueSize / 2 - 1} teammates to play with you`);
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -102,7 +104,7 @@ const execute = async (message, queueSize) => {
     if (!fetchedTeam.members.includes(e.user.id)) {
       wrongEmbed.setTitle(`:x: ${e.user.username} is not on your team!`);
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
       isInTeam = false;
     }
   });
@@ -120,7 +122,7 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/2`);
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 
   if (queueArray.length === 2) {
     try {
@@ -193,7 +195,7 @@ const execute = async (message, queueSize) => {
           permissionOverwrites: permissionOverwritesTeam1,
         })
         .catch(() =>
-          message.channel.send("Error creating voice channels, are you sure the bot has permissions to do so?")
+          sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
         );
 
       gameCreatedObj.voiceChannelIds.push({
@@ -223,7 +225,7 @@ const execute = async (message, queueSize) => {
           permissionOverwrites: permissionOverwritesTeam2,
         })
         .catch(() =>
-          message.channel.send("Error creating voice channels, are you sure the bot has permissions to do so?")
+          sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
         );
 
       gameCreatedObj.voiceChannelIds.push({
@@ -234,7 +236,8 @@ const execute = async (message, queueSize) => {
 
       const ongoingGamesInsert = new OngoingGamesTeamsSchema(gameCreatedObj);
 
-      message.channel.send(
+      sendMessage(
+        message,
         `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
           (acc = "", curr) => `${acc}<@${curr}>, `,
           ""
@@ -264,7 +267,7 @@ const execute = async (message, queueSize) => {
           )}`
         );
 
-      message.channel.send(discordEmbed1);
+      sendMessage(message, discordEmbed1);
 
       const JoinMatchEmbed = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_CHECK)
@@ -289,10 +292,10 @@ const execute = async (message, queueSize) => {
                   `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
                 );
 
-              message.channel.send(errorEmbed);
+              sendMessage(message, errorEmbed);
             }
           })
-          .catch(() => message.channel.send("Invalid User"));
+          .catch(() => sendMessage(message, "Invalid User"));
         promises.push(fetchedUser);
       }
 
@@ -310,7 +313,7 @@ const execute = async (message, queueSize) => {
             `:x: Couldn't sent message to <@${gameCreatedObj.team1.captain}>, please check if your DM'S aren't set to friends only.`
           );
 
-        message.channel.send(errorEmbed);
+        sendMessage(message, errorEmbed);
         console.error(error);
       });
 
@@ -318,7 +321,7 @@ const execute = async (message, queueSize) => {
     } catch (e) {
       wrongEmbed.setTitle("Error creating teams, resetting queue.");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
 
       queueArray.splice(0, queueArray.length);
 

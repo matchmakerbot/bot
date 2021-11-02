@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, invites } = require("../utils");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -12,7 +14,7 @@ const execute = async (message) => {
   if (pendingInvites.length === 0) {
     wrongEmbed.setTitle(":x: You have no pending invites.");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -20,7 +22,7 @@ const execute = async (message) => {
 
   correctEmbed.setDescription(pendingInvites.join(", "), "Show what you can do in order to get more invites!");
 
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

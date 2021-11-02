@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const { sendMessage } = require("../../../utils/utils");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchGamesSolos } = require("../utils");
 
@@ -11,7 +12,7 @@ const execute = async (message) => {
   if (games.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 
-    message.channel.send(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
   // support more games
@@ -35,7 +36,7 @@ const execute = async (message) => {
 
     correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
   }
-  message.channel.send(correctEmbed);
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

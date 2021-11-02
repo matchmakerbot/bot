@@ -2,6 +2,8 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId } = require("../utils");
 
+const { sendMessage } = require("../../../utils/utils");
+
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
 const execute = async (message) => {
@@ -21,7 +23,7 @@ const execute = async (message) => {
       if (team == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -30,7 +32,7 @@ const execute = async (message) => {
       if (scoreDirectory == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -47,7 +49,7 @@ const execute = async (message) => {
 
       correctEmbed.addField("MMR:", scoreDirectory.mmr);
 
-      message.channel.send(correctEmbed);
+      sendMessage(message, correctEmbed);
       return;
     }
     case "channel": {
@@ -75,14 +77,14 @@ const execute = async (message) => {
       ) {
         wrongEmbed.setTitle(":x: This channel does not belong to this server!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
       if (storedUsersList.length === 0) {
         wrongEmbed.setTitle(":x: No games have been played in here!");
 
-        message.channel.send(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -119,14 +121,14 @@ const execute = async (message) => {
           }
         }
       }
-      message.channel.send(correctEmbed);
+      sendMessage(message, correctEmbed);
 
       return;
     }
     default: {
       wrongEmbed.setTitle("Invalid Parameters");
 
-      message.channel.send(wrongEmbed);
+      sendMessage(message, wrongEmbed);
     }
   }
 };
