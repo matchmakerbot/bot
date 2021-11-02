@@ -263,7 +263,7 @@ const execute = async (message, queueSize) => {
         players: [],
       };
 
-      const rorcMessage = await sendMessage(message, correctEmbed);
+      const rorcMessage = await message.channel.send(correctEmbed);
 
       await rorcMessage.react("🇨");
 
