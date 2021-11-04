@@ -1,3 +1,5 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable no-return-assign */
 const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
@@ -69,50 +71,38 @@ const updateOngoingGames = async () => {
   if (ongoingGamesSolos.length === 0 && ongoingGamesTeams.length === 0) {
     return;
   }
-
   const currentTimeMS = Date.now();
+
+  ongoingGamesSolos.forEach((e) => (e.queueType = "solos"));
+  ongoingGamesTeams.forEach((e) => (e.queueType = "teams"));
 
   for (const game of [
     ongoingGamesSolos.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
     ongoingGamesTeams.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
   ].flat()) {
-    const channelNotif = client.channels
-      .fetch(game.channelId)
-      .then(async (e) => {
-        game.voiceChannelIds.forEach((channel) => {
-          deletableChannels.push(channel);
-        });
-
-        const embedRemove = new Discord.MessageEmbed()
-          .setColor(EMBED_COLOR_WARNING)
-          .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
-
-        await e.send(embedRemove).catch(() => {
-          console.log("Unable to send message 1");
-        });
-        if (game.queueType === "solos") {
-          await OngoingGamesSolosCollection.deleteOne({
-            gameId: game.gameId,
-          });
-        } else {
-          await OngoingGamesTeamsCollection.deleteOne({
-            gameId: game.gameId,
-          });
-        }
-        return null;
-      })
-      .catch(async () => {
-        if (game.queueType === "solos") {
-          await OngoingGamesSolosCollection.deleteOne({
-            gameId: game.gameId,
-          });
-        } else {
-          await OngoingGamesTeamsCollection.deleteOne({
-            gameId: game.gameId,
-          });
-        }
-        return null;
+    const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {
+      game.voiceChannelIds.forEach((channel) => {
+        deletableChannels.push(channel);
       });
+
+      const embedRemove = new Discord.MessageEmbed()
+        .setColor(EMBED_COLOR_WARNING)
+        .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
+
+      await e.send(embedRemove).catch(() => {
+        console.log("Unable to send message 1");
+      });
+      if (game.queueType === "solos") {
+        await OngoingGamesSolosCollection.deleteOne({
+          gameId: game.gameId,
+        });
+      } else {
+        await OngoingGamesTeamsCollection.deleteOne({
+          gameId: game.gameId,
+        });
+      }
+      return null;
+    });
     promises.push(channelNotif);
   }
   await Promise.all(promises);
