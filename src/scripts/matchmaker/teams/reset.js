@@ -119,13 +119,13 @@ const execute = async (message, queueSize) => {
       ) {
         wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-        sendMessage(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
       if (message.content.split(" ").length !== 3) {
         wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-        sendMessage(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -137,7 +137,7 @@ const execute = async (message, queueSize) => {
       if (player == null) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
-        sendMessage(wrongEmbed);
+        sendMessage(message, wrongEmbed);
         return;
       }
 
@@ -157,13 +157,13 @@ const execute = async (message, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 
-      sendMessage(correctEmbed);
+      sendMessage(message, correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-      sendMessage(wrongEmbed);
+      sendMessage(message, wrongEmbed);
     }
   }
 };

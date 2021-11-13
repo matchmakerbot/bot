@@ -27,14 +27,14 @@ const execute = async (message) => {
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
-    sendMessage(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
   if (fetchedTeam.captain !== userId) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
-    sendMessage(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -46,7 +46,7 @@ const execute = async (message) => {
   ) {
     wrongEmbed.setTitle(":x: Team is not in game");
 
-    sendMessage(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -63,7 +63,7 @@ const execute = async (message) => {
   if (cancelQueueArray.includes(fetchedTeam.name)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    sendMessage(wrongEmbed);
+    sendMessage(message, wrongEmbed);
     return;
   }
 
@@ -73,7 +73,7 @@ const execute = async (message) => {
     `:exclamation: ${fetchedTeam.name} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`
   );
 
-  sendMessage(correctEmbed);
+  sendMessage(message, correctEmbed);
 
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -88,7 +88,7 @@ const execute = async (message) => {
       gameId,
     });
 
-    sendMessage(newCorrectEmbed);
+    sendMessage(message, newCorrectEmbed);
   }
 };
 
