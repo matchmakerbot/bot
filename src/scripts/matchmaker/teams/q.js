@@ -188,21 +188,22 @@ const execute = async (message, queueSize) => {
         });
       }
 
-      const orangeTeamVc = await message.guild.channels
+      await message.guild.channels
         .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
           type: "voice",
           parent: message.channel.parentID,
           permissionOverwrites: permissionOverwritesTeam1,
         })
+        .then((e) => {
+          gameCreatedObj.voiceChannelIds.push({
+            id: e.id,
+            channelName: `🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`,
+            channel: channelId,
+          });
+        })
         .catch(() =>
           sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
         );
-
-      gameCreatedObj.voiceChannelIds.push({
-        id: orangeTeamVc.id,
-        channelName: `🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`,
-        channel: channelId,
-      });
 
       const permissionOverwritesTeam2 = [
         {
@@ -218,21 +219,22 @@ const execute = async (message, queueSize) => {
         });
       }
 
-      const blueTeamVc = await message.guild.channels
+      await message.guild.channels
         .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
           type: "voice",
           parent: message.channel.parentID,
           permissionOverwrites: permissionOverwritesTeam2,
         })
+        .then((e) => {
+          gameCreatedObj.voiceChannelIds.push({
+            id: e.id,
+            channelName: `🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`,
+            channel: channelId,
+          });
+        })
         .catch(() =>
           sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
         );
-
-      gameCreatedObj.voiceChannelIds.push({
-        id: blueTeamVc.id,
-        channelName: `🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`,
-        channel: channelId,
-      });
 
       const ongoingGamesInsert = new OngoingGamesTeamsSchema(gameCreatedObj);
 
