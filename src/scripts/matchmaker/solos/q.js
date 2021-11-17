@@ -130,7 +130,7 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  /*if (queueArray.find((e) => e.id === userId) != null) {
+  if (queueArray.find((e) => e.id === userId) != null) {
     wrongEmbed.setTitle(":x: You're already in the queue!");
 
     sendMessage(message, wrongEmbed);
@@ -153,7 +153,7 @@ const execute = async (message, queueSize) => {
 
     sendMessage(message, wrongEmbed);
     return;
-  }*/
+  }
 
   const storedGames = await fetchGamesSolos();
 
