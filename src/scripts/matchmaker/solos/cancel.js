@@ -54,6 +54,8 @@ const execute = async (message, queueSize) => {
       gameId: game.gameId,
     });
 
+    deletableChannels.push(...game.voiceChannelIds);
+
     sendMessage(message, correctEmbed);
     return;
   }

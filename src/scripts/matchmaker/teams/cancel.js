@@ -55,6 +55,8 @@ const execute = async (message) => {
       gameId: game.gameId,
     });
 
+    deletableChannels.push(...game.voiceChannelIds);
+
     sendMessage(message, correctEmbed);
     return;
   }
@@ -129,6 +131,7 @@ const execute = async (message) => {
 
 module.exports = {
   name: "cancel",
-  description: "Cancel the game (Only use this in the case of someone not playing etc...) Administrators can also do !cancel force gameId to force a game cancellatio",
+  description:
+    "Cancel the game (Only use this in the case of someone not playing etc...) Administrators can also do !cancel force gameId to force a game cancellatio",
   execute,
 };
