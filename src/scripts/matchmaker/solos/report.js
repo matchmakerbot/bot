@@ -86,11 +86,9 @@ const execute = async (message) => {
     gameId: game.gameId,
   });
 
-  if (game.voiceChannelIds.length !== 0) {
-    game.voiceChannelIds.forEach((channel) => {
-      deletableChannels.push(channel);
-    });
-  }
+  game.voiceChannelIds.forEach((channel) => {
+    deletableChannels.push(channel);
+  });
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 

@@ -321,6 +321,8 @@ const execute = async (message, queueSize) => {
 
       queueArray.splice(0, queueArray.length);
     } catch (e) {
+      console.log(e);
+
       wrongEmbed.setTitle("Error creating teams, resetting queue.");
 
       sendMessage(message, wrongEmbed);

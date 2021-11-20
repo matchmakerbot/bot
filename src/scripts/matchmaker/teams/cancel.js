@@ -24,6 +24,41 @@ const execute = async (message) => {
 
   const ongoingGames = await fetchGamesTeams(null, message.guild.id);
 
+  const [, secondArg, thirdArg] = message.content.split(" ");
+
+  if (secondArg === "force") {
+    if (!message.member.hasPermission("ADMINISTRATOR")) {
+      wrongEmbed.setTitle(":x: You do not have Administrator permission!");
+
+      sendMessage(message, wrongEmbed);
+      return;
+    }
+
+    const game = await OngoingGamesTeamsCollection.findOne({ gameId: thirdArg });
+
+    if (game == null) {
+      wrongEmbed.setTitle(":x: Game not found!");
+
+      sendMessage(message, wrongEmbed);
+      return;
+    }
+
+    if (game.channelId !== message.channel.id) {
+      wrongEmbed.setTitle(":x: This is the wrong channel!");
+
+      sendMessage(message, wrongEmbed);
+      return;
+    }
+    correctEmbed.setTitle(`:white_check_mark: Game ${game.gameId} Cancelled!`);
+
+    await OngoingGamesTeamsCollection.deleteOne({
+      gameId: game.gameId,
+    });
+
+    sendMessage(message, correctEmbed);
+    return;
+  }
+
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
@@ -94,6 +129,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "cancel",
-  description: "Cancel the game (Only use this in the case of someone not playing etc...)",
+  description: "Cancel the game (Only use this in the case of someone not playing etc...) Administrators can also do !cancel force gameId to force a game cancellatio",
   execute,
 };

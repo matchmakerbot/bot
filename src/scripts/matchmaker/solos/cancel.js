@@ -23,6 +23,41 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
+  const [, secondArg, thirdArg] = message.content.split(" ");
+
+  if (secondArg === "force") {
+    if (!message.member.hasPermission("ADMINISTRATOR")) {
+      wrongEmbed.setTitle(":x: You do not have Administrator permission!");
+
+      sendMessage(message, wrongEmbed);
+      return;
+    }
+
+    const game = await OngoingGamesSolosCollection.findOne({ gameId: thirdArg });
+
+    if (game == null) {
+      wrongEmbed.setTitle(":x: Game not found!");
+
+      sendMessage(message, wrongEmbed);
+      return;
+    }
+
+    if (game.channelId !== message.channel.id) {
+      wrongEmbed.setTitle(":x: This is the wrong channel!");
+
+      sendMessage(message, wrongEmbed);
+      return;
+    }
+    correctEmbed.setTitle(`:white_check_mark: Game ${game.gameId} Cancelled!`);
+
+    await OngoingGamesSolosCollection.deleteOne({
+      gameId: game.gameId,
+    });
+
+    sendMessage(message, correctEmbed);
+    return;
+  }
+
   if (gameList.length === 0) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
@@ -84,6 +119,7 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "cancel",
-  description: "Cancel the game (Only use this in the case of someone not playing etc...)",
+  description:
+    "Cancel the game (Only use this in the case of someone not playing etc...) Administrators can also do !cancel force gameId to force a game cancellation",
   execute,
 };
