@@ -133,7 +133,7 @@ const execute = async (message, queueSize) => {
         id: thirdArg,
       });
 
-      if (player.length === 0) {
+      if (player == null) {
         wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!");
 
         sendMessage(message, wrongEmbed);

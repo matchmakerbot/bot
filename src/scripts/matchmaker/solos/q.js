@@ -51,7 +51,9 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch((error) => {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
-      .setTitle(`:x: Couldn't sent message to ${dm.username}, please check if your DM'S aren't set to friends only.`);
+      .setTitle(
+        `:x: Couldn't sent message to ${dm.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
+      );
 
     console.error(error);
 
@@ -341,7 +343,7 @@ const execute = async (message, queueSize) => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
-              `:x: Couldn't sent message to ${privateDmCaptain1.username}, please check if your DM'S aren't set to friends only.`
+              `:x: Couldn't sent message to ${privateDmCaptain1.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
             );
 
           console.error(error);
