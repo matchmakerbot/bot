@@ -17,7 +17,7 @@ const discordEmbed = new Discord.MessageEmbed()
   )
   .addField(
     "!config",
-    "Configures some definitions on the server, for example !config createVoiceChannels on/off, !config createTextChannel on/off, !config senddirectmessage on/off"
+    "Configures some definitions on a given channel, for example !config createVoiceChannels on/off, !config createTextChannel on/off, !config sendDirectMessage on/off"
   )
   .setTimestamp();
 

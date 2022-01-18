@@ -11,7 +11,7 @@ const execute = (message, queueSize) => {
 
   const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
 
-  const index = queueArray.map((e) => e.id).indexOf(message.author.id);
+  const index = queueArray.map((e) => e.userId).indexOf(message.author.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't leave now!");

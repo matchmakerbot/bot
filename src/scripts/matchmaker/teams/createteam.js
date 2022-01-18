@@ -8,7 +8,7 @@ const {
   fetchTeamByGuildAndUserId,
 } = require("../utils");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { sendMessage } = require("../../../utils/utils");
 

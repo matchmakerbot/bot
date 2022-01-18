@@ -1,14 +1,6 @@
 const Discord = require("discord.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  joinTeam1And2,
-  fetchGamesSolos,
-  includesUserId,
-  cancelQueue,
-  deletableChannels,
-} = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, cancelQueue, deletableChannels } = require("../utils");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
@@ -19,11 +11,9 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const gameList = await fetchGamesSolos(message.channel.id);
-
   const userId = message.author.id;
 
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const [, secondArg, gameIdInMessage] = message.content.split(" ");
 
   if (secondArg === "force") {
     if (!message.member.hasPermission("ADMINISTRATOR")) {
@@ -33,7 +23,7 @@ const execute = async (message, queueSize) => {
       return;
     }
 
-    const game = await OngoingGamesSolosCollection.findOne({ gameId: thirdArg });
+    const game = await OngoingGamesSolosCollection.findOne({ gameId: gameIdInMessage });
 
     if (game == null) {
       wrongEmbed.setTitle(":x: Game not found!");
@@ -56,27 +46,34 @@ const execute = async (message, queueSize) => {
 
     deletableChannels.push(...game.channelIds);
 
+    if (cancelQueue[game.gameId] != null) {
+      delete cancelQueue[gameIdInMessage];
+    }
+
     sendMessage(message, correctEmbed);
     return;
   }
 
-  if (gameList.length === 0) {
+  const selectedGame = await OngoingGamesSolosCollection.findOne({
+    channelId: message.channel.id,
+    $or: [
+      {
+        team1: { $elemMatch: { userId } },
+      },
+      {
+        team2: { $elemMatch: { userId } },
+      },
+    ],
+  });
+
+  if (selectedGame == null) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (!includesUserId(gameList.map((e) => joinTeam1And2(e)).flat(), userId)) {
-    wrongEmbed.setTitle(":x: You aren't in a game!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  const games = gameList.find((game) => includesUserId(joinTeam1And2(game), userId));
-
-  const { gameId } = games;
+  const { gameId } = selectedGame;
 
   if (!Object.keys(cancelQueue).includes(gameId.toString())) {
     cancelQueue[gameId] = [];
@@ -104,14 +101,13 @@ const execute = async (message, queueSize) => {
   if (cancelqueuearray.length === queueSize / 2 + 1) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    deletableChannels.push(...games.channelIds);
+    deletableChannels.push(...selectedGame.channelIds);
 
-    newCorrectEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
+    newCorrectEmbed.setTitle(`:white_check_mark: Game ${selectedGame.gameId} Cancelled!`);
 
     delete cancelQueue[gameId];
 
     await OngoingGamesSolosCollection.deleteOne({
-      queueSize,
       gameId,
     });
 

@@ -1,23 +1,17 @@
 const Discord = require("discord.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  finishedGames,
-  fetchGamesSolos,
-  joinTeam1And2,
-  getQueueArray,
-} = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, getQueueArray } = require("../utils");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
 const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+
 const { sendMessage } = require("../../../utils/utils");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
 
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const [, mode, userId] = message.content.split(" ");
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -32,13 +26,6 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (message.content.split(" ").length === 1) {
-    wrongEmbed.setTitle(":x: Invalid Parameters!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
   if (!message.member.hasPermission("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
@@ -46,7 +33,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  switch (secondArg) {
+  switch (mode) {
     case "channel": {
       const fetchGamesByChannelId = await OngoingGamesSolosCollection.find({
         channelId,
@@ -59,43 +46,8 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      if (message.content.split(" ").length !== 2) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-      const promises = [];
-      await MatchmakerCollection.find({
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      }).then(async (storedUsers) => {
-        for (const user of storedUsers) {
-          const channelPos = user.channels
-            .map((e) => e)
-            .map((e) => e.channelId)
-            .indexOf(channelId);
-
-          if (channelPos !== -1) {
-            const updatePromise = MatchmakerCollection.update(
-              {
-                id: user.id,
-              },
-              {
-                $pull: {
-                  channels: {
-                    channelId,
-                  },
-                },
-              }
-            );
-            promises.push(updatePromise);
-          }
-        }
-        await Promise.all(promises);
+      await MatchmakerCollection.deleteMany({
+        channelId,
       });
 
       for (const game of finishedGames) {
@@ -110,27 +62,35 @@ const execute = async (message, queueSize) => {
     }
 
     case "player": {
-      const findUserInGame = (await fetchGamesSolos())
-        .map((e) => joinTeam1And2(e))
-        .flat()
-        .map((e) => e.id)
-        .includes(thirdArg);
-      if (findUserInGame) {
+      if (userId == null) {
+        wrongEmbed.setTitle(":x: You need to specify an user id!");
+
+        sendMessage(message, wrongEmbed);
+        return;
+      }
+
+      const ongoingGame = await OngoingGamesSolosCollection.findOne({
+        channelId,
+        $or: [
+          {
+            team1: { $elemMatch: { userId } },
+          },
+          {
+            team2: { $elemMatch: { userId } },
+          },
+        ],
+      });
+
+      if (ongoingGame != null) {
         wrongEmbed.setTitle(":x: User is in the middle of a game!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
 
-      if (message.content.split(" ").length !== 3) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
       const player = await MatchmakerCollection.findOne({
-        id: thirdArg,
+        userId,
+        channelId,
       });
 
       if (player == null) {
@@ -140,18 +100,10 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await MatchmakerCollection.update(
-        {
-          id: thirdArg,
-        },
-        {
-          $pull: {
-            channels: {
-              channelId,
-            },
-          },
-        }
-      );
+      await MatchmakerCollection.deleteOne({
+        userId,
+        channelId,
+      });
 
       correctEmbed.setTitle(":white_check_mark: Player's score reset!");
 

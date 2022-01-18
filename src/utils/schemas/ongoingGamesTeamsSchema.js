@@ -15,7 +15,6 @@ const schema = new mongoose.Schema(
   {
     queueSize: Number,
     gameId: Number,
-    gamemode: String,
     date: Date,
     channelId: String,
     guildId: String,
@@ -23,14 +22,11 @@ const schema = new mongoose.Schema(
     team2: teamObject,
     channelIds: [
       {
-        channelName: String,
-        id: String,
-        channel: String,
-        _id: false,
+        type: String,
       },
     ],
   },
   { collection: "ongoing_games_teams", versionKey: false }
 );
 
-module.exports = mongoose.model("ongoing_games_teams", schema);
+module.exports = mongoose.model("ongoingGamesTeams", schema);

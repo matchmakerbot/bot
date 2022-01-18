@@ -2,19 +2,15 @@ const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema(
   {
-    id: String,
-    name: String,
-    channels: [
-      {
-        channelId: String,
-        wins: Number,
-        losses: Number,
-        mmr: Number,
-        _id: false,
-      },
-    ],
+    userId: String,
+    username: String,
+    guildId: String,
+    channelId: String,
+    wins: { type: Number, default: 0 },
+    losses: { type: Number, default: 0 },
+    mmr: { type: Number, default: 1000 },
   },
-  { collection: "solos", versionKey: false, minimize: false }
+  { collection: "matchmakerUsers", versionKey: false, minimize: false }
 );
 
-module.exports = mongoose.model("solos", schema);
+module.exports = mongoose.model("matchmakerUsers", schema);

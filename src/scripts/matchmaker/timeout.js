@@ -4,7 +4,7 @@ const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
 
-const { EMBED_COLOR_WARNING, channelQueues, deletableChannels, fetchGamesSolos, fetchGamesTeams } = require("./utils");
+const { EMBED_COLOR_WARNING, channelQueues, deletableChannels } = require("./utils");
 
 const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
 
@@ -18,7 +18,7 @@ const UPDATE_INTERVAL_MS = 60 * 1000;
 
 const warnNonDeletableChannel = async (channel, gameId, errorId) => {
   const notifyChannel = await client.channels.fetch(channel).catch(() => {
-    return console.log("Cannot find notifyChannel");
+    return console.error("Cannot find notifyChannel");
   });
   const embedRemove = new Discord.MessageEmbed()
     .setColor(EMBED_COLOR_WARNING)
@@ -26,11 +26,11 @@ const warnNonDeletableChannel = async (channel, gameId, errorId) => {
       `Unable to delete voice channel ${gameId}: ${
         errorId === 1
           ? "Channel not found"
-          : "Maybe the bot doesn't have permissions to do so? Please delete vc manually."
+          : "Maybe the bot doesn't have permissions to do so? Please delete channel manually."
       }`
     );
   await notifyChannel.send(embedRemove).catch(() => {
-    console.log("Cannot send unable to delete voice channel message");
+    console.error("Cannot send unable to delete channel message");
   });
 };
 
@@ -38,11 +38,13 @@ const updateUsers = async () => {
   const promises = [];
   const currentTimeMS = Date.now();
 
-  for (const channelUsers of channelQueues.filter((queue) => queue.players.length < queue.queueSize)) {
-    for (const userOrTeam of channelUsers.players.filter(
-      (user1) => currentTimeMS - user1.date > MAX_USER_IDLE_TIME_MS
-    )) {
-      const channel = channelUsers.channelId;
+  const filteredChannels = channelQueues.filter((queue) => queue.players.length < queue.queueSize);
+
+  for (const filteredChannel of filteredChannels) {
+    const filteredUsers = filteredChannel.players.filter((user) => currentTimeMS - user.date > MAX_USER_IDLE_TIME_MS);
+
+    for (const filteredUser of filteredUsers) {
+      const channel = filteredChannel.channelId;
 
       const notifyChannel = client.channels
         .fetch(channel)
@@ -51,11 +53,11 @@ const updateUsers = async () => {
             .setColor(EMBED_COLOR_WARNING)
             .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
-          e.send(`<@${userOrTeam.captain != null ? userOrTeam.captain : userOrTeam.id}>`, embedRemove);
-          channelUsers.players.splice(channelUsers.players.indexOf(userOrTeam), 1);
+          e.send(`<@${filteredUser.captain != null ? filteredUser.captain : filteredUser.userId}>`, embedRemove);
+          filteredChannel.players.splice(filteredChannel.players.indexOf(filteredUser), 1);
         })
         .catch(() => {
-          delete channelQueues[channel];
+          delete channelQueues.splice(channelQueues.indexOf(filteredChannel.channelId), 1);
         });
       promises.push(notifyChannel);
     }
@@ -65,21 +67,25 @@ const updateUsers = async () => {
 
 const updateOngoingGames = async () => {
   const promises = [];
-  // future: only fetch games that happenned more than 3 hours ago
-  const ongoingGamesSolos = await fetchGamesSolos();
-  const ongoingGamesTeams = await fetchGamesTeams();
+
+  const currentTimeMS = Date.now();
+
+  const ongoingGamesSolos = await OngoingGamesSolosCollection.find({
+    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+  });
+
+  const ongoingGamesTeams = await OngoingGamesSolosCollection.find({
+    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+  });
+
   if (ongoingGamesSolos.length === 0 && ongoingGamesTeams.length === 0) {
     return;
   }
-  const currentTimeMS = Date.now();
 
-  ongoingGamesSolos.forEach((e) => (e.queueType = "solos"));
-  ongoingGamesTeams.forEach((e) => (e.queueType = "teams"));
+  ongoingGamesSolos.forEach((e) => (e.queueMode = "solos"));
+  ongoingGamesTeams.forEach((e) => (e.queueMode = "teams"));
 
-  for (const game of [
-    ongoingGamesSolos.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
-    ongoingGamesTeams.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
-  ].flat()) {
+  for (const game of [...ongoingGamesSolos, ...ongoingGamesTeams]) {
     const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {
       game.channelIds.forEach((channel) => {
         deletableChannels.push(channel);
@@ -90,9 +96,9 @@ const updateOngoingGames = async () => {
         .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
 
       await e.send(embedRemove).catch(() => {
-        console.log("Unable to send message 1");
+        console.error("Unable to send message 1");
       });
-      if (game.queueType === "solos") {
+      if (game.queueMode === "solos") {
         await OngoingGamesSolosCollection.deleteOne({
           gameId: game.gameId,
         });
@@ -101,7 +107,6 @@ const updateOngoingGames = async () => {
           gameId: game.gameId,
         });
       }
-      return null;
     });
     promises.push(channelNotif);
   }
@@ -113,7 +118,7 @@ const updateChannels = async () => {
   const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
     const channel = client.channels
-      .fetch(deletableChannel.id)
+      .fetch(deletableChannel.channelId)
       .then(async (e) => {
         if (e.type === "text") {
           deleteVC.push(deletableChannel);

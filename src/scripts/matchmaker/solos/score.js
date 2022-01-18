@@ -1,8 +1,9 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchFromId } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../utils");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+
 const { sendMessage } = require("../../../utils/utils");
 
 const execute = async (message) => {
@@ -17,13 +18,9 @@ const execute = async (message) => {
   const userId = message.author.id;
   switch (secondArg) {
     case "me": {
-      const user = await MatchmakerCollection.findOne({
-        id: userId,
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
+      const user = await MatchmakerUsersCollection.findOne({
+        userId,
+        channelId,
       });
 
       if (user == null) {
@@ -33,101 +30,62 @@ const execute = async (message) => {
         return;
       }
 
-      const scoreDirectory = user.channels[user.channels.map((e) => e.channelId).indexOf(channelId)];
+      correctEmbed.addField("Wins:", user.wins);
 
-      correctEmbed.addField("Wins:", scoreDirectory.wins);
-
-      correctEmbed.addField("Losses:", scoreDirectory.losses);
+      correctEmbed.addField("Losses:", user.losses);
 
       correctEmbed.addField(
         "Winrate:",
-        Number.isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100))
+        Number.isNaN(Math.floor((user.wins / (user.wins + user.losses)) * 100))
           ? "0%"
-          : `${Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)}%`
+          : `${Math.floor((user.wins / (user.wins + user.losses)) * 100)}%`
       );
 
-      correctEmbed.addField("MMR:", scoreDirectory.mmr);
+      correctEmbed.addField("MMR:", user.mmr);
 
       sendMessage(message, correctEmbed);
       return;
     }
     case "channel": {
-      let funcArg = thirdArg;
-      const storedUsers = await MatchmakerCollection.find({
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      });
-      const storedUsersList = storedUsers.filter(
-        (a) =>
-          a.channels.map((e) => e.channelId).indexOf(channelId) !== -1 &&
-          a.channels[a.channels.map((e) => e.channelId).indexOf(channelId)].wins +
-            a.channels[a.channels.map((e) => e.channelId).indexOf(channelId)].losses !==
-            0
-      );
-
-      if (
-        !message.guild.channels.cache
-          .array()
-          .map((e) => e.id)
-          .includes(channelId)
-      ) {
-        wrongEmbed.setTitle(":x: This channel does not belong to this server!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
-      if (storedUsersList.length === 0) {
-        wrongEmbed.setTitle(":x: No games have been played in here!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
-      storedUsersList.sort((a, b) => {
-        const indexA = a.channels.map((e) => e.channelId).indexOf(channelId);
-
-        const indexB = b.channels.map((e) => e.channelId).indexOf(channelId);
-
-        return b.channels[indexB].mmr - a.channels[indexA].mmr;
-      });
+      let skipCount = thirdArg;
 
       if (Number.isNaN(Number(thirdArg)) || thirdArg == null || thirdArg < 1) {
-        funcArg = 1;
+        skipCount = 1;
       }
 
-      let indexes = 10 * (funcArg - 1);
-      for (indexes; indexes < 10 * funcArg; indexes++) {
-        if (storedUsersList[indexes] == null) {
-          correctEmbed.addField("No more members to list in this page!", "Encourage your friends to play!");
+      const storedUsersList = (
+        await MatchmakerUsersCollection.find({
+          channelId,
+        })
+          .skip(10 * (skipCount - 1))
+          .limit(10)
+      ).filter((e) => e.wins + e.losses > 0);
 
-          break;
-        }
-        for (const channels of storedUsersList[indexes].channels) {
-          if (channels.channelId === channelId) {
-            correctEmbed.addField(
-              // eslint-disable-next-line no-await-in-loop
-              (await fetchFromId(storedUsersList[indexes].id, wrongEmbed, message))?.username,
-              `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
-                Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))
-                  ? "0"
-                  : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)
-              }% | MMR: ${channels.mmr}`
-            );
+      if (storedUsersList.length === 0) {
+        wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
 
-            correctEmbed.setFooter(`Showing page ${funcArg}/${Math.ceil(storedUsersList.length / 10)}`);
-          }
-        }
+        sendMessage(message, wrongEmbed);
+        return;
+      }
+
+      const storedUsersCount = await MatchmakerUsersCollection.count({});
+
+      storedUsersList.sort((a, b) => b.mmr - a.mmr);
+
+      for (const user of storedUsersList) {
+        const winrate = user.losses === 0 ? 100 : Math.floor((user.wins / (user.wins + user.losses)) * 100);
+        correctEmbed.addField(
+          user.username,
+          `Wins: ${user.wins} | Losses: ${user.losses} | Winrate: ${winrate}% | MMR: ${user.mmr}`
+        );
+        correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}`);
       }
 
       sendMessage(message, correctEmbed);
       break;
     }
     default: {
-      wrongEmbed.setTitle("Invalid Parameters");
+      wrongEmbed.setTitle("Invalid argument!");
 
       sendMessage(message, wrongEmbed);
     }

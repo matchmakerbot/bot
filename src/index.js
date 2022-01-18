@@ -10,7 +10,7 @@ const { createDbConnection } = require("./utils/connectMongoDBServer");
     await createBotInstance();
     console.log("Started MatchmakerBot Instance");
   } catch (e) {
-    console.log("Error creating a Bot Instance/Db Connection");
+    console.error("Error creating a Bot Instance/Db Connection");
 
     console.error(e);
 

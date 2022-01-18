@@ -1,12 +1,8 @@
 const client = require("../../utils/createClientInstance.js");
 
-const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
+const MatchmakerSolosCollection = require("../../utils/schemas/matchmakerUsersSchema");
 
-const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTeamsSchema.js");
-
-const MatchmakerCollection = require("../../utils/schemas/matchmakerUsersSchema");
-
-const TeamsCollection = require("../../utils/schemas/teamsSchema");
+const MatchmakerTeamsCollection = require("../../utils/schemas/matchmakerTeamsSchema");
 
 const EMBED_COLOR_ERROR = "#F8534F";
 
@@ -36,10 +32,6 @@ const gameCount = {
   value: 0,
 };
 
-const joinTeam1And2 = (object) => {
-  return object.team1.concat(object.team2);
-};
-
 const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
   const user = await client.users.fetch(id).catch(() => {
     wrongEmbedParam.setTitle("Please tag the user");
@@ -48,33 +40,14 @@ const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
   return user;
 };
 
-const fetchGamesSolos = async (channelId) => {
-  const games = await OngoingGamesSolosCollection.find(
-    channelId != null
-      ? {
-          channelId,
-        }
-      : {}
-  );
-  return games;
-};
-
-const fetchGamesTeams = async (channelId, guildId) => {
-  const obj = {};
-  if (channelId != null) obj.channelId = channelId;
-  if (guildId != null) obj.guildId = guildId;
-  const games = await OngoingGamesTeamsCollection.find(obj);
-  return games;
-};
-
 const messageEndswith = (message) => {
   const split = message.content.split(" ");
   return split[split.length - 1];
 };
 
-const getQueueArray = (queueSize, channelId, guildId, queueType) => {
+const getQueueArray = (queueSize, channelId, guildId, queueMode) => {
   for (const item of channelQueues) {
-    if (item.channelId === channelId && item.queueType === queueType) {
+    if (item.channelId === channelId && item.queueMode === queueMode) {
       return item.players;
     }
   }
@@ -82,58 +55,25 @@ const getQueueArray = (queueSize, channelId, guildId, queueType) => {
     channelId,
     guildId,
     queueSize,
-    queueType,
+    queueMode,
     players: [],
   });
   return channelQueues[channelQueues.length - 1].players;
 };
 
-const assignWinLoseDb = async (userOrTeam, game, queueType, team) => {
-  const storedDb =
-    queueType === "solos"
-      ? await MatchmakerCollection.findOne({
-          id: userOrTeam.id,
-        })
-      : await TeamsCollection.findOne({
-          name: userOrTeam.name,
-          guildId: game.guildId,
-        });
+const assignScoreUser = async (user) => {
+  const score = user.won ? "wins" : "losses";
 
-  const channelPos = storedDb.channels.map((e) => e.channelId).indexOf(game.channelId);
-
-  const score =
-    (game.winningTeam === 0 && team === TEAM1) || (game.winningTeam === 1 && team === TEAM2) ? WINS : LOSSES;
-
-  const sort = `channels.${channelPos}.${score}`;
-
-  const mmr = `channels.${channelPos}.mmr`;
-
-  if (queueType === "solos") {
-    await MatchmakerCollection.update(
-      {
-        id: userOrTeam.id,
-      },
-      {
-        $set: {
-          [sort]: storedDb.channels[channelPos][score] + 1,
-          [mmr]: storedDb.channels[channelPos].mmr + userOrTeam.mmrDifference,
-        },
-      }
-    );
-  } else {
-    await TeamsCollection.update(
-      {
-        name: userOrTeam.name,
-        guildId: game.guildId,
-      },
-      {
-        $set: {
-          [sort]: storedDb.channels[channelPos][score] + 1,
-          [mmr]: storedDb.channels[channelPos].mmr + userOrTeam.mmrDifference,
-        },
-      }
-    );
-  }
+  await MatchmakerSolosCollection.updateOne(
+    {
+      id: user.userId,
+      channelId: user.channelId,
+    },
+    {
+      $inc: { [score]: 1 },
+      mmr: user.mmr + user.mmrDifference,
+    }
+  );
 };
 
 const balanceTeamsByMmr = (players, queueSize) => {
@@ -194,13 +134,13 @@ const balanceTeamsByMmr = (players, queueSize) => {
   return { team1: playersArrA, team2: playersArrB };
 };
 
-const revertGame = async (user, game, param, team, queueType) => {
+const revertGame = async (user, game, param, team, queueMode) => {
   const storedDb =
-    queueType === "solos"
-      ? await MatchmakerCollection.findOne({
-          id: user.id,
+    queueMode === "solos"
+      ? await MatchmakerSolosCollection.findOne({
+          id: user.userId,
         })
-      : await TeamsCollection.findOne({
+      : await MatchmakerTeamsCollection.findOne({
           name: user.name,
           guildId: game.guildId,
         });
@@ -234,15 +174,15 @@ const revertGame = async (user, game, param, team, queueType) => {
             winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 20 : storedDb.channels[channelPos].mmr + 20,
         },
       };
-      if (queueType === "solos") {
-        await MatchmakerCollection.update(
+      if (queueMode === "solos") {
+        await MatchmakerSolosCollection.updateOne(
           {
-            id: user.id,
+            id: user.userId,
           },
           set
         );
       } else {
-        await TeamsCollection.update(
+        await MatchmakerTeamsCollection.updateOne(
           {
             name: user.name,
             guildId: game.guildId,
@@ -261,15 +201,15 @@ const revertGame = async (user, game, param, team, queueType) => {
             winsOrLosses === "wins" ? storedDb.channels[channelPos].mmr - 10 : storedDb.channels[channelPos].mmr + 10,
         },
       };
-      if (queueType === "solos") {
-        await MatchmakerCollection.update(
+      if (queueMode === "solos") {
+        await MatchmakerSolosCollection.updateOne(
           {
-            id: user.id,
+            id: user.userId,
           },
           set
         );
       } else {
-        await TeamsCollection.update(
+        await MatchmakerTeamsCollection.updateOne(
           {
             name: user.name,
             guildId: game.guildId,
@@ -280,35 +220,8 @@ const revertGame = async (user, game, param, team, queueType) => {
       break;
     }
     default:
-      console.log("Invalid param");
+      console.error("Invalid param");
   }
-};
-
-const includesUserId = (array, userId) => {
-  return array.map((e) => e.id).includes(userId);
-};
-
-const fetchTeamByGuildAndUserId = async (guildId, userId) => {
-  const team = await TeamsCollection.findOne({
-    guildId,
-    $or: [{ captain: userId }, { members: userId }],
-  });
-  return team;
-};
-
-const fetchTeamsByGuildId = async (guildId) => {
-  const team = await TeamsCollection.find({
-    guildId,
-  });
-  return team;
-};
-
-const fetchTeamByGuildIdAndName = async (guildId, name) => {
-  const team = await TeamsCollection.findOne({
-    guildId,
-    name,
-  });
-  return team;
 };
 
 const messageArgs = (message) => {
@@ -337,25 +250,18 @@ const shuffle = (array) => {
 };
 
 module.exports = {
-  fetchGamesTeams,
-  fetchTeamByGuildIdAndName,
-  fetchTeamsByGuildId,
-  fetchTeamByGuildAndUserId,
   fetchFromId,
-  fetchGamesSolos,
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   getQueueArray,
   messageEndswith,
-  assignWinLoseDb,
+  assignWinLoseDb: assignScoreUser,
   finishedGames,
   deletableChannels,
   cancelQueue,
   revertGame,
   EMBED_COLOR_WARNING,
   channelQueues,
-  includesUserId,
-  joinTeam1And2,
   gameCount,
   invites,
   messageArgs,

@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const playerObject = {
-  id: String,
-  name: String,
+  userId: String,
+  username: String,
   date: Date,
   mmr: Number,
   _id: false,
@@ -12,7 +12,6 @@ const schema = new mongoose.Schema(
   {
     queueSize: Number,
     gameId: Number,
-    gamemode: String,
     date: Date,
     channelId: String,
     guildId: String,
@@ -20,14 +19,11 @@ const schema = new mongoose.Schema(
     team2: [playerObject],
     channelIds: [
       {
-        channelName: String,
-        id: String,
-        channel: String,
-        _id: false,
+        type: String,
       },
     ],
   },
-  { collection: "ongoing_games_solos", versionKey: false }
+  { collection: "ongoingGamesSolos", versionKey: false }
 );
 
-module.exports = mongoose.model("ongoing_games_solos", schema);
+module.exports = mongoose.model("ongoingGamesSolos", schema);

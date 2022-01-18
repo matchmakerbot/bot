@@ -1,11 +1,23 @@
 const Discord = require("discord.js");
+
 const { sendMessage } = require("../../../utils/utils");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, revertGame } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../utils");
 
-const TEAM1 = "team1";
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersSchema");
 
-const TEAM2 = "team2";
+const revertGame = async (user, param, channelId) => {
+  await MatchmakerUsersCollection.updateOne(
+    {
+      channelId,
+      userId: user.userId,
+    },
+    {
+      mmr: user.mmr - (param === "revert" ? user.mmrDifference : 0),
+      $inc: { [user.won ? "wins" : "losses"]: -1, [!user.won ? "wins" : "losses"]: param === "revert" ? 1 : 0 },
+    }
+  );
+};
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -16,7 +28,7 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  if (message.content.split(" ").length === 1 || message.content.split(" ").length === 2) {
+  if (thirdArg == null) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);
@@ -49,12 +61,8 @@ const execute = async (message) => {
   if (thirdArg === "revert" || thirdArg === "cancel") {
     const promises = [];
 
-    for (const user of selectedGame.team1) {
-      promises.push(revertGame(user, selectedGame, thirdArg, TEAM1, "solos"));
-    }
-
-    for (const user of selectedGame.team2) {
-      promises.push(revertGame(user, selectedGame, thirdArg, TEAM2, "solos"));
+    for (const user of [...selectedGame.team1, ...selectedGame.team2]) {
+      promises.push(revertGame(user, thirdArg, selectedGame.channelId));
     }
 
     await Promise.all(promises);

@@ -20,7 +20,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "teams", versionKey: false, minimize: false }
+  { collection: "matchmakerTeams", versionKey: false, minimize: false }
 );
 
-module.exports = mongoose.model("teams", schema);
+module.exports = mongoose.model("matchmakerTeams", schema);
