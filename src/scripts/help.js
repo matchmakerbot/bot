@@ -10,7 +10,15 @@ const discordEmbed = new Discord.MessageEmbed()
   )
   .setColor("#F8534F")
   .setTitle("For MatchMaking related commands, please use the command !helpsolosmatchmaking or !helpteamsmatchmaking")
-  .addField("!credits", "`Just some credits :p`")
+  .addField("!credits", "Just some credits :p")
+  .addField(
+    "!queueType",
+    "Sets the queuetype , for example !queuetype 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games"
+  )
+  .addField(
+    "!config",
+    "Configures some definitions on the server, for example !config createVoiceChannels on/off, !config createTextChannel on/off, !config senddirectmessage on/off"
+  )
   .setTimestamp();
 
 module.exports = {

@@ -560,6 +560,11 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
+elo-rank@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/elo-rank/-/elo-rank-1.0.4.tgz#dd6b62f730a7d26210750c34d5b9057d20885df6"
+  integrity sha512-K1nDpqC2AzWx7EykoOnTwbci50xZPYBsfyR2Tk4h/tVnqvr6n1+8gOlWzK3pxetN5Cmx7XbPT9D0Zam2ikM6Bw==
+
 emoji-regex@^8.0.0:
   version "8.0.0"
   resolved "https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz"

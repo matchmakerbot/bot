@@ -16,9 +16,7 @@ const execute = async (message) => {
     return;
   }
   // support more games
-  for (let i = 0; i < 6; i++) {
-    const game = games[i];
-
+  for (const game of games) {
     if (game == null) {
       correctEmbed.addField("No more games to list ", "Encourage your friends to play!");
       break;
@@ -33,9 +31,8 @@ const execute = async (message) => {
       ":small_blue_diamond: Team 2",
       game.team2.reduce((acc, curr) => `${acc}<@${curr.id}>, `, "")
     );
-
-    correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
   }
+  correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(games.length / 10)}`);
   sendMessage(message, correctEmbed);
 };
 

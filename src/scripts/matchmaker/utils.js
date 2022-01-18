@@ -41,9 +41,8 @@ const joinTeam1And2 = (object) => {
 };
 
 const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
-  const user = await client.users.fetch(id).catch((error) => {
+  const user = await client.users.fetch(id).catch(() => {
     wrongEmbedParam.setTitle("Please tag the user");
-    console.log(error);
     messageParam.channel.send(wrongEmbedParam);
   });
   return user;
@@ -89,14 +88,14 @@ const getQueueArray = (queueSize, channelId, guildId, queueType) => {
   return channelQueues[channelQueues.length - 1].players;
 };
 
-const assignWinLoseDb = async (user, game, queueType, team) => {
+const assignWinLoseDb = async (userOrTeam, game, queueType, team) => {
   const storedDb =
     queueType === "solos"
       ? await MatchmakerCollection.findOne({
-          id: user.id,
+          id: userOrTeam.id,
         })
       : await TeamsCollection.findOne({
-          name: user.name,
+          name: userOrTeam.name,
           guildId: game.guildId,
         });
 
@@ -109,29 +108,90 @@ const assignWinLoseDb = async (user, game, queueType, team) => {
 
   const mmr = `channels.${channelPos}.mmr`;
 
-  const set = {
-    $set: {
-      [sort]: storedDb.channels[channelPos][score] + 1,
-      [mmr]: score === WINS ? storedDb.channels[channelPos].mmr + 10 : storedDb.channels[channelPos].mmr - 10,
-    },
-  };
-
   if (queueType === "solos") {
     await MatchmakerCollection.update(
       {
-        id: user.id,
+        id: userOrTeam.id,
       },
-      set
+      {
+        $set: {
+          [sort]: storedDb.channels[channelPos][score] + 1,
+          [mmr]: storedDb.channels[channelPos].mmr + userOrTeam.mmrDifference,
+        },
+      }
     );
   } else {
     await TeamsCollection.update(
       {
-        name: user.name,
+        name: userOrTeam.name,
         guildId: game.guildId,
       },
-      set
+      {
+        $set: {
+          [sort]: storedDb.channels[channelPos][score] + 1,
+          [mmr]: storedDb.channels[channelPos].mmr + userOrTeam.mmrDifference,
+        },
+      }
     );
   }
+};
+
+const balanceTeamsByMmr = (players, queueSize) => {
+  const playersArr = players;
+  for (let i = 0; i < playersArr.length; i++) {
+    if (playersArr[i].mmr == null) {
+      playersArr[i].mmr = 1000;
+    }
+  }
+  const pointers = [];
+  const recordpointers = [];
+  let record = Infinity;
+  const nextPossible = (index) => {
+    if (index >= queueSize) {
+      return false;
+    }
+    if (pointers[index]) {
+      pointers[index] = false;
+      return nextPossible(index + 1);
+    }
+    pointers[index] = true;
+    if (pointers.filter((e) => e === true).length !== queueSize / 2) {
+      return nextPossible(0);
+    }
+    return true;
+  };
+
+  for (let i = 0; i < queueSize; i++) {
+    pointers[i] = false;
+  }
+  while (nextPossible(0)) {
+    let mmrA = 0;
+    let mmrB = 0;
+    for (let i = 0; i < queueSize; i++) {
+      if (pointers[i]) {
+        mmrA += playersArr[i].mmr;
+      } else {
+        mmrB += playersArr[i].mmr;
+      }
+    }
+    const diff = Math.abs(mmrA - mmrB);
+    if (record > diff) {
+      record = diff;
+      recordpointers.splice(0, recordpointers.length);
+      recordpointers.push(...pointers);
+    }
+  }
+
+  const playersArrA = [];
+  const playersArrB = [];
+  for (let i = 0; i < queueSize; i++) {
+    if (recordpointers[i]) {
+      playersArrA.push(playersArr[i]);
+    } else {
+      playersArrB.push(playersArr[i]);
+    }
+  }
+  return { team1: playersArrA, team2: playersArrB };
 };
 
 const revertGame = async (user, game, param, team, queueType) => {
@@ -302,4 +362,5 @@ module.exports = {
   shuffle,
   TEAM1,
   TEAM2,
+  balanceTeamsByMmr,
 };

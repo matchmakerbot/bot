@@ -54,7 +54,7 @@ const execute = async (message, queueSize) => {
       gameId: game.gameId,
     });
 
-    deletableChannels.push(...game.voiceChannelIds);
+    deletableChannels.push(...game.channelIds);
 
     sendMessage(message, correctEmbed);
     return;
@@ -104,7 +104,7 @@ const execute = async (message, queueSize) => {
   if (cancelqueuearray.length === queueSize / 2 + 1) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    deletableChannels.push(...games.voiceChannelIds);
+    deletableChannels.push(...games.channelIds);
 
     newCorrectEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
 

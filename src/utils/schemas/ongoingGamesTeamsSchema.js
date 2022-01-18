@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const teamObject = {
   name: String,
   captain: String,
+  mmr: Number,
   members: [
     {
       type: String,
@@ -20,7 +21,7 @@ const schema = new mongoose.Schema(
     guildId: String,
     team1: teamObject,
     team2: teamObject,
-    voiceChannelIds: [
+    channelIds: [
       {
         channelName: String,
         id: String,

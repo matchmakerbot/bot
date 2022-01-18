@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const EloRank = require("elo-rank");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
@@ -18,6 +19,7 @@ const {
 } = require("../utils");
 
 const execute = async (message) => {
+  const elo = new EloRank(16);
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -82,6 +84,16 @@ const execute = async (message) => {
 
   const promises = [];
 
+  const team1EloDifference =
+    elo.updateRating(elo.getExpected(game.team1.mmr, game.team2.mmr), game.winningTeam === 0 ? 1 : 0, game.team1.mmr) -
+    game.team1.mmr;
+
+  const team2EloDifference = -team1EloDifference;
+
+  game.team1.mmrDifference = team1EloDifference;
+
+  game.team2.mmrDifference = team2EloDifference;
+
   promises.push(assignWinLoseDb(game.team1, game, "teams", TEAM1));
 
   promises.push(assignWinLoseDb(game.team2, game, "teams", TEAM2));
@@ -94,7 +106,7 @@ const execute = async (message) => {
     gameId: game.gameId,
   });
 
-  game.voiceChannelIds.forEach((channel) => {
+  game.channelIds.forEach((channel) => {
     deletableChannels.push(channel);
   });
 

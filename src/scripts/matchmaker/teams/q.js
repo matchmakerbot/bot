@@ -6,6 +6,8 @@ const client = require("../../../utils/createClientInstance.js");
 
 const TeamsCollection = require("../../../utils/schemas/teamsSchema");
 
+const GuildsCollection = require("../../../utils/schemas/guildsSchema.js");
+
 const { sendMessage } = require("../../../utils/utils");
 
 const {
@@ -110,10 +112,15 @@ const execute = async (message, queueSize) => {
   });
 
   if (!isInTeam) return;
+  const teamMmr =
+    fetchedTeam.channels.map((e) => e.channelId).indexOf(channelId) !== -1
+      ? fetchedTeam.channels[fetchedTeam.channels.map((e) => e.channelId).indexOf(channelId)].mmr
+      : 1000;
 
   const toPush = {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
+    mmr: teamMmr,
     members: [...message.mentions.members.map((e) => e.user.id)],
     date: new Date(),
   };
@@ -138,7 +145,7 @@ const execute = async (message, queueSize) => {
         guildId: message.guild.id,
         team1: queueArray[0],
         team2: queueArray[1],
-        voiceChannelIds: [],
+        channelIds: [],
       };
       const promises = [];
       for (const team of queueArray) {
@@ -174,69 +181,110 @@ const execute = async (message, queueSize) => {
         password: Math.floor(Math.random() * 99999) + 100,
       };
 
-      const permissionOverwritesTeam1 = [
-        {
-          id: message.guild.id,
-          deny: "CONNECT",
-        },
-      ];
+      const channelData = await GuildsCollection.findOne({ id: message.guild.id });
 
-      for (const id of [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.members]) {
-        permissionOverwritesTeam1.push({
-          id,
-          allow: "CONNECT",
-        });
+      if (channelData.channels[channelId].createVoiceChannels) {
+        const permissionOverwritesTeam1 = [
+          {
+            id: message.guild.id,
+            deny: "CONNECT",
+          },
+        ];
+
+        for (const id of [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.members]) {
+          permissionOverwritesTeam1.push({
+            id,
+            allow: "CONNECT",
+          });
+        }
+
+        await message.guild.channels
+          .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
+            type: "voice",
+            parent: message.channel.parentID,
+            permissionOverwrites: permissionOverwritesTeam1,
+          })
+          .then((e) => {
+            gameCreatedObj.channelIds.push({
+              id: e.id,
+              channelName: `🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`,
+              channel: channelId,
+            });
+          })
+          .catch(() =>
+            sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
+          );
+
+        const permissionOverwritesTeam2 = [
+          {
+            id: message.guild.id,
+            deny: "CONNECT",
+          },
+        ];
+
+        for (const id of [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.members]) {
+          permissionOverwritesTeam2.push({
+            id,
+            allow: "CONNECT",
+          });
+        }
+
+        await message.guild.channels
+          .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
+            type: "voice",
+            parent: message.channel.parentID,
+            permissionOverwrites: permissionOverwritesTeam2,
+          })
+          .then((e) => {
+            gameCreatedObj.channelIds.push({
+              id: e.id,
+              channelName: `🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`,
+              channel: channelId,
+            });
+          })
+          .catch(() =>
+            sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
+          );
       }
 
-      await message.guild.channels
-        .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
-          type: "voice",
-          parent: message.channel.parentID,
-          permissionOverwrites: permissionOverwritesTeam1,
-        })
-        .then((e) => {
-          gameCreatedObj.voiceChannelIds.push({
-            id: e.id,
-            channelName: `🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`,
-            channel: channelId,
+      if (channelData.channels[channelId].createTextChannels) {
+        const permissionOverwrites = [
+          {
+            id: message.guild.id,
+            deny: "VIEW_CHANNEL",
+          },
+        ];
+
+        [
+          gameCreatedObj.team2.captain,
+          ...gameCreatedObj.team2.members,
+          gameCreatedObj.team1.captain,
+          ...gameCreatedObj.team1.members,
+        ].forEach((user) => {
+          permissionOverwrites.push({
+            id: user,
+            allow: ["VIEW_CHANNEL", "READ_MESSAGE_HISTORY", "SEND_MESSAGES"],
+            deny: "MANAGE_MESSAGES",
           });
-        })
-        .catch(() =>
-          sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
-        );
-
-      const permissionOverwritesTeam2 = [
-        {
-          id: message.guild.id,
-          deny: "CONNECT",
-        },
-      ];
-
-      for (const id of [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.members]) {
-        permissionOverwritesTeam2.push({
-          id,
-          allow: "CONNECT",
         });
+
+        await message.guild.channels
+          .create(`Matchmaker-Game-${gameCreatedObj.gameId}`, {
+            type: "text",
+            parent: message.channel.parentID,
+            permissionOverwrites,
+          })
+          .then(async (e) => {
+            gameCreatedObj.channelIds.push({
+              id: e.id,
+              channelName: e.name,
+              channel: channelId,
+            });
+          })
+          .catch(() =>
+            sendMessage(message, "Error creating text chat, are you sure the bot has permissions to do so?")
+          );
       }
-
-      await message.guild.channels
-        .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
-          type: "voice",
-          parent: message.channel.parentID,
-          permissionOverwrites: permissionOverwritesTeam2,
-        })
-        .then((e) => {
-          gameCreatedObj.voiceChannelIds.push({
-            id: e.id,
-            channelName: `🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`,
-            channel: channelId,
-          });
-        })
-        .catch(() =>
-          sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
-        );
-
-      const ongoingGamesInsert = new OngoingGamesTeamsSchema(gameCreatedObj);
 
       sendMessage(
         message,
@@ -248,8 +296,6 @@ const execute = async (message, queueSize) => {
           ""
         )} `
       );
-
-      await ongoingGamesInsert.save();
 
       const discordEmbed1 = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_CHECK)
@@ -271,54 +317,58 @@ const execute = async (message, queueSize) => {
 
       sendMessage(message, discordEmbed1);
 
-      const JoinMatchEmbed = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_CHECK)
-        .addField("Name:", valuesforpm.name)
-        .addField("Password:", valuesforpm.password)
-        .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
+      if (channelData.channels[channelId].sendDirectMessage) {
+        const JoinMatchEmbed = new Discord.MessageEmbed()
+          .setColor(EMBED_COLOR_CHECK)
+          .addField("Name:", valuesforpm.name)
+          .addField("Password:", valuesforpm.password)
+          .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
 
-      for (const id of [
-        ...gameCreatedObj.team1.members,
-        ...gameCreatedObj.team2.members,
-        gameCreatedObj.team2.captain,
-      ]) {
-        const fetchedUser = client.users
-          .fetch(id)
-          .then(async (user) => {
-            try {
-              await user.send(JoinMatchEmbed);
-            } catch (error) {
-              const errorEmbed = new Discord.MessageEmbed()
-                .setColor(EMBED_COLOR_WARNING)
-                .setTitle(
-                  `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
-                );
+        for (const id of [
+          ...gameCreatedObj.team1.members,
+          ...gameCreatedObj.team2.members,
+          gameCreatedObj.team2.captain,
+        ]) {
+          const fetchedUser = client.users
+            .fetch(id)
+            .then(async (user) => {
+              try {
+                await user.send(JoinMatchEmbed);
+              } catch (error) {
+                const errorEmbed = new Discord.MessageEmbed()
+                  .setColor(EMBED_COLOR_WARNING)
+                  .setTitle(
+                    `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
+                  );
 
-              sendMessage(message, errorEmbed);
-            }
-          })
-          .catch(() => sendMessage(message, "Invalid User"));
-        promises.push(fetchedUser);
+                sendMessage(message, errorEmbed);
+              }
+            })
+            .catch(() => sendMessage(message, "Invalid User"));
+          promises.push(fetchedUser);
+        }
+
+        const CreateMatchEmbed = new Discord.MessageEmbed()
+          .setColor(EMBED_COLOR_CHECK)
+          .addField("Name:", valuesforpm.name)
+          .addField("Password:", valuesforpm.password)
+          .addField("You have to:", "Create Custom Match");
+
+        const create1 = await client.users.fetch(gameCreatedObj.team1.captain);
+        create1.send(CreateMatchEmbed).catch((error) => {
+          const errorEmbed = new Discord.MessageEmbed()
+            .setColor(EMBED_COLOR_ERROR)
+            .setTitle(
+              `:x: Couldn't sent message to <@${gameCreatedObj.team1.captain}>, please check if your DM'S aren't set to friends only.`
+            );
+
+          sendMessage(message, errorEmbed);
+          console.error(error);
+        });
       }
+      const ongoingGamesInsert = new OngoingGamesTeamsSchema(gameCreatedObj);
 
-      const CreateMatchEmbed = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_CHECK)
-        .addField("Name:", valuesforpm.name)
-        .addField("Password:", valuesforpm.password)
-        .addField("You have to:", "Create Custom Match");
-
-      const create1 = await client.users.fetch(gameCreatedObj.team1.captain);
-      create1.send(CreateMatchEmbed).catch((error) => {
-        const errorEmbed = new Discord.MessageEmbed()
-          .setColor(EMBED_COLOR_ERROR)
-          .setTitle(
-            `:x: Couldn't sent message to <@${gameCreatedObj.team1.captain}>, please check if your DM'S aren't set to friends only.`
-          );
-
-        sendMessage(message, errorEmbed);
-        console.error(error);
-      });
-
+      await ongoingGamesInsert.save();
       queueArray.splice(0, queueArray.length);
     } catch (e) {
       console.log(e);

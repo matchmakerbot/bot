@@ -81,7 +81,7 @@ const updateOngoingGames = async () => {
     ongoingGamesTeams.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
   ].flat()) {
     const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {
-      game.voiceChannelIds.forEach((channel) => {
+      game.channelIds.forEach((channel) => {
         deletableChannels.push(channel);
       });
 
@@ -108,13 +108,19 @@ const updateOngoingGames = async () => {
   await Promise.all(promises);
 };
 
-const updateVoiceChannels = async () => {
+const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];
   for (const deletableChannel of deletableChannels) {
-    const voiceChannel = client.channels
+    const channel = client.channels
       .fetch(deletableChannel.id)
       .then(async (e) => {
+        if (e.type === "text") {
+          deleteVC.push(deletableChannel);
+          await e.delete().catch(async () => {
+            warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 0);
+          });
+        }
         if (e.members.array().length === 0) {
           deleteVC.push(deletableChannel);
           await e.delete().catch(async () => {
@@ -126,7 +132,7 @@ const updateVoiceChannels = async () => {
         deleteVC.push(deletableChannel);
         warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 1);
       });
-    promises.push(voiceChannel);
+    promises.push(channel);
   }
   await Promise.all(promises);
 
@@ -141,7 +147,7 @@ const evaluateUpdates = async () => {
   }
   await updateOngoingGames();
 
-  await updateVoiceChannels();
+  await updateChannels();
 };
 const startIntervalMatchmakerBot = () => {
   setInterval(evaluateUpdates, UPDATE_INTERVAL_MS);

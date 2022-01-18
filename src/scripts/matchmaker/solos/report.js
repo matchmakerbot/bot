@@ -1,4 +1,5 @@
 const Discord = require("discord.js");
+const EloRank = require("elo-rank");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 const { sendMessage } = require("../../../utils/utils.js");
@@ -18,6 +19,8 @@ const {
 } = require("../utils");
 
 const execute = async (message) => {
+  const elo = new EloRank(16);
+
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -37,7 +40,7 @@ const execute = async (message) => {
       userId
     )
   ) {
-    wrongEmbed.setTitle(":x: You aren't in a game!");
+    wrongEmbed.setTitle(":x: You aren't in a game, or the game is in a different guild!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -70,11 +73,27 @@ const execute = async (message) => {
 
   const promises = [];
 
+  const mmrOfEachTeam = {
+    team1: game.team1.reduce((a, c) => a + c.mmr, 0) / game.team1.length,
+    team2: game.team2.reduce((a, c) => a + c.mmr, 0) / game.team2.length,
+  };
+
+  const team1EloDifference =
+    elo.updateRating(
+      elo.getExpected(mmrOfEachTeam.team1, mmrOfEachTeam.team2),
+      game.winningTeam === 0 ? 1 : 0,
+      mmrOfEachTeam.team1
+    ) - mmrOfEachTeam.team1;
+
+  const team2EloDifference = -team1EloDifference;
+
   for (const user of game.team1) {
+    user.mmrDifference = team1EloDifference;
     promises.push(assignWinLoseDb(user, game, "solos", TEAM1));
   }
 
   for (const user of game.team2) {
+    user.mmrDifference = team2EloDifference;
     promises.push(assignWinLoseDb(user, game, "solos", TEAM2));
   }
 
@@ -86,7 +105,7 @@ const execute = async (message) => {
     gameId: game.gameId,
   });
 
-  game.voiceChannelIds.forEach((channel) => {
+  game.channelIds.forEach((channel) => {
     deletableChannels.push(channel);
   });
 

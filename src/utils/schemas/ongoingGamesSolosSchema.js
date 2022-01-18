@@ -4,6 +4,7 @@ const playerObject = {
   id: String,
   name: String,
   date: Date,
+  mmr: Number,
   _id: false,
 };
 
@@ -17,7 +18,7 @@ const schema = new mongoose.Schema(
     guildId: String,
     team1: [playerObject],
     team2: [playerObject],
-    voiceChannelIds: [
+    channelIds: [
       {
         channelName: String,
         id: String,
