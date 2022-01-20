@@ -78,12 +78,13 @@ const execute = async (message) => {
     team2: game.team2.reduce((a, c) => a + c.mmr, 0) / game.team2.length,
   };
 
-  const team1EloDifference =
+  const team1EloDifference = Math.round(
     elo.updateRating(
       elo.getExpected(mmrOfEachTeam.team1, mmrOfEachTeam.team2),
       game.winningTeam === 0 ? 1 : 0,
       mmrOfEachTeam.team1
-    ) - mmrOfEachTeam.team1;
+    ) - mmrOfEachTeam.team1
+  );
 
   const team2EloDifference = -team1EloDifference;
 
