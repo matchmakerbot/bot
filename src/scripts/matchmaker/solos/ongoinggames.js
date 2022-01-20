@@ -31,7 +31,7 @@ const execute = async (message) => {
 
   const gamesCount = await OngoingGamesSolosCollection.countDocuments();
 
-  for (const game of ongoingGames) {
+  ongoingGames.forEach((game) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
     correctEmbed.addField(
       ":small_orange_diamond: Team 1",
@@ -41,7 +41,7 @@ const execute = async (message) => {
       ":small_blue_diamond: Team 2",
       game.team2.reduce((acc, curr) => `${acc}<@${curr.userId}>, `, "")
     );
-  }
+  });
 
   correctEmbed.addField("No more games to list on this page", "Encourage your friends to play!");
 

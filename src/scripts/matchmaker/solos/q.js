@@ -141,7 +141,7 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  /* if (queueArray.find((e) => e.userId === userId) != null) {
+  if (queueArray.find((e) => e.userId === userId) != null) {
     wrongEmbed.setTitle(":x: You're already in the queue!");
 
     sendMessage(message, wrongEmbed);
@@ -155,7 +155,7 @@ const execute = async (message, queueSize) => {
 
     sendMessage(message, wrongEmbed);
     return;
-  } */
+  }
 
   const ongoingGame = await OngoingGamesSolosCollection.findOne({
     $or: [
@@ -216,7 +216,7 @@ const execute = async (message, queueSize) => {
         })),
       });
 
-      for (const user of queueArray) {
+      queueArray.forEach((user) => {
         if (usersInDb.find((e) => e.userId === user.userId) == null) {
           const newUser = {
             userId: user.userId,
@@ -231,7 +231,7 @@ const execute = async (message, queueSize) => {
 
           promises.push(matchmakerInsert.save());
         }
-      }
+      });
       await Promise.all(promises);
 
       promises.splice(0, promises.length);
@@ -418,6 +418,7 @@ const execute = async (message, queueSize) => {
           ];
           let wasLastCaptainTeam1;
           while (queueArrayCopy.length > 1) {
+            // eslint-disable-next-line no-restricted-syntax
             for (const captain of captains) {
               // eslint-disable-next-line no-await-in-loop
               wasLastCaptainTeam1 = await choose2Players(
@@ -469,12 +470,12 @@ const execute = async (message, queueSize) => {
           },
         ];
 
-        for (const user of gameCreatedObj.team1) {
+        gameCreatedObj.team1.forEach((user) => {
           permissionOverwritesTeam1.push({
             id: user.userId,
             allow: "CONNECT",
           });
-        }
+        });
 
         await message.guild.channels
           .create(`🔸Team-1-Game-${gameCreatedObj.gameId}`, {
@@ -496,12 +497,12 @@ const execute = async (message, queueSize) => {
           },
         ];
 
-        for (const user of gameCreatedObj.team2) {
+        gameCreatedObj.team2.forEach((user) => {
           permissionOverwritesTeam2.push({
             id: user.userId,
             allow: "CONNECT",
           });
-        }
+        });
 
         await message.guild.channels
           .create(`🔹Team-2-Game-${gameCreatedObj.gameId}`, {
@@ -570,7 +571,7 @@ const execute = async (message, queueSize) => {
 
         const playersArray = gameCreatedObj.team1.concat(gameCreatedObj.team2);
 
-        for (const users of playersArray) {
+        playersArray.forEach((users) => {
           if (users.userId !== gameCreatedObj.team1[0].userId) {
             const fetchedUser = client.users
               .fetch(users.userId)
@@ -590,7 +591,7 @@ const execute = async (message, queueSize) => {
               .catch(() => sendMessage(message, "Invalid User"));
             promises.push(fetchedUser);
           }
-        }
+        });
 
         await Promise.all(promises);
 

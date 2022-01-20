@@ -78,12 +78,13 @@ const execute = async (message) => {
     team2: ongoingGame.team2.reduce((a, c) => a + c.mmr, 0) / ongoingGame.team2.length,
   };
 
-  const team1EloDifference =
+  const team1EloDifference = Math.round(
     elo.updateRating(
       elo.getExpected(mmrOfEachTeam.team1, mmrOfEachTeam.team2),
       ongoingGame.winningTeam === 0 ? 1 : 0,
       mmrOfEachTeam.team1
-    ) - mmrOfEachTeam.team1;
+    ) - mmrOfEachTeam.team1
+  );
 
   const team2EloDifference = -team1EloDifference;
 
@@ -106,9 +107,9 @@ const execute = async (message) => {
     })),
   };
 
-  for (const user of [...assignScoreData.team1, ...assignScoreData.team2]) {
+  [...assignScoreData.team1, ...assignScoreData.team2].forEach((user) => {
     promises.push(assignScoreUser(user, ongoingGame.channelId));
-  }
+  });
 
   await Promise.all(promises);
 

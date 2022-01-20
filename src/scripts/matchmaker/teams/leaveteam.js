@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, channelQueues } = require("../utils");
 
@@ -27,7 +27,7 @@ const execute = async (message) => {
     return;
   }
 
-  const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
+  const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueMode === "teams");
 
   for (const channel of channels) {
     if (channel.players[0]?.name === fetchedTeam.name) {
@@ -39,7 +39,7 @@ const execute = async (message) => {
     }
   }
 
-  await TeamsCollection.update(
+  await TeamsCollection.updateOne(
     {
       guildId: message.guild.id,
       name: fetchedTeam.name,

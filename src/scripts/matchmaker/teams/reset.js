@@ -6,7 +6,7 @@ const { sendMessage } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
@@ -74,7 +74,7 @@ const execute = async (message, queueSize) => {
             .indexOf(channelId);
 
           if (channelPos !== -1) {
-            const updatePromise = TeamsCollection.update(
+            const updatePromise = TeamsCollection.updateOne(
               {
                 name: team.name,
                 guildId: team.guildId,
@@ -141,7 +141,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await TeamsCollection.update(
+      await TeamsCollection.updateOne(
         {
           name: teamName,
           guildId: message.guild.id,

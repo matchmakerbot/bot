@@ -4,7 +4,7 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId } = requ
 
 const { sendMessage } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -106,10 +106,10 @@ const execute = async (message) => {
 
           break;
         }
-        for (const channels of storedUsersList[indexes].channels) {
+        storedUsersList[indexes].channels.forEach((channels) => {
           if (channels.channelId === channelId) {
             correctEmbed.addField(
-              storedUsersList[indexes].name,
+              channels.name,
               `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
                 Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))
                   ? "0"
@@ -119,7 +119,7 @@ const execute = async (message) => {
 
             correctEmbed.setFooter(`Showing page ${funcArg}/${Math.ceil(storedUsersList.length / 10)}`);
           }
-        }
+        });
       }
       sendMessage(message, correctEmbed);
 

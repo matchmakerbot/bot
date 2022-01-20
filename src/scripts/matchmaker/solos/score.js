@@ -72,14 +72,14 @@ const execute = async (message) => {
 
       storedUsersList.sort((a, b) => b.mmr - a.mmr);
 
-      for (const user of storedUsersList) {
+      storedUsersList.forEach((user) => {
         const winrate = user.losses === 0 ? 100 : Math.floor((user.wins / (user.wins + user.losses)) * 100);
         correctEmbed.addField(
           user.username,
           `Wins: ${user.wins} | Losses: ${user.losses} | Winrate: ${winrate}% | MMR: ${user.mmr}`
         );
         correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}`);
-      }
+      });
 
       sendMessage(message, correctEmbed);
       break;

@@ -4,9 +4,9 @@ const OngoingGamesTeamsSchema = require("../../../utils/schemas/ongoingGamesTeam
 
 const client = require("../../../utils/createClientInstance.js");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const GuildsCollection = require("../../../utils/schemas/guildsSchema.js");
+const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -56,7 +56,7 @@ const execute = async (message, queueSize) => {
 
   if (
     channelQueues
-      .filter((e) => e.queueType === "teams" && e.guildId === message.guild.id)
+      .filter((e) => e.queueMode === "teams" && e.guildId === message.guild.id)
       .map((e) => e.players)
       .flat()
       .map((e) => e.name)
@@ -148,13 +148,13 @@ const execute = async (message, queueSize) => {
         channelIds: [],
       };
       const promises = [];
-      for (const team of queueArray) {
+      queueArray.forEach((team) => {
         const dbRequest = TeamsCollection.findOne({
           name: team.name,
           guildId: message.guild.id,
         }).then(async (storedTeam) => {
           if (!storedTeam.channels.map((e) => e.channelId).includes(channelId)) {
-            await TeamsCollection.update(
+            await TeamsCollection.updateOne(
               {
                 name: team.name,
                 guildId: message.guild.id,
@@ -173,7 +173,7 @@ const execute = async (message, queueSize) => {
           }
         });
         promises.push(dbRequest);
-      }
+      });
       await Promise.all(promises);
 
       const valuesforpm = {
@@ -181,9 +181,9 @@ const execute = async (message, queueSize) => {
         password: Math.floor(Math.random() * 99999) + 100,
       };
 
-      const channelData = await GuildsCollection.findOne({ id: message.guild.id });
+      const channelData = await ChannelsCollection.findOne({ id: message.channel.id });
 
-      if (channelData.channels[channelId].createVoiceChannels) {
+      if (channelData.createVoiceChannels) {
         const permissionOverwritesTeam1 = [
           {
             id: message.guild.id,
@@ -191,12 +191,12 @@ const execute = async (message, queueSize) => {
           },
         ];
 
-        for (const id of [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.members]) {
+        [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.members].forEach((id) => {
           permissionOverwritesTeam1.push({
             id,
             allow: "CONNECT",
           });
-        }
+        });
 
         await message.guild.channels
           .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
@@ -222,12 +222,12 @@ const execute = async (message, queueSize) => {
           },
         ];
 
-        for (const id of [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.members]) {
+        [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.members].forEach((id) => {
           permissionOverwritesTeam2.push({
             id,
             allow: "CONNECT",
           });
-        }
+        });
 
         await message.guild.channels
           .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
@@ -247,7 +247,7 @@ const execute = async (message, queueSize) => {
           );
       }
 
-      if (channelData.channels[channelId].createTextChannels) {
+      if (channelData.createTextChannels) {
         const permissionOverwrites = [
           {
             id: message.guild.id,
@@ -317,36 +317,34 @@ const execute = async (message, queueSize) => {
 
       sendMessage(message, discordEmbed1);
 
-      if (channelData.channels[channelId].sendDirectMessage) {
+      if (channelData.sendDirectMessage) {
         const JoinMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
           .addField("Name:", valuesforpm.name)
           .addField("Password:", valuesforpm.password)
           .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
 
-        for (const id of [
-          ...gameCreatedObj.team1.members,
-          ...gameCreatedObj.team2.members,
-          gameCreatedObj.team2.captain,
-        ]) {
-          const fetchedUser = client.users
-            .fetch(id)
-            .then(async (user) => {
-              try {
-                await user.send(JoinMatchEmbed);
-              } catch (error) {
-                const errorEmbed = new Discord.MessageEmbed()
-                  .setColor(EMBED_COLOR_WARNING)
-                  .setTitle(
-                    `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
-                  );
+        [...gameCreatedObj.team1.members, ...gameCreatedObj.team2.members, gameCreatedObj.team2.captain].forEach(
+          (id) => {
+            const fetchedUser = client.users
+              .fetch(id)
+              .then(async (user) => {
+                try {
+                  await user.send(JoinMatchEmbed);
+                } catch (error) {
+                  const errorEmbed = new Discord.MessageEmbed()
+                    .setColor(EMBED_COLOR_WARNING)
+                    .setTitle(
+                      `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
+                    );
 
-                sendMessage(message, errorEmbed);
-              }
-            })
-            .catch(() => sendMessage(message, "Invalid User"));
-          promises.push(fetchedUser);
-        }
+                  sendMessage(message, errorEmbed);
+                }
+              })
+              .catch(() => sendMessage(message, "Invalid User"));
+            promises.push(fetchedUser);
+          }
+        );
 
         const CreateMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
@@ -371,8 +369,6 @@ const execute = async (message, queueSize) => {
       await ongoingGamesInsert.save();
       queueArray.splice(0, queueArray.length);
     } catch (e) {
-      console.log(e);
-
       wrongEmbed.setTitle("Error creating teams, resetting queue.");
 
       sendMessage(message, wrongEmbed);

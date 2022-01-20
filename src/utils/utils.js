@@ -1,3 +1,5 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
 const sendMessage = async (message, messageType) => {

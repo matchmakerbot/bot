@@ -11,7 +11,7 @@ const {
   invites,
 } = require("../utils");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -51,7 +51,7 @@ const execute = async (message) => {
       return;
     }
 
-    const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
+    const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueMode === "teams");
 
     for (const channel of channels) {
       if (channel.players[0]?.name === messageArgs(message)) {
@@ -108,7 +108,7 @@ const execute = async (message) => {
     return;
   }
 
-  const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueType === "teams");
+  const channels = channelQueues.filter((e) => e.guildId === message.guild.id && e.queueMode === "teams");
 
   for (const channel of channels) {
     if (channel.players[0]?.name === fetchedTeam.name) {

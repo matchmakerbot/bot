@@ -61,9 +61,9 @@ const execute = async (message) => {
   if (thirdArg === "revert" || thirdArg === "cancel") {
     const promises = [];
 
-    for (const user of [...selectedGame.team1, ...selectedGame.team2]) {
+    [...selectedGame.team1, ...selectedGame.team2].forEach((user) => {
       promises.push(revertGame(user, thirdArg, selectedGame.channelId));
-    }
+    });
 
     await Promise.all(promises);
   } else {

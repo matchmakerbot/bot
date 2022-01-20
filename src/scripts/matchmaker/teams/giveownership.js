@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -79,7 +79,7 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Given ownership to ${message.mentions.members.first().user.username}`);
 
-  await TeamsCollection.update(
+  await TeamsCollection.updateOne(
     {
       guildId: message.guild.id,
       name: fetchedTeam.name,

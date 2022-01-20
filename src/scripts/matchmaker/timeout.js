@@ -1,5 +1,3 @@
-// eslint-disable-next-line eslint-comments/disable-enable-pair
-/* eslint-disable no-return-assign */
 const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
@@ -82,8 +80,12 @@ const updateOngoingGames = async () => {
     return;
   }
 
-  ongoingGamesSolos.forEach((e) => (e.queueMode = "solos"));
-  ongoingGamesTeams.forEach((e) => (e.queueMode = "teams"));
+  ongoingGamesSolos.forEach((e) => {
+    e.queueMode = "solos";
+  });
+  ongoingGamesTeams.forEach((e) => {
+    e.queueMode = "teams";
+  });
 
   for (const game of [...ongoingGamesSolos, ...ongoingGamesTeams]) {
     const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {

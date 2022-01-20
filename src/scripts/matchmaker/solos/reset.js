@@ -50,11 +50,12 @@ const execute = async (message, queueSize) => {
         channelId,
       });
 
-      for (const game of finishedGames) {
-        if (game.channelId === channelId) {
-          finishedGames.splice(finishedGames.indexOf(game), 1);
-        }
+      const foundGame = finishedGames.find((e) => e.channelId === channelId);
+
+      if (foundGame != null) {
+        finishedGames.splice(finishedGames.indexOf(foundGame), 1);
       }
+
       correctEmbed.setTitle(":white_check_mark: Channel score reset!");
 
       sendMessage(message, correctEmbed);

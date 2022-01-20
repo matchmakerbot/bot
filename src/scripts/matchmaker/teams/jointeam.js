@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamsByGuildId, messageArgs, invites } = require("../utils");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -47,7 +47,7 @@ const execute = async (message) => {
     return;
   }
 
-  await TeamsCollection.update(
+  await TeamsCollection.updateOne(
     {
       guildId: message.guild.id,
       name: messageArgs(message),

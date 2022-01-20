@@ -26,7 +26,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { collection: "ongoing_games_teams", versionKey: false }
+  { collection: "ongoingGamesTeams", versionKey: false }
 );
 
 module.exports = mongoose.model("ongoingGamesTeams", schema);
