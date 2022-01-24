@@ -10,8 +10,6 @@ const {
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
-
 const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const execute = async (message, queueSize) => {
@@ -90,12 +88,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      const team = MatchmakerTeamsCollection.findOne({
-        channelId,
-        name: teamName,
-      });
-
-      const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team._id });
+      const teamScore = TeamsScoreCollection.findOne({ channelId, guildId: message.guild.id, name: teamName });
 
       if (teamScore == null) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
@@ -105,7 +98,8 @@ const execute = async (message, queueSize) => {
       }
 
       await TeamsScoreCollection.deleteOne({
-        teamId: team._id,
+        name: teamScore.name,
+        guildId: message.guild.id,
         channelId,
       });
 

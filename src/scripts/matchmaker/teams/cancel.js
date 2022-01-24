@@ -13,11 +13,7 @@ const execute = async (message) => {
 
   const userId = message.author.id;
 
-  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, userId);
-
-  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
-
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const [, secondArg, gameIdInMessage] = message.content.split(" ");
 
   if (secondArg === "force") {
     if (!message.member.hasPermission("ADMINISTRATOR")) {
@@ -27,62 +23,58 @@ const execute = async (message) => {
       return;
     }
 
-    const game = await OngoingGamesTeamsCollection.findOne({ gameId: thirdArg });
+    const fetchedGame = await OngoingGamesTeamsCollection.findOne({
+      gameId: gameIdInMessage,
+    });
 
-    if (game == null) {
+    if (fetchedGame == null) {
       wrongEmbed.setTitle(":x: Game not found!");
 
       sendMessage(message, wrongEmbed);
       return;
     }
 
-    if (game.channelId !== message.channel.id) {
+    if (fetchedGame.channelId !== message.channel.id) {
       wrongEmbed.setTitle(":x: This is the wrong channel!");
 
       sendMessage(message, wrongEmbed);
       return;
     }
-    correctEmbed.setTitle(`:white_check_mark: Game ${game.gameId} Cancelled!`);
 
     await OngoingGamesTeamsCollection.deleteOne({
-      gameId: game.gameId,
+      gameId: fetchedGame.gameId,
     });
 
-    deletableChannels.push(...game.channelIds);
+    deletableChannels.push(...fetchedGame.channelIds);
+
+    correctEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
     sendMessage(message, correctEmbed);
     return;
   }
 
-  if (fetchedTeam == null) {
-    wrongEmbed.setTitle(":x: You do not belong to a team");
+  const fetchedGame = await OngoingGamesTeamsCollection.findOne({
+    channelId: message.channel.id,
+    $or: [
+      {
+        team1: { captain: userId },
+      },
+      {
+        team2: { captain: userId },
+      },
+    ],
+  });
+
+  if (fetchedGame == null) {
+    wrongEmbed.setTitle(
+      ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
+    );
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (fetchedTeam.captain !== userId) {
-    wrongEmbed.setTitle(":x: You are not the captain!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (
-    !ongoingGames
-      .map((e) => [e.team1.name, e.team2.name])
-      .flat()
-      .includes(fetchedTeam.name)
-  ) {
-    wrongEmbed.setTitle(":x: Team is not in game");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  const games = ongoingGames.find((game) => game.team1.captain === userId || game.team2.captain === userId);
-
-  const { gameId } = games;
+  const { gameId } = fetchedGame;
 
   if (!Object.keys(cancelQueue).includes(gameId.toString())) {
     cancelQueue[gameId] = [];
@@ -90,17 +82,17 @@ const execute = async (message) => {
 
   const cancelQueueArray = cancelQueue[gameId];
 
-  if (cancelQueueArray.includes(fetchedTeam.name)) {
+  if (cancelQueueArray.includes(fetchedGame.name)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  cancelQueueArray.push(fetchedTeam.name);
+  cancelQueueArray.push(fetchedGame.name);
 
   correctEmbed.setTitle(
-    `:exclamation: ${fetchedTeam.name} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`
+    `:exclamation: ${fetchedGame.name} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`
   );
 
   sendMessage(message, correctEmbed);
@@ -108,9 +100,9 @@ const execute = async (message) => {
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    deletableChannels.push(...games.channelIds);
+    deletableChannels.push(...fetchedGame.channelIds);
 
-    newCorrectEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
+    newCorrectEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
     delete cancelQueue[gameId];
 

@@ -1,10 +1,12 @@
 const Discord = require("discord.js");
 
-const OngoingGamesTeamsSchema = require("../../../utils/schemas/ongoingGamesTeamsSchema");
-
 const client = require("../../../utils/createClientInstance.js");
 
+const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
+
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+
+const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
@@ -26,19 +28,15 @@ const execute = async (message, queueSize) => {
 
   const channelId = message.channel.id;
 
-  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await MatchmakerTeamsCollection.findOne({
+    guildId: message.guild.id,
+    captain: message.author.id,
+  });
 
   const queueArray = getQueueArray(queueSize, channelId, message.guild.id);
 
   if (fetchedTeam == null) {
-    wrongEmbed.setTitle(":x: You don't belong to a team!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (fetchedTeam.captain !== message.author.id) {
-    wrongEmbed.setTitle(":x: You are not the captain!");
+    wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -54,10 +52,8 @@ const execute = async (message, queueSize) => {
   if (
     channelQueues
       .filter((e) => e.guildId === message.guild.id)
-      .map((e) => e.players)
-      .flat()
+      .map((e) => e.players[0])
       .map((e) => e.name)
-      .flat()
       .includes(fetchedTeam.name)
   ) {
     wrongEmbed.setTitle(":x: You're already queued in another channel!");
@@ -66,22 +62,19 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
+  const ongoingGame = await OngoingGamesTeamsCollection.findOne({
+    guildId: message.guild.id,
+    $or: [{ team1: fetchedTeam.name }, { team2: fetchedTeam.name }],
+  });
 
-  if (
-    ongoingGames
-      .map((e) => [e.team1, e.team2])
-      .flat()
-      .map((e) => e.name)
-      .includes(fetchedTeam.name)
-  ) {
+  if (ongoingGame != null) {
     wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (fetchedTeam.members.length + 1 < queueSize / 2 || (fetchedTeam.members.length === 0 && queueSize !== 2)) {
+  if (fetchedTeam.memberIds.length + 1 < queueSize / 2 || (fetchedTeam.memberIds.length === 0 && queueSize !== 2)) {
     wrongEmbed.setTitle(
       `:x: You need at least ${queueSize / 2} members on your team to join the queue (including you)`
     );
@@ -100,7 +93,7 @@ const execute = async (message, queueSize) => {
   let isInTeam = true;
 
   message.mentions.members.forEach((e) => {
-    if (!fetchedTeam.members.includes(e.user.id)) {
+    if (!fetchedTeam.memberIds.includes(e.user.id)) {
       wrongEmbed.setTitle(`:x: ${e.user.username} is not on your team!`);
 
       sendMessage(message, wrongEmbed);
@@ -109,16 +102,12 @@ const execute = async (message, queueSize) => {
   });
 
   if (!isInTeam) return;
-  const teamMmr =
-    fetchedTeam.channels.map((e) => e.channelId).indexOf(channelId) !== -1
-      ? fetchedTeam.channels[fetchedTeam.channels.map((e) => e.channelId).indexOf(channelId)].mmr
-      : 1000;
 
   const toPush = {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
-    mmr: teamMmr,
-    members: [...message.mentions.members.map((e) => e.user.id)],
+    mmr: fetchedTeam.mmr,
+    memberIds: [...message.mentions.members.map((e) => e.user.id)],
     date: new Date(),
   };
 
@@ -144,33 +133,30 @@ const execute = async (message, queueSize) => {
         team2: queueArray[1],
         channelIds: [],
       };
+
       const promises = [];
-      queueArray.forEach((team) => {
-        const dbRequest = MatchmakerTeamsCollection.findOne({
-          name: team.name,
-          guildId: message.guild.id,
-        }).then(async (storedTeam) => {
-          if (!storedTeam.channels.map((e) => e.channelId).includes(channelId)) {
-            await MatchmakerTeamsCollection.updateOne(
-              {
-                name: team.name,
-                guildId: message.guild.id,
-              },
-              {
-                $push: {
-                  channels: {
-                    channelId,
-                    wins: 0,
-                    losses: 0,
-                    mmr: 1000,
-                  },
-                },
-              }
-            );
-          }
-        });
-        promises.push(dbRequest);
+
+      const teamsInDb = await MatchmakerTeamsScoreCollection.findOne({
+        $or: queueArray.map((e) => ({ name: e.name })),
+        guildId: message.guild.id,
       });
+
+      queueArray.forEach((team) => {
+        if (teamsInDb.find((e) => e.name === team.teamName) == null) {
+          const newUser = {
+            name: team.name,
+            guildId: message.guild.id,
+            channelId: message.channel.id,
+          };
+
+          teamsInDb.push({ ...newUser });
+
+          const matchmakerInsert = new MatchmakerTeamsScoreCollection(newUser);
+
+          promises.push(matchmakerInsert.save());
+        }
+      });
+
       await Promise.all(promises);
 
       const valuesforpm = {
@@ -188,7 +174,7 @@ const execute = async (message, queueSize) => {
           },
         ];
 
-        [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.members].forEach((id) => {
+        [gameCreatedObj.team1.captain, ...gameCreatedObj.team1.memberIds].forEach((id) => {
           permissionOverwritesTeam1.push({
             id,
             allow: "CONNECT",
@@ -219,7 +205,7 @@ const execute = async (message, queueSize) => {
           },
         ];
 
-        [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.members].forEach((id) => {
+        [gameCreatedObj.team2.captain, ...gameCreatedObj.team2.memberIds].forEach((id) => {
           permissionOverwritesTeam2.push({
             id,
             allow: "CONNECT",
@@ -254,9 +240,9 @@ const execute = async (message, queueSize) => {
 
         [
           gameCreatedObj.team2.captain,
-          ...gameCreatedObj.team2.members,
+          ...gameCreatedObj.team2.memberIds,
           gameCreatedObj.team1.captain,
-          ...gameCreatedObj.team1.members,
+          ...gameCreatedObj.team1.memberIds,
         ].forEach((user) => {
           permissionOverwrites.push({
             id: user,
@@ -285,10 +271,10 @@ const execute = async (message, queueSize) => {
 
       sendMessage(
         message,
-        `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
+        `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
           (acc = "", curr) => `${acc}<@${curr}>, `,
           ""
-        )} <@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
+        )} <@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
           (acc = "", curr) => `${acc}<@${curr}>, `,
           ""
         )} `
@@ -299,14 +285,14 @@ const execute = async (message, queueSize) => {
         .addField("Game is ready:", `Game ID is: ${gameCreatedObj.gameId}`)
         .addField(
           `:small_orange_diamond: Team ${gameCreatedObj.team1.name}`,
-          `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.members.reduce(
+          `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
             (acc = "", curr) => `${acc}<@${curr}>, `,
             ""
           )}`
         )
         .addField(
           `:small_blue_diamond: Team ${gameCreatedObj.team2.name}`,
-          `<@${gameCreatedObj.team2.captain}>, ${gameCreatedObj.team2.members.reduce(
+          `<@${gameCreatedObj.team2.captain}>, ${gameCreatedObj.team2.memberIds.reduce(
             (acc = "", curr) => `${acc}<@${curr}>, `,
             ""
           )}`
@@ -321,7 +307,7 @@ const execute = async (message, queueSize) => {
           .addField("Password:", valuesforpm.password)
           .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
 
-        [...gameCreatedObj.team1.members, ...gameCreatedObj.team2.members, gameCreatedObj.team2.captain].forEach(
+        [...gameCreatedObj.team1.memberIds, ...gameCreatedObj.team2.memberIds, gameCreatedObj.team2.captain].forEach(
           (id) => {
             const fetchedUser = client.users
               .fetch(id)
@@ -361,7 +347,7 @@ const execute = async (message, queueSize) => {
           console.error(error);
         });
       }
-      const ongoingGamesInsert = new OngoingGamesTeamsSchema(gameCreatedObj);
+      const ongoingGamesInsert = new OngoingGamesTeamsCollection(gameCreatedObj);
 
       await ongoingGamesInsert.save();
       queueArray.splice(0, queueArray.length);

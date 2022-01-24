@@ -19,8 +19,8 @@ const assignScoreTeams = async (game) => {
 
   [game.team1, game.team2].forEach((team) => {
     const won =
-      (game.winningTeam === 0 && (game.team1.members.includes(team.userId) || game.team1.captain === team.userId)) ||
-      (game.winningTeam === 1 && (game.team2.members.includes(team.userId) || game.team2.captain === team.userId));
+      (game.winningTeam === 0 && (game.team1.memberIds.includes(team.userId) || game.team1.captain === team.userId)) ||
+      (game.winningTeam === 1 && (game.team2.memberIds.includes(team.userId) || game.team2.captain === team.userId));
 
     const score = won ? "wins" : "losses";
 
@@ -55,23 +55,18 @@ const execute = async (message) => {
     channelId,
     $or: [
       {
-        team1: { $or: [{ $elemMatch: { userId }, captain: userId }] },
+        team1: { captain: userId },
       },
       {
-        team2: { $or: [{ $elemMatch: { userId }, captain: userId }] },
+        team2: { captain: userId },
       },
     ],
   });
 
   if (ongoingGame == null) {
-    wrongEmbed.setTitle(":x: You aren't in a game, or the game is in a different guild/channel!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (ongoingGame.team1.captain !== userId && ongoingGame.team2.captain !== userId) {
-    wrongEmbed.setTitle(":x: You are not the captain!");
+    wrongEmbed.setTitle(
+      ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
+    );
 
     sendMessage(message, wrongEmbed);
     return;

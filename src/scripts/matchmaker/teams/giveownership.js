@@ -56,16 +56,16 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (!fetchedTeam.members.includes(pingedUser)) {
+  if (!fetchedTeam.memberIds.includes(pingedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  fetchedTeam.members.push(message.author.id);
+  fetchedTeam.memberIds.push(message.author.id);
 
-  fetchedTeam.members.splice(fetchedTeam.members.indexOf(pingedUser), 1);
+  fetchedTeam.memberIds.splice(fetchedTeam.memberIds.indexOf(pingedUser), 1);
 
   correctEmbed.setTitle(`:white_check_mark: Given ownership to ${message.mentions.members.first().user.username}`);
 
@@ -76,7 +76,7 @@ const execute = async (message, queueSize) => {
     },
     {
       captain: pingedUser,
-      members: fetchedTeam.members,
+      memberIds: fetchedTeam.memberIds,
     }
   );
 

@@ -14,7 +14,6 @@ const execute = async (message) => {
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     captain: message.author.id,
     guildId: message.guild.id,
-    memberIds: { $elemMatch: message.author.id },
   });
 
   const [, secondArg] = message.content.split(" ");
@@ -28,7 +27,7 @@ const execute = async (message) => {
 
   const kickedUser = message.mentions.members.first() == null ? secondArg : message.mentions.members.first().user.id;
 
-  if (!fetchedTeam.members.includes(kickedUser)) {
+  if (!fetchedTeam.memberIds.includes(kickedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     sendMessage(message, wrongEmbed);
@@ -59,7 +58,7 @@ const execute = async (message) => {
       guildId: message.guild.id,
       name: fetchedTeam.name,
     },
-    { $pull: { members: kickedUser } }
+    { $pull: { memberIds: kickedUser } }
   );
 
   correctEmbed.setTitle(

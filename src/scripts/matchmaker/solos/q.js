@@ -4,7 +4,7 @@ const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
@@ -210,7 +210,7 @@ const execute = async (message, queueSize) => {
 
       const promises = [];
 
-      const usersInDb = await MatchmakerCollection.find({
+      const usersInDb = await MatchmakerUsersScoreCollection.find({
         $or: queueArray.map((e) => ({
           userId: e.userId,
         })),
@@ -225,9 +225,9 @@ const execute = async (message, queueSize) => {
             channelId: message.channel.id,
           };
 
-          usersInDb.push({ ...newUser, wins: 0, losses: 0, mmr: 1000 });
+          usersInDb.push({ ...newUser });
 
-          const matchmakerInsert = new MatchmakerCollection(newUser);
+          const matchmakerInsert = new MatchmakerUsersScoreCollection(newUser);
 
           promises.push(matchmakerInsert.save());
         }

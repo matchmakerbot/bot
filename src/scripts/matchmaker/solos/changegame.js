@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../../../utils/utils");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+const MatchmakerUsersScoreSchema = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const changeGame = async (game, param) => {
   const promises = [];
@@ -13,7 +13,7 @@ const changeGame = async (game, param) => {
       (game.winningTeam === 1 && game.team2.includes(user.userId));
 
     promises.push(
-      await MatchmakerUsersCollection.updateOne(
+      await MatchmakerUsersScoreSchema.updateOne(
         {
           channelId: game.channelId,
           userId: user.userId,
@@ -41,7 +41,7 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  if (thirdArg == null) {
+  if (thirdArg === "revert" || thirdArg === "cancel") {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);
@@ -71,14 +71,7 @@ const execute = async (message) => {
     return;
   }
 
-  if (thirdArg === "revert" || thirdArg === "cancel") {
-    await changeGame(selectedGame, thirdArg);
-  } else {
-    wrongEmbed.setTitle(":x: Invalid Parameters!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
+  await changeGame(selectedGame, thirdArg);
 
   const indexSelectedGame = finishedGames.indexOf(selectedGame);
 

@@ -2,11 +2,12 @@ const mongoose = require("mongoose");
 
 const schema = new mongoose.Schema(
   {
-    teamId: mongoose.ObjectId,
+    name: String,
+    guildId: String,
     channelId: String,
-    wins: Number,
-    losses: Number,
-    mmr: Number,
+    wins: { type: Number, default: 0 },
+    losses: { type: Number, default: 0 },
+    mmr: { type: Number, default: 1000 },
   },
   { collection: "matchmakerTeamsScore", versionKey: false, minimize: false }
 );

@@ -10,19 +10,12 @@ const execute = async (message) => {
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-    captain: message.author.id,
     guildId: message.guild.id,
+    memberIds: { $elemMatch: message.author.id },
   });
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (fetchedTeam.captain === message.author.id) {
-    wrongEmbed.setTitle(":x: You are the captain, to delete the team do !disband");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -45,7 +38,7 @@ const execute = async (message) => {
       guildId: message.guild.id,
       name: fetchedTeam.name,
     },
-    { $pull: { members: message.author.id } }
+    { $pull: { memberIds: message.author.id } }
   );
 
   correctEmbed.setTitle(`:white_check_mark: ${message.author.username} just left ${fetchedTeam.name}`);

@@ -24,7 +24,7 @@ const execute = async (message) => {
         $or: [{ captain: userId }, { memberIds: { $elemMatch: userId } }],
       });
 
-      const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team._id });
+      const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team.name, guildId: message.guild.id });
 
       if (teamScore == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");

@@ -32,7 +32,7 @@ const execute = async (message) => {
 
   correctEmbed.addField(
     "Members:",
-    `<@${fetchedTeam.captain}> (Captain), ${fetchedTeam.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
+    `<@${fetchedTeam.captain}> (Captain), ${fetchedTeam.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
   );
 
   sendMessage(message, correctEmbed);
