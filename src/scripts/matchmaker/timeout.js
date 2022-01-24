@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
 
-const { EMBED_COLOR_WARNING, channelQueues, deletableChannels } = require("./utils");
+const { EMBED_COLOR_WARNING, channelQueues, deletableChannels } = require("../../utils/utils");
 
 const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
 
@@ -69,14 +69,14 @@ const updateOngoingGames = async () => {
   const currentTimeMS = Date.now();
 
   const ongoingGamesSolos = await OngoingGamesSolosCollection.find({
-    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+    date: { $gt: -MAX_GAME_LENGTH_MS + currentTimeMS },
   });
 
-  const ongoingGamesTeams = await OngoingGamesSolosCollection.find({
-    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+  const ongoingGamesTeams = await OngoingGamesTeamsCollection.find({
+    date: { $gt: -MAX_GAME_LENGTH_MS + currentTimeMS },
   });
 
-  if (ongoingGamesSolos.length === 0 && ongoingGamesTeams.length === 0) {
+  if ([...ongoingGamesSolos, ...ongoingGamesTeams].length === 0) {
     return;
   }
 

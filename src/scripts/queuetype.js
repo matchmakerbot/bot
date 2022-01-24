@@ -4,7 +4,7 @@ const ChannelsCollection = require("../utils/schemas/channelsSchema");
 
 const { queueTypeObject } = require("../utils/cache");
 
-const { channelQueues } = require("./matchmaker/utils");
+const { channelQueues } = require("../utils/utils");
 
 const availableQueueModes = ["solos", "teams"];
 
@@ -52,19 +52,23 @@ const execute = async (message) => {
   const channelInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
 
   if (channelInfo != null) {
-    for (const queue of channelQueues) {
-      if (queue.players.length === queue.queueSize && queue.channelId === message.channel.id) {
-        wrongEmbed.setTitle(":x: Cannot change queue type once a game has been made");
+    const isInGame =
+      channelQueues.find((e) => e.channelId === message.channel.id && e.players.length === e.queueSize) != null;
 
-        return sendMessage(message, wrongEmbed);
-      }
+    if (isInGame) {
+      wrongEmbed.setTitle(":x: Cannot change queue type once a game has been made");
 
-      if (queue.channelId === message.channel.id) {
-        queue.queueSize = intGamemode;
-        queue.queueMode = queueMode;
-        queue.players.splice(0, queue.players.length);
-      }
+      return sendMessage(message, wrongEmbed);
     }
+
+    const channelInQueue = queueTypeObject.find((e) => e.channelId === message.channel.id);
+
+    if (channelInQueue != null) {
+      channelInQueue.queueType = queueMode;
+      channelInQueue.queueSize = intGamemode;
+      channelInQueue.players.splice(0, channelInQueue.players.length);
+    }
+
     await ChannelsCollection.updateOne(
       {
         channelId: message.channel.id,

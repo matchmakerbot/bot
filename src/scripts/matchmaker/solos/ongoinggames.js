@@ -1,8 +1,6 @@
 const Discord = require("discord.js");
 
-const { sendMessage } = require("../../../utils/utils");
-
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../utils");
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
@@ -18,6 +16,7 @@ const execute = async (message) => {
   if (Number.isNaN(Number(skip)) || skip == null || skip < 1) {
     skipCount = 1;
   }
+
   const ongoingGames = await OngoingGamesSolosCollection.find({ channelId: message.channel.id })
     .skip(5 * (skipCount - 1))
     .limit(5);

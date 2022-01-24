@@ -1,10 +1,8 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../utils");
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersSchema");
-
-const { sendMessage } = require("../../../utils/utils");
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);

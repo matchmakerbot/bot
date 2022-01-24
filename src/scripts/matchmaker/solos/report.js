@@ -4,25 +4,39 @@ const EloRank = require("elo-rank");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
 
-const { sendMessage } = require("../../../utils/utils.js");
+const {
+  sendMessage,
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  finishedGames,
+  deletableChannels,
+} = require("../../../utils/utils.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, deletableChannels } = require("../utils");
+const assignScoreUsers = async (game) => {
+  const promises = [];
 
-const assignScoreUser = async (user, channelId) => {
-  const score = user.won ? "wins" : "losses";
+  [...game.team1, ...game.team2].forEach(async (user) => {
+    const won =
+      (game.winningTeam === 0 && game.team1.includes(user.userId)) ||
+      (game.winningTeam === 1 && game.team2.includes(user.userId));
 
-  await MatchmakerUsersCollection.updateOne(
-    {
-      userId: user.userId,
-      channelId,
-    },
-    {
-      $inc: { [score]: 1 },
-      mmr: user.mmr + user.mmrDifference,
-    }
-  );
+    const score = won ? "wins" : "losses";
+
+    promises.push(
+      MatchmakerUsersCollection.updateOne(
+        {
+          userId: user.userId,
+          channelId: game.channelId,
+        },
+        {
+          $inc: { [score]: 1, mmr: won ? game.mmrDifference : -game.mmrDifference },
+        }
+      )
+    );
+  });
+  await Promise.all(promises);
 };
 
 const execute = async (message) => {
@@ -56,7 +70,7 @@ const execute = async (message) => {
     return;
   }
 
-  if (secondArg !== "win" && secondArg !== "lose") {
+  if (!["win", "lose"].includes(secondArg)) {
     wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
 
     sendMessage(message, wrongEmbed);
@@ -71,47 +85,38 @@ const execute = async (message) => {
     ongoingGame.winningTeam = 1;
   }
 
-  const promises = [];
-
   const mmrOfEachTeam = {
     team1: ongoingGame.team1.reduce((a, c) => a + c.mmr, 0) / ongoingGame.team1.length,
     team2: ongoingGame.team2.reduce((a, c) => a + c.mmr, 0) / ongoingGame.team2.length,
   };
 
-  const team1EloDifference = Math.round(
-    elo.updateRating(
-      elo.getExpected(mmrOfEachTeam.team1, mmrOfEachTeam.team2),
-      ongoingGame.winningTeam === 0 ? 1 : 0,
-      mmrOfEachTeam.team1
-    ) - mmrOfEachTeam.team1
-  );
+  const winningTeamMmr = ongoingGame.winningTeam === 0 ? mmrOfEachTeam.team1 : mmrOfEachTeam.team2;
 
-  const team2EloDifference = -team1EloDifference;
+  const mmrDifference = Math.abs(
+    Math.round(
+      elo.updateRating(
+        elo.getExpected(
+          winningTeamMmr,
+          winningTeamMmr === ongoingGame.team1 ? mmrOfEachTeam.team2 : mmrOfEachTeam.team1
+        ),
+        1,
+        winningTeamMmr
+      ) - winningTeamMmr
+    )
+  );
 
   const assignScoreData = {
     channelId: ongoingGame.channelId,
     guildId: ongoingGame.guildId,
     gameId: ongoingGame.gameId,
-    mmrOfEachTeam: { team1: mmrOfEachTeam.team1, team2: mmrOfEachTeam.team2 },
-    team1: ongoingGame.team1.map((e) => ({
-      mmr: e.mmr,
-      userId: e.userId,
-      mmrDifference: team1EloDifference,
-      won: ongoingGame.winningTeam === 0,
-    })),
-    team2: ongoingGame.team2.map((e) => ({
-      mmr: e.mmr,
-      userId: e.userId,
-      mmrDifference: team2EloDifference,
-      won: ongoingGame.winningTeam === 1,
-    })),
+    winningTeam: ongoingGame.winningTeam,
+    mmrOfEachTeam,
+    eloDifference: mmrDifference,
+    team1: ongoingGame.team1,
+    team2: ongoingGame.team2,
   };
 
-  [...assignScoreData.team1, ...assignScoreData.team2].forEach((user) => {
-    promises.push(assignScoreUser(user, ongoingGame.channelId));
-  });
-
-  await Promise.all(promises);
+  await assignScoreUsers(assignScoreData);
 
   finishedGames.push(assignScoreData);
 

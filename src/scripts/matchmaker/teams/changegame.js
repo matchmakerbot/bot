@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, revertGame } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, changeGame } = require("../../../utils/utils");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -50,9 +50,9 @@ const execute = async (message) => {
   if (thirdArg === "revert" || thirdArg === "cancel") {
     const promises = [];
 
-    promises.push(revertGame(selectedGame.team1, selectedGame, thirdArg, TEAM1, "teams"));
+    promises.push(changeGame(selectedGame.team1, selectedGame, thirdArg, TEAM1));
 
-    promises.push(revertGame(selectedGame.team2, selectedGame, thirdArg, TEAM2, "teams"));
+    promises.push(changeGame(selectedGame.team2, selectedGame, thirdArg, TEAM2));
 
     await Promise.all(promises);
   } else {
@@ -72,8 +72,8 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "revertgame",
+  name: "changegame",
   description:
-    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores (I know this name is shit plz give better options)",
+    "Cancels/reverts score of a finished game. Usage: !changegame (gameid) cancel, this example will cancel the game, as it never happen. !changegame (gameid) revert, this example will revert the scores (I know this name is shit plz give better options)",
   execute,
 };

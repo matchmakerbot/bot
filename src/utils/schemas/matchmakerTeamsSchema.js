@@ -5,18 +5,9 @@ const schema = new mongoose.Schema(
     guildId: String,
     name: String,
     captain: String,
-    members: [
+    memberIds: [
       {
         type: String,
-      },
-    ],
-    channels: [
-      {
-        channelId: String,
-        wins: Number,
-        losses: Number,
-        mmr: Number,
-        _id: false,
       },
     ],
   },

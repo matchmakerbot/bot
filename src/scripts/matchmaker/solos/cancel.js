@@ -1,10 +1,14 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, cancelQueue, deletableChannels } = require("../utils");
-
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const { sendMessage } = require("../../../utils/utils");
+const {
+  sendMessage,
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  cancelQueue,
+  deletableChannels,
+} = require("../../../utils/utils");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);

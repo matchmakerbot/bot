@@ -8,8 +8,6 @@ const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
-const { sendMessage } = require("../../../utils/utils");
-
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -20,7 +18,8 @@ const {
   shuffle,
   gameCount,
   fetchGamesTeams,
-} = require("../utils");
+  sendMessage,
+} = require("../../../utils/utils");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -31,7 +30,7 @@ const execute = async (message, queueSize) => {
 
   const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
 
-  const queueArray = getQueueArray(queueSize, channelId, message.guild.id, "teams");
+  const queueArray = getQueueArray(queueSize, channelId, message.guild.id);
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You don't belong to a team!");
@@ -56,7 +55,7 @@ const execute = async (message, queueSize) => {
 
   if (
     channelQueues
-      .filter((e) => e.queueMode === "teams" && e.guildId === message.guild.id)
+      .filter((e) => e.guildId === message.guild.id)
       .map((e) => e.players)
       .flat()
       .map((e) => e.name)

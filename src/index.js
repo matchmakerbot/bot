@@ -14,6 +14,6 @@ const { createDbConnection } = require("./utils/connectMongoDBServer");
 
     console.error(e);
 
-    // process.exit(1);
+    process.exit(1);
   }
 })();

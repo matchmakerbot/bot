@@ -6,9 +6,8 @@ const {
   fetchTeamByGuildIdAndName,
   EMBED_COLOR_ERROR,
   fetchTeamByGuildAndUserId,
-} = require("../utils");
-
-const { sendMessage } = require("../../../utils/utils");
+  sendMessage,
+} = require("../../../utils/utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);

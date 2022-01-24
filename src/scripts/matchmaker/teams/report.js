@@ -3,8 +3,6 @@ const EloRank = require("elo-rank");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
-const { sendMessage } = require("../../../utils/utils");
-
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
@@ -16,7 +14,8 @@ const {
   fetchTeamByGuildAndUserId,
   TEAM1,
   TEAM2,
-} = require("../utils");
+  sendMessage,
+} = require("../../../utils/utils");
 
 const execute = async (message) => {
   const elo = new EloRank(16);
@@ -94,9 +93,9 @@ const execute = async (message) => {
 
   game.team2.mmrDifference = team2EloDifference;
 
-  promises.push(assignWinLoseDb(game.team1, game, "teams", TEAM1));
+  promises.push(assignWinLoseDb(game.team1, game, TEAM1));
 
-  promises.push(assignWinLoseDb(game.team2, game, "teams", TEAM2));
+  promises.push(assignWinLoseDb(game.team2, game, TEAM2));
 
   finishedGames.push(game);
 

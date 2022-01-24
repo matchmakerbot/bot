@@ -7,7 +7,7 @@ const {
   fetchTeamByGuildAndUserId,
   cancelQueue,
   deletableChannels,
-} = require("../utils");
+} = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 

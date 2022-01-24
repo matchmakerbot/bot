@@ -4,7 +4,7 @@ const teamObject = {
   name: String,
   captain: String,
   mmr: Number,
-  members: [
+  memberIds: [
     {
       type: String,
     },

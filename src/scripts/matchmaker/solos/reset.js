@@ -1,12 +1,16 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, getQueueArray } = require("../utils");
-
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
 
-const { sendMessage } = require("../../../utils/utils");
+const {
+  sendMessage,
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  finishedGames,
+  getQueueArray,
+} = require("../../../utils/utils");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
@@ -17,7 +21,7 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
@@ -46,9 +50,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await MatchmakerCollection.deleteMany({
-        channelId,
-      });
+      await MatchmakerCollection.deleteMany({ channelId });
 
       const foundGame = finishedGames.find((e) => e.channelId === channelId);
 

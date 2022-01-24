@@ -1,17 +1,17 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamsByGuildId, messageArgs, invites } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, invites, sendMessage } = require("../../../utils/utils");
 
 const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
-
-const { sendMessage } = require("../../../utils/utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const guildTeams = await fetchTeamsByGuildId(message.guild.id);
+  const guildTeams = await TeamsCollection.findMany({ guildId: message.guild.id });
+
+  const teamName = messageArgs(message);
 
   if (
     guildTeams
@@ -26,21 +26,23 @@ const execute = async (message) => {
     return;
   }
 
-  if (!guildTeams.map((e) => e.name).includes(messageArgs(message))) {
+  if (!guildTeams.map((e) => e.name).includes(teamName)) {
     wrongEmbed.setTitle(":x: This team doesn't exist");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (!Object.keys(invites).includes(messageArgs(message))) {
+  if (!Object.keys(invites).includes(teamName)) {
     wrongEmbed.setTitle(":x: This team didn't invite anyone!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (!invites[messageArgs(message)].includes(message.author.id)) {
+  const invitePath = invites[teamName];
+
+  if (!invitePath.includes(message.author.id)) {
     wrongEmbed.setTitle(":x: This team didn't invite you!");
 
     sendMessage(message, wrongEmbed);
@@ -50,14 +52,18 @@ const execute = async (message) => {
   await TeamsCollection.updateOne(
     {
       guildId: message.guild.id,
-      name: messageArgs(message),
+      name: teamName,
     },
-    { $push: { members: message.author.id } }
+    { $push: { memberIds: message.author.id } }
   );
 
-  invites[messageArgs(message)].splice(invites[messageArgs(message)].indexOf(message.author.id), 1);
+  if (invitePath.length === 1) {
+    delete invites[teamName];
+  } else {
+    invitePath.splice(invitePath.indexOf(teamName), 1);
+  }
 
-  correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${messageArgs(message)}!`);
+  correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${teamName}!`);
 
   sendMessage(message, correctEmbed);
 };

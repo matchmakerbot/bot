@@ -1,38 +1,42 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamsByGuildId } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
-const { sendMessage } = require("../../../utils/utils");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const teams = await fetchTeamsByGuildId(message.guild.id);
+  const [, skip] = message.content.split(" ");
 
-  let [, secondArg] = message.content.split(" ");
+  let skipCount = skip;
+
+  if (Number.isNaN(Number(skip)) || skip == null || skip < 1) {
+    skipCount = 1;
+  }
+
+  const teams = await TeamsCollection.findOne({
+    guildId: message.guild.id,
+  })
+    .skip(10 * (skipCount - 1))
+    .limit(10);
 
   if (teams.length === 0) {
-    wrongEmbed.setTitle(":x: No games are currently having place!");
+    wrongEmbed.setTitle(":x: There are no teams on this page!");
 
     return sendMessage(message, wrongEmbed);
   }
 
-  if (Number.isNaN(secondArg) || secondArg == null) {
-    secondArg = 1;
-  }
-  let i = 10 * (secondArg - 1);
-  for (i; i < 10 * secondArg; i++) {
-    if (teams[i] == null) {
-      correctEmbed.addField("No more teams to list ", "Encourage your friends to play!");
-      break;
-    }
+  const teamsCount = await TeamsCollection.countDocuments();
 
-    correctEmbed.addField(`Name: ${teams[i].name}`, `Captain: <@${teams[i].captain}>`);
+  teams.forEach((team) => {
+    correctEmbed.addField(`Name: ${team.name}`, `Captain: <@${team.captain}>`);
 
-    correctEmbed.setFooter(`Showing page ${secondArg}/${Math.ceil(teams.length / 10)}`);
-  }
+    correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(teamsCount / 10)}`);
+  });
+
   return sendMessage(message, correctEmbed);
 };
 

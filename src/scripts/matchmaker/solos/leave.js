@@ -1,15 +1,13 @@
 const Discord = require("discord.js");
 
-const { sendMessage } = require("../../../utils/utils");
-
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../utils");
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
 const execute = (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
 
   const index = queueArray.map((e) => e.userId).indexOf(message.author.id);
 

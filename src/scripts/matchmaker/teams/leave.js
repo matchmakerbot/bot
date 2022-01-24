@@ -2,30 +2,28 @@ const Discord = require("discord.js");
 
 const { sendMessage } = require("../../../utils/utils");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId, getQueueArray } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
+
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
-
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
+  const fetchedTeam = await TeamsCollection.findOne({
+    captain: message.author.id,
+    guildId: message.guild.id,
+  });
 
   if (fetchedTeam == null) {
-    wrongEmbed.setTitle(":x: You do not belong to a team!");
+    wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (fetchedTeam.captain !== message.author.id) {
-    wrongEmbed.setTitle(":x: You are not the captain!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === 2) {
     wrongEmbed.setTitle(":x: You can't leave now!");

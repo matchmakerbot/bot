@@ -4,11 +4,12 @@ const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
 const {
+  sendMessage,
   EMBED_COLOR_CHECK,
   getQueueArray,
   EMBED_COLOR_ERROR,
@@ -17,8 +18,7 @@ const {
   gameCount,
   shuffle,
   balanceTeamsByMmr,
-} = require("../utils");
-const { sendMessage } = require("../../../utils/utils.js");
+} = require("../../../utils/utils.js");
 
 const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
@@ -137,7 +137,7 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
 
   const channelId = message.channel.id;
 
@@ -269,7 +269,7 @@ const execute = async (message, queueSize) => {
       await rorcMessage
         .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount), {
           max: queueSize,
-          time: 3000,
+          time: 20000,
         })
         .then((collected) => {
           collected.forEach((e) => {

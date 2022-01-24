@@ -1,33 +1,32 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, getQueueArray, fetchGamesTeams } = require("../utils");
-
-const { sendMessage } = require("../../../utils/utils");
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  finishedGames,
+  getQueueArray,
+  sendMessage,
+} = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
 const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
+const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
 
-  const [, secondArg] = message.content.split(" ");
+  const [, mode] = message.content.split(" ");
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
+  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (message.content.split(" ").length === 1) {
-    wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -40,7 +39,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  switch (secondArg) {
+  switch (mode) {
     case "channel": {
       const fetchGamesByChannelId = await OngoingGamesTeamsCollection.find({
         channelId,
@@ -53,51 +52,14 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      if (message.content.split(" ").length !== 2) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
+      await TeamsScoreCollection.deleteMany({ channelId });
 
-        sendMessage(message, wrongEmbed);
-        return;
+      const foundGame = finishedGames.find((e) => e.channelId === channelId);
+
+      if (foundGame != null) {
+        finishedGames.splice(finishedGames.indexOf(foundGame), 1);
       }
-      const promises = [];
-      await TeamsCollection.find({
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      }).then(async (storedTeams) => {
-        for (const team of storedTeams) {
-          const channelPos = team.channels
-            .map((e) => e)
-            .map((e) => e.channelId)
-            .indexOf(channelId);
 
-          if (channelPos !== -1) {
-            const updatePromise = TeamsCollection.updateOne(
-              {
-                name: team.name,
-                guildId: team.guildId,
-              },
-              {
-                $pull: {
-                  channels: {
-                    channelId,
-                  },
-                },
-              }
-            );
-            promises.push(updatePromise);
-          }
-        }
-        await Promise.all(promises);
-      });
-
-      for (const game of finishedGames) {
-        if (game.channelId === channelId) {
-          finishedGames.splice(finishedGames.indexOf(game), 1);
-        }
-      }
       correctEmbed.setTitle(":white_check_mark: Channel score reset!");
 
       sendMessage(message, correctEmbed);
@@ -109,21 +71,20 @@ const execute = async (message, queueSize) => {
       teamName.splice(0, 2);
       teamName = teamName.join(" ");
 
-      const ongoingGames = await fetchGamesTeams(null, message.guild.id);
-
-      if (
-        ongoingGames
-          .map((e) => [e.team1.name, e.team2.name])
-          .flat()
-          .includes(teamName)
-      ) {
-        wrongEmbed.setTitle(":x: Team is in the middle of a game!");
+      if (teamName === "" && teamName == null) {
+        wrongEmbed.setTitle(":x: You need to specify a team name!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
-      if (message.content.split(" ").length !== 3) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
+
+      const ongoingGame = await OngoingGamesTeamsCollection.findOne({
+        channelId,
+        $or: [{ team1: { name: teamName } }, { team2: { name: teamName } }],
+      });
+
+      if (ongoingGame != null) {
+        wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
         sendMessage(message, wrongEmbed);
         return;
@@ -131,7 +92,7 @@ const execute = async (message, queueSize) => {
 
       const player = await TeamsCollection.findOne({
         name: teamName,
-        guildId: message.guild.id,
+        channelId,
       });
 
       if (player == null) {
@@ -141,19 +102,10 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await TeamsCollection.updateOne(
-        {
-          name: teamName,
-          guildId: message.guild.id,
-        },
-        {
-          $pull: {
-            channels: {
-              channelId,
-            },
-          },
-        }
-      );
+      await TeamsCollection.deleteOne({
+        name: teamName,
+        channelId,
+      });
 
       correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 

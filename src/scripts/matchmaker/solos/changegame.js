@@ -1,22 +1,35 @@
 const Discord = require("discord.js");
 
-const { sendMessage } = require("../../../utils/utils");
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../../../utils/utils");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../utils");
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersSchema");
+const changeGame = async (game, param) => {
+  const promises = [];
 
-const revertGame = async (user, param, channelId) => {
-  await MatchmakerUsersCollection.updateOne(
-    {
-      channelId,
-      userId: user.userId,
-    },
-    {
-      mmr: user.mmr - (param === "revert" ? user.mmrDifference : 0),
-      $inc: { [user.won ? "wins" : "losses"]: -1, [!user.won ? "wins" : "losses"]: param === "revert" ? 1 : 0 },
-    }
-  );
+  [...game.team1, ...game.team2].forEach(async (user) => {
+    const won =
+      (game.winningTeam === 0 && game.team1.includes(user.userId)) ||
+      (game.winningTeam === 1 && game.team2.includes(user.userId));
+
+    promises.push(
+      await MatchmakerUsersCollection.updateOne(
+        {
+          channelId: game.channelId,
+          userId: user.userId,
+        },
+        {
+          $inc: {
+            [won ? "wins" : "losses"]: -1,
+            [!won ? "wins" : "losses"]: param === "revert" ? 1 : 0,
+            // eslint-disable-next-line no-nested-ternary
+            mmr: user.mmr + (param === "revert" ? (!won ? game.mmrDifference * 2 : -game.mmrDifference * 2) : 0),
+          },
+        }
+      )
+    );
+  });
+  await Promise.all(promises);
 };
 
 const execute = async (message) => {
@@ -59,13 +72,7 @@ const execute = async (message) => {
   }
 
   if (thirdArg === "revert" || thirdArg === "cancel") {
-    const promises = [];
-
-    [...selectedGame.team1, ...selectedGame.team2].forEach((user) => {
-      promises.push(revertGame(user, thirdArg, selectedGame.channelId));
-    });
-
-    await Promise.all(promises);
+    await changeGame(selectedGame, thirdArg);
   } else {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
@@ -83,8 +90,8 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "revertgame",
+  name: "changegame",
   description:
-    "Cancels/reverts score of a finished game. Usage: !revertgame (gameid) cancel, this example will cancel the game, as it never happen. !revertgame (gameid) revert, this example will revert the scores",
+    "Cancels/reverts score of a finished game. Usage: !changegame (gameid) cancel, this example will cancel the game, as it never happen. !changegame (gameid) revert, this example will revert the scores",
   execute,
 };

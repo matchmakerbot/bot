@@ -1,8 +1,11 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchTeamByGuildAndUserId } = require("../utils");
-
-const { sendMessage } = require("../../../utils/utils");
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  fetchTeamByGuildAndUserId,
+  sendMessage,
+} = require("../../../utils/utils");
 
 const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 

@@ -10,7 +10,7 @@ const schema = new mongoose.Schema(
     losses: { type: Number, default: 0 },
     mmr: { type: Number, default: 1000 },
   },
-  { collection: "matchmakerUsers", versionKey: false, minimize: false }
+  { collection: "matchmakerUsersWithScore", versionKey: false, minimize: false }
 );
 
-module.exports = mongoose.model("matchmakerUsers", schema);
+module.exports = mongoose.model("matchmakerUsersWithScore", schema);

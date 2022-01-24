@@ -2,15 +2,15 @@ const Discord = require("discord.js");
 
 const client = require("../../../utils/createClientInstance.js");
 
-const { sendMessage } = require("../../../utils/utils");
+const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
-  fetchTeamByGuildAndUserId,
   invites,
   EMBED_COLOR_WARNING,
-} = require("../utils");
+  sendMessage,
+} = require("../../../utils/utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -24,19 +24,15 @@ const execute = async (message) => {
     return;
   }
 
-  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const fetchedTeam = await TeamsCollection.findOne({
+    captain: message.author.id,
+    guildId: message.guild.id,
+  });
 
-  const pingedUser = message.mentions.members.first().user.id;
+  const pingedUser = message.mentions.members.first().user;
 
   if (fetchedTeam == null) {
-    wrongEmbed.setTitle(":x: You do not belong to a team!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (fetchedTeam.captain !== message.author.id) {
-    wrongEmbed.setTitle(":x: You are not the captain!");
+    wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -46,14 +42,18 @@ const execute = async (message) => {
     invites[fetchedTeam.name] = [];
   }
 
-  if (invites[fetchedTeam.name].includes(pingedUser)) {
-    wrongEmbed.setTitle(`:x: ${message.mentions.members.first().user.username} was already invited`);
+  if (invites[fetchedTeam.name].includes(pingedUser.id)) {
+    wrongEmbed.setTitle(`:x: ${pingedUser.username} was already invited`);
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  const userTeam = await fetchTeamByGuildAndUserId(message.guild.id, pingedUser);
+  const userTeam = await TeamsCollection.findOne({
+    captain: pingedUser.id,
+    guildId: message.guild.id,
+    memberIds: { $elemMatch: { userId: pingedUser.id } },
+  });
 
   if (userTeam != null) {
     wrongEmbed.setTitle(":x: User already belongs to a team!");
@@ -65,24 +65,30 @@ const execute = async (message) => {
   correctEmbed.setTitle(
     `:white_check_mark: Invited ${message.mentions.members.first().user.username} to ${fetchedTeam.name}!`
   );
+
   const pmEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
-  const fetchedUser = await client.users.fetch(pingedUser);
+
   try {
+    const fetchedUser = await client.users.fetch(pingedUser.id);
+
     pmEmbed.setTitle(
-      `You have been invited to join ${fetchedTeam.name}. Please do !jointeam ${fetchedTeam.name} to join the team`
+      `You have been invited to join ${fetchedTeam.name}. Please do !jointeam ${fetchedTeam.name} in the server to join the team`
     );
+
     await fetchedUser.send(pmEmbed);
   } catch (error) {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
-      .setTitle(`:x: Couldn't sent message to <@${pingedUser}>, please check if your DM'S aren't set to friends only.`);
+      .setTitle(
+        `:x: Couldn't sent message to <@${pingedUser.id}>, please check if your DM'S aren't set to friends only.`
+      );
 
     console.error(error);
 
     sendMessage(message, errorEmbed);
   }
 
-  invites[fetchedTeam.name].push(pingedUser);
+  invites[fetchedTeam.name].push(pingedUser.id);
 
   sendMessage(message, correctEmbed);
 };
