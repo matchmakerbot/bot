@@ -12,12 +12,10 @@ const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   EMBED_COLOR_WARNING,
-  fetchTeamByGuildAndUserId,
   channelQueues,
   getQueueArray,
   shuffle,
   gameCount,
-  fetchGamesTeams,
   sendMessage,
 } = require("../../../utils/utils");
 

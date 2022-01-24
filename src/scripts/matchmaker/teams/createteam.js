@@ -35,9 +35,8 @@ const execute = async (message) => {
   }
 
   const teamByUser = await TeamsCollection.findOne({
-    captain: message.author.id,
     guildId: message.guild.id,
-    memberIds: { $elemMatch: { userId: message.author.id } },
+    $or: [{ captain: message.author.id }, { memberIds: { $elemMatch: message.author.id } }],
   });
 
   if (teamByUser != null) {
@@ -65,7 +64,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "createteam",
-  description:
-    "Creates a team, usage: !createteam Maniacs, the bot then creates a role with the teams name and assigns a Team Captain role to the person that created the team",
+  description: "Creates a team, usage: !createteam Maniacs",
   execute,
 };

@@ -14,7 +14,7 @@ const execute = async (message) => {
   const fetchedTeam = await TeamsCollection.findOne({
     captain: message.author.id,
     guildId: message.guild.id,
-    memberIds: { $elemMatch: { userId: message.author.id } },
+    memberIds: { $elemMatch: message.author.id },
   });
 
   const [, secondArg] = message.content.split(" ");

@@ -1,13 +1,10 @@
 const Discord = require("discord.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  fetchTeamByGuildAndUserId,
-  sendMessage,
-} = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
 const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+
+const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -19,18 +16,24 @@ const execute = async (message) => {
   const channelId = message.channel.id;
 
   const userId = message.author.id;
+
   switch (secondArg) {
     case "me": {
-      const team = await fetchTeamByGuildAndUserId(message.guild.id, userId);
+      const team = TeamsCollection.findOne({
+        channelId,
+        $or: [{ captain: userId }, { memberIds: { $elemMatch: userId } }],
+      });
 
-      if (team == null) {
+      const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team._id });
+
+      if (teamScore == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
 
-      const scoreDirectory = team.channels[team.channels.map((e) => e.channelId).indexOf(channelId)];
+      const scoreDirectory = teamScore.channels[teamScore.channels.map((e) => e.channelId).indexOf(channelId)];
 
       if (scoreDirectory == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
@@ -56,74 +59,39 @@ const execute = async (message) => {
       return;
     }
     case "channel": {
-      let funcArg = thirdArg;
-      const storedUsers = await TeamsCollection.find({
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      });
-      const storedUsersList = storedUsers.filter(
-        (a) =>
-          a.channels.map((e) => e.channelId).indexOf(channelId) !== -1 &&
-          a.channels[a.channels.map((e) => e.channelId).indexOf(channelId)].wins +
-            a.channels[a.channels.map((e) => e.channelId).indexOf(channelId)].losses !==
-            0
-      );
-
-      if (
-        !message.guild.channels.cache
-          .array()
-          .map((e) => e.id)
-          .includes(channelId)
-      ) {
-        wrongEmbed.setTitle(":x: This channel does not belong to this server!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
-      if (storedUsersList.length === 0) {
-        wrongEmbed.setTitle(":x: No games have been played in here!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
-      storedUsersList.sort((a, b) => {
-        const indexA = a.channels.map((e) => e.channelId).indexOf(channelId);
-
-        const indexB = b.channels.map((e) => e.channelId).indexOf(channelId);
-
-        return b.channels[indexB].mmr - a.channels[indexA].mmr;
-      });
+      let skipCount = thirdArg;
 
       if (Number.isNaN(Number(thirdArg)) || thirdArg == null || thirdArg < 1) {
-        funcArg = 1;
+        skipCount = 1;
       }
-      let indexes = 10 * (funcArg - 1);
-      for (indexes; indexes < 10 * funcArg; indexes++) {
-        if (storedUsersList[indexes] == null) {
-          correctEmbed.addField("No more members to list in this page!", "Encourage your friends to play!");
 
-          break;
-        }
-        storedUsersList[indexes].channels.forEach((channels) => {
-          if (channels.channelId === channelId) {
-            correctEmbed.addField(
-              channels.name,
-              `Wins: ${channels.wins} | Losses: ${channels.losses} | Winrate: ${
-                Number.isNaN(Math.floor((channels.wins / (channels.wins + channels.losses)) * 100))
-                  ? "0"
-                  : Math.floor((channels.wins / (channels.wins + channels.losses)) * 100)
-              }% | MMR: ${channels.mmr}`
-            );
+      const storedTeamsList = await TeamsScoreCollection.find({
+        channelId,
+      })
+        .skip(10 * (skipCount - 1))
+        .limit(10);
 
-            correctEmbed.setFooter(`Showing page ${funcArg}/${Math.ceil(storedUsersList.length / 10)}`);
-          }
-        });
+      if (storedTeamsList.length === 0) {
+        wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
+
+        sendMessage(message, wrongEmbed);
+        return;
       }
+
+      const storedTeamsCount = await TeamsScoreCollection.count({});
+
+      storedTeamsList.sort((a, b) => b.mmr - a.mmr);
+
+      storedTeamsList.forEach((team) => {
+        const winrate = team.losses === 0 ? 100 : Math.floor((team.wins / (team.wins + team.losses)) * 100);
+
+        correctEmbed.addField(
+          team.name,
+          `Wins: ${team.wins} | Losses: ${team.losses} | Winrate: ${winrate}% | MMR: ${team.mmr}`
+        );
+        correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedTeamsCount / 10)}`);
+      });
+
       sendMessage(message, correctEmbed);
 
       return;

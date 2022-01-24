@@ -1,3 +1,5 @@
+// eslint-disable-next-line eslint-comments/disable-enable-pair
+/* eslint-disable promise/no-nesting */
 const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
@@ -38,10 +40,10 @@ const updateUsers = async () => {
 
   const filteredChannels = channelQueues.filter((queue) => queue.players.length < queue.queueSize);
 
-  for (const filteredChannel of filteredChannels) {
+  filteredChannels.forEach((filteredChannel) => {
     const filteredUsers = filteredChannel.players.filter((user) => currentTimeMS - user.date > MAX_USER_IDLE_TIME_MS);
 
-    for (const filteredUser of filteredUsers) {
+    filteredUsers.forEach((filteredUser) => {
       const channel = filteredChannel.channelId;
 
       const notifyChannel = client.channels
@@ -55,11 +57,11 @@ const updateUsers = async () => {
           filteredChannel.players.splice(filteredChannel.players.indexOf(filteredUser), 1);
         })
         .catch(() => {
-          delete channelQueues.splice(channelQueues.indexOf(filteredChannel.channelId), 1);
+          channelQueues.splice(channelQueues.indexOf(filteredChannel.channelId), 1);
         });
       promises.push(notifyChannel);
-    }
-  }
+    });
+  });
   await Promise.all(promises);
 };
 
@@ -76,6 +78,8 @@ const updateOngoingGames = async () => {
     date: { $gt: -MAX_GAME_LENGTH_MS + currentTimeMS },
   });
 
+  const games = [...ongoingGamesSolos, ...ongoingGamesTeams];
+
   if ([...ongoingGamesSolos, ...ongoingGamesTeams].length === 0) {
     return;
   }
@@ -87,7 +91,7 @@ const updateOngoingGames = async () => {
     e.queueMode = "teams";
   });
 
-  for (const game of [...ongoingGamesSolos, ...ongoingGamesTeams]) {
+  games.forEach((game) => {
     const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {
       game.channelIds.forEach((channel) => {
         deletableChannels.push(channel);
@@ -111,24 +115,18 @@ const updateOngoingGames = async () => {
       }
     });
     promises.push(channelNotif);
-  }
+  });
   await Promise.all(promises);
 };
 
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];
-  for (const deletableChannel of deletableChannels) {
+  deletableChannels.forEach((deletableChannel) => {
     const channel = client.channels
       .fetch(deletableChannel.channelId)
       .then(async (e) => {
-        if (e.type === "text") {
-          deleteVC.push(deletableChannel);
-          await e.delete().catch(async () => {
-            warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 0);
-          });
-        }
-        if (e.members.array().length === 0) {
+        if (e.type === "text" || e.members?.array()?.length === 0) {
           deleteVC.push(deletableChannel);
           await e.delete().catch(async () => {
             warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 0);
@@ -140,12 +138,12 @@ const updateChannels = async () => {
         warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 1);
       });
     promises.push(channel);
-  }
+  });
   await Promise.all(promises);
 
-  for (const item of deleteVC) {
+  deleteVC.forEach((item) => {
     deletableChannels.splice(deletableChannels.indexOf(item), 1);
-  }
+  });
 };
 
 const evaluateUpdates = async () => {

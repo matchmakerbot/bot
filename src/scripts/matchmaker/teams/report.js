@@ -11,7 +11,6 @@ const {
   messageEndswith,
   deletableChannels,
   assignWinLoseDb,
-  fetchTeamByGuildAndUserId,
   TEAM1,
   TEAM2,
   sendMessage,

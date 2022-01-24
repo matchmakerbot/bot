@@ -90,20 +90,22 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      const player = await TeamsCollection.findOne({
-        name: teamName,
+      const team = TeamsCollection.findOne({
         channelId,
+        name: teamName,
       });
 
-      if (player == null) {
+      const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team._id });
+
+      if (teamScore == null) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
 
-      await TeamsCollection.deleteOne({
-        name: teamName,
+      await TeamsScoreCollection.deleteOne({
+        teamId: team._id,
         channelId,
       });
 

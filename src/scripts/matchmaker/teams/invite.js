@@ -50,9 +50,13 @@ const execute = async (message) => {
   }
 
   const userTeam = await TeamsCollection.findOne({
-    captain: pingedUser.id,
     guildId: message.guild.id,
-    memberIds: { $elemMatch: { userId: pingedUser.id } },
+    $or: [
+      {
+        captain: pingedUser.id,
+        memberIds: { $elemMatch: pingedUser.id },
+      },
+    ],
   });
 
   if (userTeam != null) {
