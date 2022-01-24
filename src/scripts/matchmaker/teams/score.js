@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
@@ -19,7 +19,7 @@ const execute = async (message) => {
 
   switch (secondArg) {
     case "me": {
-      const team = TeamsCollection.findOne({
+      const team = MatchmakerTeamsCollection.findOne({
         channelId,
         $or: [{ captain: userId }, { memberIds: { $elemMatch: userId } }],
       });

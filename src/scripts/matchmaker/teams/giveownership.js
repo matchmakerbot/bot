@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -11,7 +11,7 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchedTeam = await TeamsCollection.findOne({
+  const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     captain: message.author.id,
     guildId: message.guild.id,
   });
@@ -69,7 +69,7 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Given ownership to ${message.mentions.members.first().user.username}`);
 
-  await TeamsCollection.updateOne(
+  await MatchmakerTeamsCollection.updateOne(
     {
       guildId: message.guild.id,
       name: fetchedTeam.name,

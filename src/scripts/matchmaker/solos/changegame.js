@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../../../utils/utils");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const changeGame = async (game, param) => {
   const promises = [];

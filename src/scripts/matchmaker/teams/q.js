@@ -4,7 +4,7 @@ const OngoingGamesTeamsSchema = require("../../../utils/schemas/ongoingGamesTeam
 
 const client = require("../../../utils/createClientInstance.js");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
@@ -146,12 +146,12 @@ const execute = async (message, queueSize) => {
       };
       const promises = [];
       queueArray.forEach((team) => {
-        const dbRequest = TeamsCollection.findOne({
+        const dbRequest = MatchmakerTeamsCollection.findOne({
           name: team.name,
           guildId: message.guild.id,
         }).then(async (storedTeam) => {
           if (!storedTeam.channels.map((e) => e.channelId).includes(channelId)) {
-            await TeamsCollection.updateOne(
+            await MatchmakerTeamsCollection.updateOne(
               {
                 name: team.name,
                 guildId: message.guild.id,

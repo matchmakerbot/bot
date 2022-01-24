@@ -3,21 +3,46 @@ const EloRank = require("elo-rank");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
-  fetchGamesTeams,
   finishedGames,
   messageEndswith,
   deletableChannels,
-  assignWinLoseDb,
-  TEAM1,
-  TEAM2,
   sendMessage,
 } = require("../../../utils/utils");
 
+const assignScoreTeams = async (game) => {
+  const promises = [];
+
+  [game.team1, game.team2].forEach((team) => {
+    const won =
+      (game.winningTeam === 0 && (game.team1.members.includes(team.userId) || game.team1.captain === team.userId)) ||
+      (game.winningTeam === 1 && (game.team2.members.includes(team.userId) || game.team2.captain === team.userId));
+
+    const score = won ? "wins" : "losses";
+
+    promises.push(
+      MatchmakerTeamsCollection.updateOne(
+        {
+          channelId: game.channelId,
+          name: team.name,
+        },
+        {
+          $inc: { [score]: 1, mmr: won ? game.mmrDifference : -game.mmrDifference },
+        }
+      )
+    );
+  });
+};
+
 const execute = async (message) => {
+  const [, secondArg] = message.content.split(" ");
+
   const elo = new EloRank(16);
+
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -26,40 +51,34 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  const ongoingGames = await fetchGamesTeams(message.channel.id);
+  const ongoingGame = await OngoingGamesTeamsCollection.findOne({
+    channelId,
+    $or: [
+      {
+        team1: { $or: [{ $elemMatch: { userId }, captain: userId }] },
+      },
+      {
+        team2: { $or: [{ $elemMatch: { userId }, captain: userId }] },
+      },
+    ],
+  });
 
-  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
-
-  if (fetchedTeam == null) {
-    wrongEmbed.setTitle(":x: You do not belong to a team!");
+  if (ongoingGame == null) {
+    wrongEmbed.setTitle(":x: You aren't in a game, or the game is in a different guild/channel!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (fetchedTeam.captain !== userId) {
+  if (ongoingGame.team1.captain !== userId && ongoingGame.team2.captain !== userId) {
     wrongEmbed.setTitle(":x: You are not the captain!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (
-    !ongoingGames
-      .map((e) => [e.team1.name, e.team2.name])
-      .flat()
-      .includes(fetchedTeam.name)
-  ) {
-    wrongEmbed.setTitle(":x: You aren't in a game");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  const game = ongoingGames.find((d) => [d.team1.name, d.team2.name].includes(fetchedTeam.name));
-
-  if (game.channelId !== channelId) {
-    wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
+  if (!["win", "lose"].includes(secondArg)) {
+    wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -72,39 +91,54 @@ const execute = async (message) => {
     return;
   }
   if (
-    (game.team1.captain === message.author.id && messageEndswith(message) === "win") ||
-    (game.team2.captain === message.author.id && messageEndswith(message) === "lose")
+    (ongoingGame.team1.captain === message.author.id && messageEndswith(message) === "win") ||
+    (ongoingGame.team2.captain === message.author.id && messageEndswith(message) === "lose")
   ) {
-    game.winningTeam = 0;
+    ongoingGame.winningTeam = 0;
   } else {
-    game.winningTeam = 1;
+    ongoingGame.winningTeam = 1;
   }
 
-  const promises = [];
+  const mmrOfEachTeam = {
+    team1: ongoingGame.team1.mmr,
+    team2: ongoingGame.team2.mmr,
+  };
 
-  const team1EloDifference =
-    elo.updateRating(elo.getExpected(game.team1.mmr, game.team2.mmr), game.winningTeam === 0 ? 1 : 0, game.team1.mmr) -
-    game.team1.mmr;
+  const winningTeamMmr = ongoingGame.winningTeam === 0 ? mmrOfEachTeam.team1 : mmrOfEachTeam.team2;
 
-  const team2EloDifference = -team1EloDifference;
+  const mmrDifference = Math.abs(
+    Math.round(
+      elo.updateRating(
+        elo.getExpected(
+          winningTeamMmr,
+          winningTeamMmr === ongoingGame.team1 ? mmrOfEachTeam.team2 : mmrOfEachTeam.team1
+        ),
+        1,
+        winningTeamMmr
+      ) - winningTeamMmr
+    )
+  );
 
-  game.team1.mmrDifference = team1EloDifference;
+  const assignScoreData = {
+    channelId: ongoingGame.channelId,
+    guildId: ongoingGame.guildId,
+    gameId: ongoingGame.gameId,
+    winningTeam: ongoingGame.winningTeam,
+    mmrOfEachTeam,
+    eloDifference: mmrDifference,
+    team1: ongoingGame.team1,
+    team2: ongoingGame.team2,
+  };
 
-  game.team2.mmrDifference = team2EloDifference;
+  await assignScoreTeams(assignScoreData);
 
-  promises.push(assignWinLoseDb(game.team1, game, TEAM1));
-
-  promises.push(assignWinLoseDb(game.team2, game, TEAM2));
-
-  finishedGames.push(game);
-
-  await Promise.all(promises);
+  finishedGames.push(assignScoreData);
 
   await OngoingGamesTeamsCollection.deleteOne({
-    gameId: game.gameId,
+    gameId: ongoingGame.gameId,
   });
 
-  game.channelIds.forEach((channel) => {
+  ongoingGame.channelIds.forEach((channel) => {
     deletableChannels.push(channel);
   });
 

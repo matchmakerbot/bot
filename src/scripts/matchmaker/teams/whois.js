@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const { EMBED_COLOR_CHECK, messageArgs, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
@@ -15,8 +15,8 @@ const execute = async (message) => {
 
   const fetchedTeam =
     secondArg != null
-      ? await TeamsCollection.findOne({ guildId: message.guild.id, name: teamName })
-      : await TeamsCollection.findOne({
+      ? await MatchmakerTeamsCollection.findOne({ guildId: message.guild.id, name: teamName })
+      : await MatchmakerTeamsCollection.findOne({
           guildId: message.guild.id,
           $or: [{ captain: message.author.id }, { memberIds: { $elemMatch: message.author.id } }],
         });

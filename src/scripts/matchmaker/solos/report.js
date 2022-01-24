@@ -4,7 +4,7 @@ const EloRank = require("elo-rank");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
+const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const {
   sendMessage,
@@ -19,8 +19,8 @@ const assignScoreUsers = async (game) => {
 
   [...game.team1, ...game.team2].forEach(async (user) => {
     const won =
-      (game.winningTeam === 0 && game.team1.includes(user.userId)) ||
-      (game.winningTeam === 1 && game.team2.includes(user.userId));
+      (game.winningTeam === 0 && game.team1.map((e) => e.userId).includes(user.userId)) ||
+      (game.winningTeam === 1 && game.team2.map((e) => e.userId).includes(user.userId));
 
     const score = won ? "wins" : "losses";
 

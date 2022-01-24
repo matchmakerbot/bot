@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, sendMessage } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -25,7 +25,7 @@ const execute = async (message) => {
     return;
   }
 
-  const teamByName = await TeamsCollection.findOne({ name: teamName, guildId: message.guild.id });
+  const teamByName = await MatchmakerTeamsCollection.findOne({ name: teamName, guildId: message.guild.id });
 
   if (teamByName != null) {
     wrongEmbed.setTitle(":x: Name already in use");
@@ -34,7 +34,7 @@ const execute = async (message) => {
     return;
   }
 
-  const teamByUser = await TeamsCollection.findOne({
+  const teamByUser = await MatchmakerTeamsCollection.findOne({
     guildId: message.guild.id,
     $or: [{ captain: message.author.id }, { memberIds: { $elemMatch: message.author.id } }],
   });
@@ -53,7 +53,7 @@ const execute = async (message) => {
     memberIds: [],
   };
 
-  const teamInsert = new TeamsCollection(teamsInsert);
+  const teamInsert = new MatchmakerTeamsCollection(teamsInsert);
 
   await teamInsert.save();
 

@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const {
   sendMessage,

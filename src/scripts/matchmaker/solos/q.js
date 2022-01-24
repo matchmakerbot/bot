@@ -4,7 +4,7 @@ const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersWithScoreSchema");
+const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 

@@ -4,14 +4,14 @@ const { sendMessage } = require("../../../utils/utils");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const fetchedTeam = await TeamsCollection.findOne({
+  const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     captain: message.author.id,
     guildId: message.guild.id,
   });

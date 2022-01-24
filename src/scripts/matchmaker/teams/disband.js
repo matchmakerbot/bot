@@ -9,7 +9,7 @@ const {
   sendMessage,
 } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const OngoingGames = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
@@ -52,7 +52,7 @@ const disbandTeam = async (message, fetchedTeam) => {
     sendMessage(message, wrongEmbed);
   }
 
-  await TeamsCollection.deleteOne({
+  await MatchmakerTeamsCollection.deleteOne({
     guildId: message.guild.id,
     name: fetchedTeam.name,
   });
@@ -76,7 +76,7 @@ const execute = async (message) => {
       sendMessage(message, wrongEmbed);
       return;
     }
-    const fetchedTeam = await TeamsCollection.findOne({
+    const fetchedTeam = await MatchmakerTeamsCollection.findOne({
       guildId: message.guild.id,
       name: messageArgs(message),
     });
@@ -86,7 +86,7 @@ const execute = async (message) => {
     return;
   }
 
-  const fetchedTeam = await TeamsCollection.findOne({
+  const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     captain: message.author.id,
     guildId: message.guild.id,
   });

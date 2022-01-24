@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const client = require("../../../utils/createClientInstance.js");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const {
   EMBED_COLOR_CHECK,
@@ -24,7 +24,7 @@ const execute = async (message) => {
     return;
   }
 
-  const fetchedTeam = await TeamsCollection.findOne({
+  const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     captain: message.author.id,
     guildId: message.guild.id,
   });
@@ -49,7 +49,7 @@ const execute = async (message) => {
     return;
   }
 
-  const userTeam = await TeamsCollection.findOne({
+  const userTeam = await MatchmakerTeamsCollection.findOne({
     guildId: message.guild.id,
     $or: [
       {

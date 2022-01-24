@@ -2,14 +2,14 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, invites, sendMessage } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const guildTeams = await TeamsCollection.findMany({ guildId: message.guild.id });
+  const guildTeams = await MatchmakerTeamsCollection.findMany({ guildId: message.guild.id });
 
   const teamName = messageArgs(message);
 
@@ -49,7 +49,7 @@ const execute = async (message) => {
     return;
   }
 
-  await TeamsCollection.updateOne(
+  await MatchmakerTeamsCollection.updateOne(
     {
       guildId: message.guild.id,
       name: teamName,

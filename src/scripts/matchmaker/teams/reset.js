@@ -8,9 +8,9 @@ const {
   sendMessage,
 } = require("../../../utils/utils");
 
-const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
+const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
@@ -41,7 +41,7 @@ const execute = async (message, queueSize) => {
 
   switch (mode) {
     case "channel": {
-      const fetchGamesByChannelId = await OngoingGamesTeamsCollection.find({
+      const fetchGamesByChannelId = await OngoingGamesMatchmakerTeamsCollection.find({
         channelId,
       });
 
@@ -78,7 +78,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      const ongoingGame = await OngoingGamesTeamsCollection.findOne({
+      const ongoingGame = await OngoingGamesMatchmakerTeamsCollection.findOne({
         channelId,
         $or: [{ team1: { name: teamName } }, { team2: { name: teamName } }],
       });
@@ -90,7 +90,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      const team = TeamsCollection.findOne({
+      const team = MatchmakerTeamsCollection.findOne({
         channelId,
         name: teamName,
       });

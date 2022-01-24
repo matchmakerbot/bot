@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -17,7 +17,7 @@ const execute = async (message) => {
     skipCount = 1;
   }
 
-  const teams = await TeamsCollection.findOne({
+  const teams = await MatchmakerTeamsCollection.findOne({
     guildId: message.guild.id,
   })
     .skip(10 * (skipCount - 1))
@@ -29,7 +29,7 @@ const execute = async (message) => {
     return sendMessage(message, wrongEmbed);
   }
 
-  const teamsCount = await TeamsCollection.countDocuments();
+  const teamsCount = await MatchmakerTeamsCollection.countDocuments();
 
   teams.forEach((team) => {
     correctEmbed.addField(`Name: ${team.name}`, `Captain: <@${team.captain}>`);
