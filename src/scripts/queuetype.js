@@ -61,7 +61,7 @@ const execute = async (message) => {
       return sendMessage(message, wrongEmbed);
     }
 
-    const channelInQueue = queueTypeObject.find((e) => e.channelId === message.channel.id);
+    const channelInQueue = channelQueues.find((e) => e.channelId === message.channel.id);
 
     if (channelInQueue != null) {
       channelInQueue.queueType = queueMode;

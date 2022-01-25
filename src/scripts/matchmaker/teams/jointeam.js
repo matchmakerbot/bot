@@ -9,7 +9,7 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const guildTeams = await MatchmakerTeamsCollection.findMany({ guildId: message.guild.id });
+  const guildTeams = await MatchmakerTeamsCollection.find({ guildId: message.guild.id });
 
   const teamName = messageArgs(message);
 

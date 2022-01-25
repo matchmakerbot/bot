@@ -21,7 +21,7 @@ const execute = async (message) => {
     case "me": {
       const team = MatchmakerTeamsCollection.findOne({
         channelId,
-        $or: [{ captain: userId }, { memberIds: { $elemMatch: userId } }],
+        $or: [{ captain: userId }, { memberIds: { $in: userId } }],
       });
 
       const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team.name, guildId: message.guild.id });

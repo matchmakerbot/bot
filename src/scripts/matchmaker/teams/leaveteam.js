@@ -11,7 +11,7 @@ const execute = async (message) => {
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     guildId: message.guild.id,
-    memberIds: { $elemMatch: message.author.id },
+    memberIds: { $in: message.author.id },
   });
 
   if (fetchedTeam == null) {

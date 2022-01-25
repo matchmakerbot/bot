@@ -17,7 +17,7 @@ const execute = async (message) => {
     skipCount = 1;
   }
 
-  const teams = await MatchmakerTeamsCollection.findOne({
+  const teams = await MatchmakerTeamsCollection.find({
     guildId: message.guild.id,
   })
     .skip(10 * (skipCount - 1))

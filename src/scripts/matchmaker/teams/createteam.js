@@ -36,7 +36,7 @@ const execute = async (message) => {
 
   const teamByUser = await MatchmakerTeamsCollection.findOne({
     guildId: message.guild.id,
-    $or: [{ captain: message.author.id }, { memberIds: { $elemMatch: message.author.id } }],
+    $or: [{ captain: message.author.id }, { memberIds: { $in: message.author.id } }],
   });
 
   if (teamByUser != null) {

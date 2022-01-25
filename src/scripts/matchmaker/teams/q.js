@@ -53,8 +53,8 @@ const execute = async (message, queueSize) => {
     channelQueues
       .filter((e) => e.guildId === message.guild.id)
       .map((e) => e.players[0])
-      .map((e) => e.name)
-      .includes(fetchedTeam.name)
+      .map((e) => e?.name)
+      .includes(fetchedTeam?.name)
   ) {
     wrongEmbed.setTitle(":x: You're already queued in another channel!");
 

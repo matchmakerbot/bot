@@ -54,7 +54,7 @@ const execute = async (message) => {
     $or: [
       {
         captain: pingedUser.id,
-        memberIds: { $elemMatch: pingedUser.id },
+        memberIds: { $in: pingedUser.id },
       },
     ],
   });

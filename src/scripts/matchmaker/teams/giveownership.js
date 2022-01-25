@@ -2,9 +2,9 @@ const Discord = require("discord.js");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const { sendMessage } = require("../../../utils/utils");
+const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, fetchGamesTeams } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendMessage } = require("../../../utils/utils");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -41,15 +41,12 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
+  const ongoingGames = await OngoingGamesMatchmakerTeamsCollection.findOne({
+    guildId: message.guild.id,
+    $or: [{ team1: { name: fetchedTeam.name } }, { team2: { name: fetchedTeam.name } }],
+  });
 
-  if (
-    ongoingGames
-      .map((e) => [e.team1, e.team2])
-      .flat()
-      .map((e) => e.name)
-      .includes(fetchedTeam.name)
-  ) {
+  if (ongoingGames != null) {
     wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
     sendMessage(message, wrongEmbed);

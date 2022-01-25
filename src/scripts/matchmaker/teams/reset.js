@@ -77,7 +77,7 @@ const execute = async (message, queueSize) => {
       }
 
       const ongoingGame = await OngoingGamesMatchmakerTeamsCollection.findOne({
-        channelId,
+        guildId: message.guild.id,
         $or: [{ team1: { name: teamName } }, { team2: { name: teamName } }],
       });
 
