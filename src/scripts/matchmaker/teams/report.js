@@ -3,7 +3,7 @@ const EloRank = require("elo-rank");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
-const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const {
   EMBED_COLOR_CHECK,
@@ -19,13 +19,13 @@ const assignScoreTeams = async (game) => {
 
   [game.team1, game.team2].forEach((team) => {
     const won =
-      (game.winningTeam === 0 && (game.team1.memberIds.includes(team.userId) || game.team1.captain === team.userId)) ||
-      (game.winningTeam === 1 && (game.team2.memberIds.includes(team.userId) || game.team2.captain === team.userId));
+      (game.winningTeam === 0 && game.team1.name === team.name) ||
+      (game.winningTeam === 1 && game.team2.name === team.name);
 
     const score = won ? "wins" : "losses";
 
     promises.push(
-      MatchmakerTeamsCollection.updateOne(
+      MatchmakerTeamsScoreCollection.updateOne(
         {
           channelId: game.channelId,
           name: team.name,
@@ -36,6 +36,7 @@ const assignScoreTeams = async (game) => {
       )
     );
   });
+  await Promise.all(promises);
 };
 
 const execute = async (message) => {
@@ -55,10 +56,10 @@ const execute = async (message) => {
     channelId,
     $or: [
       {
-        team1: { captain: userId },
+        "team1.captain": userId,
       },
       {
-        team2: { captain: userId },
+        "team2.captain": userId,
       },
     ],
   });
@@ -120,7 +121,7 @@ const execute = async (message) => {
     gameId: ongoingGame.gameId,
     winningTeam: ongoingGame.winningTeam,
     mmrOfEachTeam,
-    eloDifference: mmrDifference,
+    mmrDifference,
     team1: ongoingGame.team1,
     team2: ongoingGame.team2,
   };

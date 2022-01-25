@@ -2,18 +2,18 @@ const Discord = require("discord.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../../../utils/utils");
 
-const MatchmakerTeamsScoreSchema = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const changeGame = async (game, param) => {
   const promises = [];
 
-  [...game.team1, ...game.team2].forEach(async (team) => {
+  [game.team1, game.team2].forEach(async (team) => {
     const won =
-      (game.winningTeam === 0 && (game.team1.memberIds.includes(team.userId) || game.team1.captain === team.userId)) ||
-      (game.winningTeam === 1 && (game.team2.memberIds.includes(team.userId) || game.team2.captain === team.userId));
+      (game.winningTeam === 0 && game.team1.name === team.name) ||
+      (game.winningTeam === 1 && game.team2.name === team.name);
 
     promises.push(
-      await MatchmakerTeamsScoreSchema.updateOne(
+      await MatchmakerTeamsScoreCollection.updateOne(
         {
           channelId: game.channelId,
           name: team.name,
@@ -22,8 +22,15 @@ const changeGame = async (game, param) => {
           $inc: {
             [won ? "wins" : "losses"]: -1,
             [!won ? "wins" : "losses"]: param === "revert" ? 1 : 0,
-            // eslint-disable-next-line no-nested-ternary
-            mmr: team.mmr + (param === "revert" ? (!won ? game.mmrDifference * 2 : -game.mmrDifference * 2) : 0),
+            mmr:
+              // eslint-disable-next-line no-nested-ternary
+              param === "revert"
+                ? !won
+                  ? game.mmrDifference * 2
+                  : -game.mmrDifference * 2
+                : !won
+                ? game.mmrDifference
+                : -game.mmrDifference,
           },
         }
       )
@@ -43,7 +50,7 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  if (thirdArg === "revert" || thirdArg === "cancel") {
+  if (!["revert", "cancel"].includes(thirdArg)) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);

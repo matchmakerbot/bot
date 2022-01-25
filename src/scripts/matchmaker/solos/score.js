@@ -66,7 +66,7 @@ const execute = async (message) => {
         return;
       }
 
-      const storedUsersCount = await MatchmakerUsersCollection.count({});
+      const storedUsersCount = await MatchmakerUsersCollection.countDocuments({});
 
       storedUsersList.sort((a, b) => b.mmr - a.mmr);
 

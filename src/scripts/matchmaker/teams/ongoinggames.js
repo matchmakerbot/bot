@@ -17,7 +17,7 @@ const execute = async (message) => {
     skipCount = 1;
   }
 
-  const ongoingGames = await OngoingGamesTeamsCollection.findOne({ channelId: message.channel.id })
+  const ongoingGames = await OngoingGamesTeamsCollection.find({ guildId: message.guild.id })
     .skip(5 * (skipCount - 1))
     .limit(5);
 
@@ -41,11 +41,11 @@ const execute = async (message) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
     correctEmbed.addField(
       `:small_orange_diamond: Team ${game.team1.name}`,
-      `<@${game.team1.captain}>, ${game.team1.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
+      `<@${game.team1.captain}>, ${game.team1.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
     );
     correctEmbed.addField(
       `:small_blue_diamond: Team ${game.team2.name}`,
-      `<@${game.team2.captain}>, ${game.team2.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
+      `<@${game.team2.captain}>, ${game.team2.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
     );
   });
 

@@ -111,7 +111,7 @@ const execute = async (message) => {
     gameId: ongoingGame.gameId,
     winningTeam: ongoingGame.winningTeam,
     mmrOfEachTeam,
-    eloDifference: mmrDifference,
+    mmrDifference,
     team1: ongoingGame.team1,
     team2: ongoingGame.team2,
   };

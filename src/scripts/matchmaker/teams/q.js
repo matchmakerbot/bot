@@ -64,7 +64,14 @@ const execute = async (message, queueSize) => {
 
   const ongoingGame = await OngoingGamesTeamsCollection.findOne({
     guildId: message.guild.id,
-    $or: [{ team1: fetchedTeam.name }, { team2: fetchedTeam.name }],
+    $or: [
+      {
+        "team1.name": fetchedTeam.name,
+      },
+      {
+        "team2.name": fetchedTeam.name,
+      },
+    ],
   });
 
   if (ongoingGame != null) {
@@ -106,7 +113,7 @@ const execute = async (message, queueSize) => {
   const toPush = {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
-    mmr: fetchedTeam.mmr,
+    mmr: null,
     memberIds: [...message.mentions.members.map((e) => e.user.id)],
     date: new Date(),
   };
@@ -136,13 +143,14 @@ const execute = async (message, queueSize) => {
 
       const promises = [];
 
-      const teamsInDb = await MatchmakerTeamsScoreCollection.findOne({
+      const teamsInDb = await MatchmakerTeamsScoreCollection.find({
         $or: queueArray.map((e) => ({ name: e.name })),
         guildId: message.guild.id,
       });
 
       queueArray.forEach((team) => {
-        if (teamsInDb.find((e) => e.name === team.teamName) == null) {
+        const thisTeam = gameCreatedObj.team1.name === team.name ? gameCreatedObj.team1 : gameCreatedObj.team2;
+        if (teamsInDb.find((e) => e.name === team.name) == null) {
           const newUser = {
             name: team.name,
             guildId: message.guild.id,
@@ -151,9 +159,13 @@ const execute = async (message, queueSize) => {
 
           teamsInDb.push({ ...newUser });
 
+          thisTeam.mmr = 1000;
+
           const matchmakerInsert = new MatchmakerTeamsScoreCollection(newUser);
 
           promises.push(matchmakerInsert.save());
+        } else {
+          thisTeam.mmr = teamsInDb.find((e) => e.name === team.name).mmr;
         }
       });
 
@@ -164,7 +176,7 @@ const execute = async (message, queueSize) => {
         password: Math.floor(Math.random() * 99999) + 100,
       };
 
-      const channelData = await ChannelsCollection.findOne({ id: message.channel.id });
+      const channelData = await ChannelsCollection.findOne({ channelId: message.channel.id });
 
       if (channelData.createVoiceChannels) {
         const permissionOverwritesTeam1 = [

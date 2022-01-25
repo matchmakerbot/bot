@@ -4,7 +4,7 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -24,7 +24,11 @@ const execute = async (message) => {
         $or: [{ captain: userId }, { memberIds: { $in: userId } }],
       });
 
-      const teamScore = TeamsScoreCollection.findOne({ channelId, teamId: team.name, guildId: message.guild.id });
+      const teamScore = await MatchmakerTeamsScoreCollection.findOne({
+        channelId,
+        teamId: team.name,
+        guildId: message.guild.id,
+      });
 
       if (teamScore == null) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
@@ -33,27 +37,18 @@ const execute = async (message) => {
         return;
       }
 
-      const scoreDirectory = teamScore.channels[teamScore.channels.map((e) => e.channelId).indexOf(channelId)];
+      correctEmbed.addField("Wins:", teamScore.wins);
 
-      if (scoreDirectory == null) {
-        wrongEmbed.setTitle(":x: You haven't played any games yet!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
-      correctEmbed.addField("Wins:", scoreDirectory.wins);
-
-      correctEmbed.addField("Losses:", scoreDirectory.losses);
+      correctEmbed.addField("Losses:", teamScore.losses);
 
       correctEmbed.addField(
         "Winrate:",
-        Number.isNaN(Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100))
+        Number.isNaN(Math.floor((teamScore.wins / (teamScore.wins + teamScore.losses)) * 100))
           ? "0%"
-          : `${Math.floor((scoreDirectory.wins / (scoreDirectory.wins + scoreDirectory.losses)) * 100)}%`
+          : `${Math.floor((teamScore.wins / (teamScore.wins + teamScore.losses)) * 100)}%`
       );
 
-      correctEmbed.addField("MMR:", scoreDirectory.mmr);
+      correctEmbed.addField("MMR:", teamScore.mmr);
 
       sendMessage(message, correctEmbed);
       return;
@@ -65,7 +60,7 @@ const execute = async (message) => {
         skipCount = 1;
       }
 
-      const storedTeamsList = await TeamsScoreCollection.find({
+      const storedTeamsList = await MatchmakerTeamsScoreCollection.find({
         channelId,
       })
         .skip(10 * (skipCount - 1))
@@ -78,7 +73,7 @@ const execute = async (message) => {
         return;
       }
 
-      const storedTeamsCount = await TeamsScoreCollection.count({});
+      const storedTeamsCount = await MatchmakerTeamsScoreCollection.countDocuments({});
 
       storedTeamsList.sort((a, b) => b.mmr - a.mmr);
 

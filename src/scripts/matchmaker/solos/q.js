@@ -305,7 +305,7 @@ const execute = async (message, queueSize) => {
         return {
           username: queueArray.find((ee) => ee.userId === e.userId).username,
           userId: e.userId,
-          mmr: e.mmr,
+          mmr: e.mmr != null ? e.mmr : 1000,
         };
       });
 

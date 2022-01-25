@@ -23,7 +23,7 @@ const changeGame = async (game, param) => {
             [won ? "wins" : "losses"]: -1,
             [!won ? "wins" : "losses"]: param === "revert" ? 1 : 0,
             // eslint-disable-next-line no-nested-ternary
-            mmr: user.mmr + (param === "revert" ? (!won ? game.mmrDifference * 2 : -game.mmrDifference * 2) : 0),
+            mmr: param === "revert" ? (!won ? game.mmrDifference * 2 : -game.mmrDifference * 2) : 0,
           },
         }
       )

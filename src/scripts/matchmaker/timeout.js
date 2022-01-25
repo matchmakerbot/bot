@@ -71,11 +71,11 @@ const updateOngoingGames = async () => {
   const currentTimeMS = Date.now();
 
   const ongoingGamesSolos = await OngoingGamesSolosCollection.find({
-    date: { $gt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
   });
 
   const ongoingGamesTeams = await OngoingGamesTeamsCollection.find({
-    date: { $gt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
   });
 
   const games = [...ongoingGamesSolos, ...ongoingGamesTeams];

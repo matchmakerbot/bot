@@ -43,7 +43,14 @@ const execute = async (message, queueSize) => {
 
   const ongoingGames = await OngoingGamesMatchmakerTeamsCollection.findOne({
     guildId: message.guild.id,
-    $or: [{ team1: { name: fetchedTeam.name } }, { team2: { name: fetchedTeam.name } }],
+    $or: [
+      {
+        "team1.name": fetchedTeam.name,
+      },
+      {
+        "team2.name": fetchedTeam.name,
+      },
+    ],
   });
 
   if (ongoingGames != null) {

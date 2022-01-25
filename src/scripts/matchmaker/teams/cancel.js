@@ -57,10 +57,10 @@ const execute = async (message) => {
     channelId: message.channel.id,
     $or: [
       {
-        team1: { captain: userId },
+        "team1.captain": userId,
       },
       {
-        team2: { captain: userId },
+        "team2.captain": userId,
       },
     ],
   });
@@ -80,20 +80,20 @@ const execute = async (message) => {
     cancelQueue[gameId] = [];
   }
 
+  const teamName = fetchedGame.team1.captain === message.author.id ? fetchedGame.team1.name : fetchedGame.team2.name;
+
   const cancelQueueArray = cancelQueue[gameId];
 
-  if (cancelQueueArray.includes(fetchedGame.name)) {
+  if (cancelQueueArray.includes(teamName)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  cancelQueueArray.push(fetchedGame.name);
+  cancelQueueArray.push(teamName);
 
-  correctEmbed.setTitle(
-    `:exclamation: ${fetchedGame.name} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`
-  );
+  correctEmbed.setTitle(`:exclamation: ${teamName} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`);
 
   sendMessage(message, correctEmbed);
 

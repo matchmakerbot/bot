@@ -26,8 +26,15 @@ const disbandTeam = async (message, fetchedTeam) => {
   }
 
   const foundGame = await OngoingGames.findOne({
-    guild: message.channel.id,
-    $or: [{ team1: { name: fetchedTeam.name } }, { team2: { name: fetchedTeam.name } }],
+    guildId: message.channel.id,
+    $or: [
+      {
+        "team1.name": fetchedTeam.name,
+      },
+      {
+        "team2.name": fetchedTeam.name,
+      },
+    ],
   });
 
   if (foundGame != null) {
