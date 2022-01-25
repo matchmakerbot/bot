@@ -243,7 +243,7 @@ const execute = async (message, queueSize) => {
 
       await sendMessage(
         message,
-        queueArray.reduce((acc = "", curr) => `${acc}<@${curr.userId}>, `, "")
+        queueArray.reduce((acc, curr) => `${acc}<@${curr.userId}>, `, "")
       );
 
       correctEmbed.setTitle(
@@ -273,12 +273,18 @@ const execute = async (message, queueSize) => {
         })
         .then((collected) => {
           collected.forEach((e) => {
-            // eslint-disable-next-line no-nested-ternary,no-unused-expressions
-            e._emoji.name === "🇷"
-              ? (rorcCount.r = e.count)
-              : e._emoji.name === "c"
-              ? (rorcCount.c = e.count)
-              : (rorcCount.b = e.count);
+            switch (e.emoji.name) {
+              case "c":
+                rorcCount.r = e.count;
+                break;
+              case "🇷": {
+                rorcCount.r = e.count;
+                break;
+              }
+              default: {
+                rorcCount.b = e.count;
+              }
+            }
           });
         });
 
@@ -553,11 +559,11 @@ const execute = async (message, queueSize) => {
         .addField("Game is ready:", `Game Id is: ${gameCreatedObj.gameId}`)
         .addField(
           ":small_orange_diamond: -Team 1-",
-          gameCreatedObj.team1.reduce((acc = "", curr) => `${acc}<@${curr.userId}>, `, "")
+          gameCreatedObj.team1.reduce((acc, curr) => `${acc}<@${curr.userId}>, `, "")
         )
         .addField(
           ":small_blue_diamond: -Team 2-",
-          gameCreatedObj.team2.reduce((acc = "", curr) => `${acc}<@${curr.userId}>, `, "")
+          gameCreatedObj.team2.reduce((acc, curr) => `${acc}<@${curr.userId}>, `, "")
         );
 
       sendMessage(message, discordEmbed1);

@@ -12,6 +12,19 @@ const changeGame = async (game, param) => {
       (game.winningTeam === 0 && game.team1.name === team.name) ||
       (game.winningTeam === 1 && game.team2.name === team.name);
 
+    let mmrAddition;
+
+    switch (param) {
+      case "revert":
+        mmrAddition = won ? game.mmrDifference * 2 : -game.mmrDifference * 2;
+        break;
+      case "cancel":
+        mmrAddition = won ? game.mmrDifference : -game.mmrDifference;
+        break;
+      default:
+        break;
+    }
+
     promises.push(
       await MatchmakerTeamsScoreCollection.updateOne(
         {
@@ -22,15 +35,7 @@ const changeGame = async (game, param) => {
           $inc: {
             [won ? "wins" : "losses"]: -1,
             [!won ? "wins" : "losses"]: param === "revert" ? 1 : 0,
-            mmr:
-              // eslint-disable-next-line no-nested-ternary
-              param === "revert"
-                ? !won
-                  ? game.mmrDifference * 2
-                  : -game.mmrDifference * 2
-                : !won
-                ? game.mmrDifference
-                : -game.mmrDifference,
+            mmr: mmrAddition,
           },
         }
       )

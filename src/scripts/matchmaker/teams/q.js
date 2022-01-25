@@ -284,10 +284,10 @@ const execute = async (message, queueSize) => {
       sendMessage(
         message,
         `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
-          (acc = "", curr) => `${acc}<@${curr}>, `,
+          (acc, curr) => `${acc}<@${curr}>, `,
           ""
         )} <@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
-          (acc = "", curr) => `${acc}<@${curr}>, `,
+          (acc, curr) => `${acc}<@${curr}>, `,
           ""
         )} `
       );
@@ -298,14 +298,14 @@ const execute = async (message, queueSize) => {
         .addField(
           `:small_orange_diamond: Team ${gameCreatedObj.team1.name}`,
           `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
-            (acc = "", curr) => `${acc}<@${curr}>, `,
+            (acc, curr) => `${acc}<@${curr}>, `,
             ""
           )}`
         )
         .addField(
           `:small_blue_diamond: Team ${gameCreatedObj.team2.name}`,
           `<@${gameCreatedObj.team2.captain}>, ${gameCreatedObj.team2.memberIds.reduce(
-            (acc = "", curr) => `${acc}<@${curr}>, `,
+            (acc, curr) => `${acc}<@${curr}>, `,
             ""
           )}`
         );
