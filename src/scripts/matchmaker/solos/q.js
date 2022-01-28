@@ -1,5 +1,7 @@
 const Discord = require("discord.js");
 
+const logger = require("pino")();
+
 const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
@@ -47,14 +49,12 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   for (let k = 0; k < queue.length; k++) {
     CaptainRepeatingEmbed.addField(`${k + 1} :`, queue[k].username);
   }
-  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch((error) => {
+  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch(() => {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(
         `:x: Couldn't sent message to ${dm.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
       );
-
-    console.error(error);
 
     sendMessage(message, errorEmbed);
     throw new Error("PM'S Disabled");
@@ -107,8 +107,12 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
         }
       }
     })
-    .catch((e) => {
-      console.error(e);
+    .catch(() => {
+      const errorEmbed = new Discord.MessageEmbed()
+        .setColor(EMBED_COLOR_WARNING)
+        .setTitle(`:x: Error choosing captains, please try again or contact a developer.`);
+
+      sendMessage(message, errorEmbed);
       throw new Error("Error captains mode");
     });
 
@@ -371,14 +375,12 @@ const execute = async (message, queueSize) => {
             Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].name);
           }
 
-          const privateDmCaptain1Message = await privateDmCaptain1.send(Captain1Embed).catch((error) => {
+          const privateDmCaptain1Message = await privateDmCaptain1.send(Captain1Embed).catch(() => {
             const errorEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR_WARNING)
               .setTitle(
                 `:x: Couldn't sent message to ${privateDmCaptain1.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
               );
-
-            console.error(error);
 
             sendMessage(message, errorEmbed);
             throw new Error("PM'S Disabled");
@@ -401,8 +403,15 @@ const execute = async (message, queueSize) => {
                 hasVoted = true;
               }
             })
-            .catch((e) => {
-              console.error(e);
+            .catch(() => {
+              const errorEmbed = new Discord.MessageEmbed()
+                .setColor(EMBED_COLOR_WARNING)
+                .setTitle(
+                  `:x: Error reacting to message in DMS, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
+                );
+
+              sendMessage(message, errorEmbed);
+              throw new Error("PM'S Disabled");
             });
 
           if (!hasVoted) {
@@ -453,7 +462,6 @@ const execute = async (message, queueSize) => {
           break;
         }
         case "b": {
-          console.log(playersWithMmr);
           const teams = balanceTeamsByMmr(playersWithMmr, queueSize);
 
           gameCreatedObj.team1 = teams.team1;
@@ -573,7 +581,7 @@ const execute = async (message, queueSize) => {
           .setColor(EMBED_COLOR_CHECK)
           .addField("Name:", valuesforpm.name)
           .addField("Password:", valuesforpm.password)
-          .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].name})`);
+          .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].username})`);
 
         const playersArray = gameCreatedObj.team1.concat(gameCreatedObj.team2);
 
@@ -588,7 +596,7 @@ const execute = async (message, queueSize) => {
                   const errorEmbed = new Discord.MessageEmbed()
                     .setColor(EMBED_COLOR_WARNING)
                     .setTitle(
-                      `:x: Couldn't sent message to ${users.name}, please check if your DM'S aren't set to friends only.`
+                      `:x: Couldn't sent message to ${users.username}, please check if your DM'S aren't set to friends only.`
                     );
 
                   sendMessage(message, errorEmbed);
@@ -611,15 +619,14 @@ const execute = async (message, queueSize) => {
           .fetch(gameCreatedObj.team1[0].userId)
           .catch(() => sendMessage(message, "Invalid User"));
 
-        await fetchedUser.send(CreateMatchEmbed).catch((error) => {
+        await fetchedUser.send(CreateMatchEmbed).catch(() => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
-              `:x: Couldn't sent message to ${gameCreatedObj.team1[0].name}, please check if your DM'S aren't set to friends only.`
+              `:x: Couldn't sent message to ${gameCreatedObj.team1[0].username}, please check if your DM'S aren't set to friends only.`
             );
 
           sendMessage(message, errorEmbed);
-          console.error(error);
         });
       }
       const ongoingGamesInsert = new OngoingGamesSolosCollection(gameCreatedObj);
@@ -633,7 +640,7 @@ const execute = async (message, queueSize) => {
 
       queueArray.splice(0, queueSize);
 
-      console.error(e);
+      logger.error(e);
     }
   }
 };

@@ -1,5 +1,7 @@
 const Discord = require("discord.js");
 
+const logger = require("pino")();
+
 const client = require("../../../utils/createClientInstance.js");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
@@ -348,7 +350,7 @@ const execute = async (message, queueSize) => {
           .addField("You have to:", "Create Custom Match");
 
         const create1 = await client.users.fetch(gameCreatedObj.team1.captain);
-        create1.send(CreateMatchEmbed).catch((error) => {
+        create1.send(CreateMatchEmbed).catch(() => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_ERROR)
             .setTitle(
@@ -356,7 +358,6 @@ const execute = async (message, queueSize) => {
             );
 
           sendMessage(message, errorEmbed);
-          console.error(error);
         });
       }
       const ongoingGamesInsert = new OngoingGamesTeamsCollection(gameCreatedObj);
@@ -370,7 +371,7 @@ const execute = async (message, queueSize) => {
 
       queueArray.splice(0, queueArray.length);
 
-      console.error(e);
+      logger.error(e);
     }
   }
 };

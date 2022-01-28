@@ -45,7 +45,9 @@ const execute = async (message) => {
       gameId: fetchedGame.gameId,
     });
 
-    deletableChannels.push(...fetchedGame.channelIds);
+    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
+
+    deletableChannels.push(deletableChannel);
 
     correctEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
@@ -100,7 +102,9 @@ const execute = async (message) => {
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    deletableChannels.push(...fetchedGame.channelIds);
+    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
+
+    deletableChannels.push(deletableChannel);
 
     newCorrectEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 

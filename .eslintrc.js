@@ -5,7 +5,6 @@ module.exports = {
     mongo: true,
   },
   extends: [
-    // base
     "eslint:recommended",
     "airbnb-base",
 
@@ -20,7 +19,6 @@ module.exports = {
     ecmaVersion: 2020,
   },
   rules: {
-    "no-console": "off", // i will eventually add a logger
     "no-plusplus": "off", // i have no need for this rule
     "promise/always-return": "off", // dumb as shit, forces you to ALWAYS return something in .then
     "no-underscore-dangle": "off", // discord.js has this in their library, cant rly do much about it lol

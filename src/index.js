@@ -1,3 +1,5 @@
+const logger = require("pino")();
+
 const { createBotInstance } = require("./utils/createBotInstance");
 
 const { createDbConnection } = require("./utils/connectMongoDBServer");
@@ -5,14 +7,14 @@ const { createDbConnection } = require("./utils/connectMongoDBServer");
 (async () => {
   try {
     await createDbConnection();
-    console.log("Estabilished MongoDB connection");
+    logger.info("Estabilished MongoDB connection");
 
     await createBotInstance();
-    console.log("Started MatchmakerBot Instance");
+    logger.info("Started MatchmakerBot Instance");
   } catch (e) {
-    console.error("Error creating a Bot Instance/Db Connection");
+    logger.error("Error creating a Bot Instance/Db Connection");
 
-    console.error(e);
+    logger.error(e);
 
     process.exit(1);
   }

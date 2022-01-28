@@ -87,8 +87,6 @@ const execute = async (message) => {
         `:x: Couldn't sent message to <@${pingedUser.id}>, please check if your DM'S aren't set to friends only.`
       );
 
-    console.error(error);
-
     sendMessage(message, errorEmbed);
   }
 

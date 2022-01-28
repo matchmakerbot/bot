@@ -3,6 +3,8 @@
 /* eslint-disable global-require */
 /* eslint-disable import/no-dynamic-require */
 
+const logger = require("pino")();
+
 const fs = require("fs");
 
 const Discord = require("discord.js");
@@ -65,6 +67,7 @@ const createBotInstance = async () => {
   try {
     client.once("ready", async () => {
       console.log(
+      logger.info(
         `Guilds: ${client.guilds.cache.map((a) => a.name).join(" || ")}\nNumber of Guilds: ${
           client.guilds.cache.map((a) => a.name).length
         }`
@@ -75,17 +78,17 @@ const createBotInstance = async () => {
         url: "https://www.twitch.tv/tweenoTV",
       });
     });
-    console.log(`Scripts loaded: ${[...client.commands].length}`);
+    logger.info(`Scripts loaded: ${[...client.commands].length}`);
 
-    console.log("Successfully created socket Client.Once -> Ready");
+    logger.info("Successfully created socket Client.Once -> Ready");
   } catch (e) {
-    console.error("Error creating event listener Client.once -> Ready");
+    logger.error("Error creating event listener Client.once -> Ready");
 
-    console.error(e);
+    logger.error(e);
   }
   try {
     client.on("message", async (message) => {
-      console.log(
+      logger.info(
         ` ${message.author.username} | ${message.author.id}| ${message.guild?.name} | ${message.channel.id} | ${message.content}`
       );
       const args = message.content.slice(prefix.length).split(/ +/);
@@ -131,28 +134,28 @@ const createBotInstance = async () => {
       }
       client.commands.get(command).execute(message);
     });
-    console.log("Successfully created socket Client.on -> Message");
+    logger.info("Successfully created socket Client.on -> Message");
   } catch (e) {
-    console.error("Error creating event listener Client.on -> Message");
+    logger.error("Error creating event listener Client.on -> Message");
 
-    console.error(e);
+    logger.error(e);
   }
   try {
     client.on("guildCreate", async (guild) => {
-      console.log(`Joined ${guild.name}`);
+      logger.info(`Joined ${guild.name}`);
     });
-    console.log("Successfully created socket Client.on -> guildCreate");
+    logger.info("Successfully created socket Client.on -> guildCreate");
   } catch (e) {
-    console.error("Error creating event listener Client.on -> guildCreate");
+    logger.error("Error creating event listener Client.on -> guildCreate");
 
-    console.error(e);
+    logger.error(e);
   }
   try {
     await client.login(process.env.token);
-    console.log("Sucessfully logged in");
+    logger.info("Successfully logged in");
   } catch (e) {
-    console.error("Error logging in");
-    console.error(e);
+    logger.error("Error logging in");
+    logger.error(e);
   }
 };
 

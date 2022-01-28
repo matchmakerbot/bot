@@ -1,5 +1,7 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable promise/no-nesting */
+const logger = require("pino")();
+
 const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
@@ -10,28 +12,32 @@ const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSol
 
 const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTeamsSchema.js");
 
-const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
+const MAX_USER_IDLE_TIME_MS = 1000; // 45 * 60 * 1000;
 
-const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
+const MAX_GAME_LENGTH_MS = 1000; // 3 * 60 * 60 * 1000;
 
-const UPDATE_INTERVAL_MS = 60 * 1000;
+const UPDATE_INTERVAL_MS = 5000; // 60 * 1000
 
-const warnNonDeletableChannel = async (channel, gameId, errorId) => {
-  const notifyChannel = await client.channels.fetch(channel).catch(() => {
-    return console.error("Cannot find notifyChannel");
-  });
-  const embedRemove = new Discord.MessageEmbed()
-    .setColor(EMBED_COLOR_WARNING)
-    .setTitle(
-      `Unable to delete voice channel ${gameId}: ${
-        errorId === 1
-          ? "Channel not found"
-          : "Maybe the bot doesn't have permissions to do so? Please delete channel manually."
-      }`
-    );
-  await notifyChannel.send(embedRemove).catch(() => {
-    console.error("Cannot send unable to delete channel message");
-  });
+const warnNonDeletableChannel = async (channel, errorId) => {
+  await client.channels
+    .fetch(channel)
+    .then(async (e) => {
+      const embedRemove = new Discord.MessageEmbed()
+        .setColor(EMBED_COLOR_WARNING)
+        .setTitle(
+          `Unable to delete voice channels in this guild: ${
+            errorId === 1
+              ? "Channel not found"
+              : "Maybe the bot doesn't have permissions to do so? Please delete channel manually."
+          }`
+        );
+      await e.send(embedRemove).catch(() => {
+        logger.error("Cannot send unable to delete channel message");
+      });
+    })
+    .catch(() => {
+      logger.error("Cannot find notifyChannel");
+    });
 };
 
 const updateUsers = async () => {
@@ -57,7 +63,7 @@ const updateUsers = async () => {
           filteredChannel.players.splice(filteredChannel.players.indexOf(filteredUser), 1);
         })
         .catch(() => {
-          channelQueues.splice(channelQueues.indexOf(filteredChannel.channelId), 1);
+          channelQueues.splice(channelQueues.indexOf(filteredChannel), 1);
         });
       promises.push(notifyChannel);
     });
@@ -92,57 +98,76 @@ const updateOngoingGames = async () => {
   });
 
   games.forEach((game) => {
-    const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {
-      game.channelIds.forEach((channel) => {
-        deletableChannels.push(channel);
-      });
+    const channelNotif = client.channels
+      .fetch(game.channelId)
+      .then(async (e) => {
+        const embedRemove = new Discord.MessageEmbed()
+          .setColor(EMBED_COLOR_WARNING)
+          .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
 
-      const embedRemove = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
-        .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
+        await e.send(embedRemove).catch((err) => {
+          logger.error(err);
+        });
+      })
+      .catch(async () => {})
+      .finally(async () => {
+        const deletableChannel = { originalChannelId: game.channelId, channelIds: [...game.channelIds] };
 
-      await e.send(embedRemove).catch(() => {
-        console.error("Unable to send message 1");
+        deletableChannels.push(deletableChannel);
+
+        if (game.queueMode === "solos") {
+          await OngoingGamesSolosCollection.deleteOne({
+            gameId: game.gameId,
+          });
+        } else {
+          await OngoingGamesTeamsCollection.deleteOne({
+            gameId: game.gameId,
+          });
+        }
       });
-      if (game.queueMode === "solos") {
-        await OngoingGamesSolosCollection.deleteOne({
-          gameId: game.gameId,
-        });
-      } else {
-        await OngoingGamesTeamsCollection.deleteOne({
-          gameId: game.gameId,
-        });
-      }
-    });
     promises.push(channelNotif);
   });
   await Promise.all(promises);
 };
-
+// not removing from deletableChannels
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];
+
   deletableChannels.forEach((deletableChannel) => {
-    const channel = client.channels
-      .fetch(deletableChannel.channelId)
-      .then(async (e) => {
-        if (e.type === "text" || e.members?.array()?.length === 0) {
-          deleteVC.push(deletableChannel);
-          await e.delete().catch(async () => {
-            warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 0);
-          });
-        }
-      })
-      .catch(() => {
-        deleteVC.push(deletableChannel);
-        warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 1);
-      });
-    promises.push(channel);
+    deletableChannel.channelIds.forEach(async (channel) => {
+      const channelToDelete = await client.channels
+        .fetch(channel)
+        .then(async (e) => {
+          if (e.type === "text" || e.members?.array()?.length === 0) {
+            await e.delete().catch(async () => {
+              warnNonDeletableChannel(deletableChannel.originalChannelId, 0);
+            });
+            deleteVC.push(channel);
+          }
+        })
+        .catch(() => {
+          deleteVC.push(...deletableChannel.channelIds);
+          warnNonDeletableChannel(deletableChannel.originalChannelId, 1);
+        });
+      promises.push(channelToDelete);
+    });
   });
   await Promise.all(promises);
 
-  deleteVC.forEach((item) => {
-    deletableChannels.splice(deletableChannels.indexOf(item), 1);
+  [...deletableChannels].forEach((deletableChannel) => {
+    if (deletableChannel.channelIds.length === 0) {
+      deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+      return;
+    }
+    deletableChannel.channelIds.forEach((channel) => {
+      if (deleteVC.includes(channel)) {
+        deletableChannels[deletableChannels.indexOf(deletableChannel)].channelIds.splice(
+          deletableChannel.channelIds.indexOf(channel),
+          1
+        );
+      }
+    });
   });
 };
 

@@ -2,6 +2,8 @@
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
+const { finishedGames, deletableChannels, channelQueues, cancelQueue, invites } = require("./cache.js");
+
 const sendMessage = async (message, messageType) => {
   await message.channel.send(messageType).catch(async () => {
     const user = await client.users.fetch(message.author.id).catch(() => {});
@@ -14,16 +16,6 @@ const EMBED_COLOR_ERROR = "#F8534F";
 const EMBED_COLOR_CHECK = "#77B255";
 
 const EMBED_COLOR_WARNING = "#B78727";
-
-const finishedGames = [];
-
-const deletableChannels = [];
-
-const channelQueues = [];
-
-const cancelQueue = {};
-
-const invites = {};
 
 const gameCount = {
   value: 0,

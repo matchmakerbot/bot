@@ -124,9 +124,9 @@ const execute = async (message) => {
     gameId: ongoingGame.gameId,
   });
 
-  ongoingGame.channelIds.forEach((channel) => {
-    deletableChannels.push(channel);
-  });
+  const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...ongoingGame.channelIds] };
+
+  deletableChannels.push(deletableChannel);
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
