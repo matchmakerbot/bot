@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const ChannelsCollection = require("../utils/schemas/channelsSchema");
 
-const { queueTypeObject } = require("../utils/cache");
+const { queueTypeObject } = require("../utils/redis");
 
 const { channelQueues } = require("../utils/utils");
 

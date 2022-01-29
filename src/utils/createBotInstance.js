@@ -13,7 +13,7 @@ const fastify = require("fastify")();
 
 const client = require("./createClientInstance.js");
 
-const { queueTypeObject } = require("./cache");
+const { queueTypeObject } = require("./redis");
 
 const ChannelsCollection = require("./schemas/channelsSchema");
 

@@ -2,7 +2,7 @@
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
-const { finishedGames, deletableChannels, channelQueues, cancelQueue, invites } = require("./cache.js");
+const { finishedGames, deletableChannels, channelQueues, cancelQueue, invites } = require("./redis.js");
 
 const sendMessage = async (message, messageType) => {
   await message.channel.send(messageType).catch(async () => {

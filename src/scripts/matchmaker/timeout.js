@@ -160,12 +160,10 @@ const updateChannels = async () => {
       deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
       return;
     }
-    deletableChannel.channelIds.forEach((channel) => {
-      if (deleteVC.includes(channel)) {
-        deletableChannels[deletableChannels.indexOf(deletableChannel)].channelIds.splice(
-          deletableChannel.channelIds.indexOf(channel),
-          1
-        );
+    deleteVC.forEach((channelToDelete) => {
+      const ids = deletableChannel.channelIds;
+      if (ids.includes(channelToDelete)) {
+        ids.splice(ids.indexOf(channelToDelete), 1);
       }
     });
   });
