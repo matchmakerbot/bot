@@ -1,6 +1,8 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, invites, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, sendMessage } = require("../../../utils/utils");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
@@ -33,6 +35,8 @@ const execute = async (message) => {
     return;
   }
 
+  const invites = await redisInstance.getObject("invites");
+
   if (!Object.keys(invites).includes(teamName)) {
     wrongEmbed.setTitle(":x: This team didn't invite anyone!");
 
@@ -62,6 +66,8 @@ const execute = async (message) => {
   } else {
     invitePath.splice(invitePath.indexOf(teamName), 1);
   }
+
+  await redisInstance.setObject("invites", invites);
 
   correctEmbed.setTitle(`:white_check_mark: ${message.author.username} joined ${teamName}!`);
 

@@ -6,13 +6,9 @@ const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGames
 
 const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
-const {
-  sendMessage,
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  finishedGames,
-  deletableChannels,
-} = require("../../../utils/utils.js");
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils.js");
 
 const assignScoreUsers = async (game) => {
   const promises = [];
@@ -118,7 +114,11 @@ const execute = async (message) => {
 
   await assignScoreUsers(assignScoreData);
 
+  const finishedGames = await redisInstance.getObject("finishedGames");
+
   finishedGames.push(assignScoreData);
+
+  await redisInstance.setObject("finishedGames", finishedGames);
 
   await OngoingGamesSolosCollection.deleteOne({
     gameId: ongoingGame.gameId,
@@ -126,7 +126,11 @@ const execute = async (message) => {
 
   const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...ongoingGame.channelIds] };
 
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
+
   deletableChannels.push(deletableChannel);
+
+  await redisInstance.setObject("deletableChannels", deletableChannels);
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 

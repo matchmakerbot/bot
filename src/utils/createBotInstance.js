@@ -13,9 +13,11 @@ const fastify = require("fastify")();
 
 const client = require("./createClientInstance.js");
 
-const { queueTypeObject } = require("./redis");
+const { redisInstance } = require("./createRedisInstance");
 
 const ChannelsCollection = require("./schemas/channelsSchema");
+
+const startExpressInstance = require("./express");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
@@ -66,7 +68,7 @@ const createBotInstance = async () => {
   startIntervalMatchmakerBot();
   try {
     client.once("ready", async () => {
-      console.log(
+      startExpressInstance();
       logger.info(
         `Guilds: ${client.guilds.cache.map((a) => a.name).join(" || ")}\nNumber of Guilds: ${
           client.guilds.cache.map((a) => a.name).length
@@ -88,7 +90,8 @@ const createBotInstance = async () => {
   }
   try {
     client.on("message", async (message) => {
-      logger.info(
+      // eslint-disable-next-line no-console
+      console.log(
         ` ${message.author.username} | ${message.author.id}| ${message.guild?.name} | ${message.channel.id} | ${message.content}`
       );
       const args = message.content.slice(prefix.length).split(/ +/);
@@ -104,6 +107,7 @@ const createBotInstance = async () => {
       if (message.guild === undefined) return;
 
       if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
+        const queueTypeObject = await redisInstance.getObject("queueTypeObject");
         if (queueTypeObject[message.channel.id] == null) {
           const guildsInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
           if (guildsInfo == null) {

@@ -6,6 +6,8 @@ const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/on
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendMessage } = require("../../../utils/utils");
 
+const { redisInstance } = require("../../../utils/createRedisInstance");
+
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -32,7 +34,9 @@ const execute = async (message, queueSize) => {
 
   const pingedUser = message.mentions.members.first().user.id;
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: Please leave the queue first!");

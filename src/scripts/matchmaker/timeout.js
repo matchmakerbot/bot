@@ -6,7 +6,9 @@ const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
 
-const { EMBED_COLOR_WARNING, channelQueues, deletableChannels } = require("../../utils/utils");
+const { EMBED_COLOR_WARNING } = require("../../utils/utils");
+
+const { redisInstance } = require("../../utils/createRedisInstance.js");
 
 const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
 
@@ -44,6 +46,8 @@ const updateUsers = async () => {
   const promises = [];
   const currentTimeMS = Date.now();
 
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
   const filteredChannels = channelQueues.filter((queue) => queue.players.length < queue.queueSize);
 
   filteredChannels.forEach((filteredChannel) => {
@@ -69,6 +73,8 @@ const updateUsers = async () => {
     });
   });
   await Promise.all(promises);
+
+  await redisInstance.setObject("channelQueues", channelQueues);
 };
 
 const updateOngoingGames = async () => {
@@ -111,9 +117,13 @@ const updateOngoingGames = async () => {
       })
       .catch(async () => {})
       .finally(async () => {
+        const deletableChannels = await redisInstance.getObject("deletableChannels");
+
         const deletableChannel = { originalChannelId: game.channelId, channelIds: [...game.channelIds] };
 
         deletableChannels.push(deletableChannel);
+
+        await redisInstance.setObject("deletableChannels", deletableChannels);
 
         if (game.queueMode === "solos") {
           await OngoingGamesSolosCollection.deleteOne({
@@ -133,6 +143,8 @@ const updateOngoingGames = async () => {
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];
+
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   deletableChannels.forEach((deletableChannel) => {
     deletableChannel.channelIds.forEach(async (channel) => {
@@ -167,12 +179,12 @@ const updateChannels = async () => {
       }
     });
   });
+  await redisInstance.setObject("deletableChannels", deletableChannels);
 };
 
 const evaluateUpdates = async () => {
-  if (Object.entries(channelQueues).length !== 0) {
-    await updateUsers();
-  }
+  await updateUsers();
+
   await updateOngoingGames();
 
   await updateChannels();

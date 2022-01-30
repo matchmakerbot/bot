@@ -2,12 +2,17 @@ const logger = require("pino")();
 
 const { createBotInstance } = require("./utils/createBotInstance");
 
-const { createDbConnection } = require("./utils/connectMongoDBServer");
+const { createDbConnection } = require("./utils/createMongoDBInstance");
+
+const { redisInstance } = require("./utils/createRedisInstance");
 
 (async () => {
   try {
     await createDbConnection();
-    logger.info("Estabilished MongoDB connection");
+    logger.info("Started MongoDB Instance");
+
+    await redisInstance.connectAndInit();
+    logger.info("Started Redis Instance");
 
     await createBotInstance();
     logger.info("Started MatchmakerBot Instance");

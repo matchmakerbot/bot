@@ -1,6 +1,8 @@
 const Discord = require("discord.js");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames } = require("../../../utils/utils");
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const MatchmakerUsersScoreSchema = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
@@ -67,6 +69,8 @@ const execute = async (message) => {
     return;
   }
 
+  const finishedGames = await redisInstance.getObject("finishedGames");
+
   if (!finishedGames.map((e) => e.gameId).includes(Number(secondArg))) {
     wrongEmbed.setTitle(":x: No game with that Id has been played");
 
@@ -88,6 +92,8 @@ const execute = async (message) => {
   const indexSelectedGame = finishedGames.indexOf(selectedGame);
 
   finishedGames.splice(indexSelectedGame, 1);
+
+  await redisInstance.setObject("finishedGames", finishedGames);
 
   correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === "revert" ? "reverted" : "cancelled"}!`);
 

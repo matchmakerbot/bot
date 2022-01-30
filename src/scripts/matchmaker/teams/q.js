@@ -12,11 +12,12 @@ const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmake
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
 const {
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   EMBED_COLOR_WARNING,
-  channelQueues,
   getQueueArray,
   shuffle,
   gameCount,
@@ -35,7 +36,9 @@ const execute = async (message, queueSize) => {
     captain: message.author.id,
   });
 
-  const queueArray = getQueueArray(queueSize, channelId, message.guild.id);
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   if (fetchedTeam == null) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
@@ -121,6 +124,8 @@ const execute = async (message, queueSize) => {
   };
 
   queueArray.push(toPush);
+
+  await redisInstance.setObject("channelQueues", channelQueues);
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/2`);
 
@@ -363,13 +368,18 @@ const execute = async (message, queueSize) => {
       const ongoingGamesInsert = new OngoingGamesTeamsCollection(gameCreatedObj);
 
       await ongoingGamesInsert.save();
+
       queueArray.splice(0, queueArray.length);
+
+      await redisInstance.setObject("channelQueues", channelQueues);
     } catch (e) {
       wrongEmbed.setTitle("Error creating teams, resetting queue.");
 
       sendMessage(message, wrongEmbed);
 
       queueArray.splice(0, queueArray.length);
+
+      await redisInstance.setObject("channelQueues", channelQueues);
 
       logger.error(e);
     }

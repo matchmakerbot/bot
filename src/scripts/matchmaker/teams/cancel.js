@@ -1,8 +1,10 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, cancelQueue, deletableChannels } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -14,6 +16,10 @@ const execute = async (message) => {
   const userId = message.author.id;
 
   const [, secondArg, gameIdInMessage] = message.content.split(" ");
+
+  const cancelQueue = await redisInstance.getObject("cancelQueue");
+
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   if (secondArg === "force") {
     if (!message.member.hasPermission("ADMINISTRATOR")) {
@@ -45,9 +51,17 @@ const execute = async (message) => {
       gameId: fetchedGame.gameId,
     });
 
+    if (cancelQueue[fetchedGame.channelId] != null) {
+      delete cancelQueue[fetchedGame.channelId];
+
+      await redisInstance.setObject("cancelQueue", cancelQueue);
+    }
+
     const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
 
     deletableChannels.push(deletableChannel);
+
+    await redisInstance.setObject("deletableChannel", deletableChannel);
 
     correctEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
@@ -95,6 +109,8 @@ const execute = async (message) => {
 
   cancelQueueArray.push(teamName);
 
+  await redisInstance.setObject("cancelQueue", cancelQueue);
+
   correctEmbed.setTitle(`:exclamation: ${teamName} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`);
 
   sendMessage(message, correctEmbed);
@@ -106,9 +122,13 @@ const execute = async (message) => {
 
     deletableChannels.push(deletableChannel);
 
+    await redisInstance.setObject("deletableChannels", deletableChannels);
+
     newCorrectEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
     delete cancelQueue[gameId];
+
+    await redisInstance.setObject("cancelQueue", cancelQueue);
 
     await OngoingGamesTeamsCollection.deleteOne({
       gameId,

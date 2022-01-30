@@ -2,12 +2,16 @@ const Discord = require("discord.js");
 
 const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
-const execute = (message, queueSize) => {
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
+const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   const index = queueArray.map((e) => e.userId).indexOf(message.author.id);
 
@@ -26,6 +30,8 @@ const execute = (message, queueSize) => {
   }
 
   queueArray.splice(index, 1);
+
+  await redisInstance.setObject("channelQueues", channelQueues);
 
   correctEmbed.setTitle(
     `:white_check_mark: ${message.author.username} left the queue! ${queueArray.length}/${queueSize}`

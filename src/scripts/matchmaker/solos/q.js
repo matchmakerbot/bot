@@ -10,12 +10,13 @@ const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmake
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
 const {
   sendMessage,
   EMBED_COLOR_CHECK,
   getQueueArray,
   EMBED_COLOR_ERROR,
-  channelQueues,
   EMBED_COLOR_WARNING,
   gameCount,
   shuffle,
@@ -141,7 +142,9 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   const channelId = message.channel.id;
 
@@ -151,6 +154,7 @@ const execute = async (message, queueSize) => {
     sendMessage(message, wrongEmbed);
     return;
   }
+
   const otherChannelWhereUserMightBe = channelQueues.find((e) => e.players.map((ee) => ee.userId).includes(userId));
 
   if (otherChannelWhereUserMightBe != null) {
@@ -192,6 +196,8 @@ const execute = async (message, queueSize) => {
   };
 
   queueArray.push(toAdd);
+
+  await redisInstance.setObject("channelQueues", channelQueues);
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/${queueSize}`);
 
@@ -632,13 +638,18 @@ const execute = async (message, queueSize) => {
       const ongoingGamesInsert = new OngoingGamesSolosCollection(gameCreatedObj);
 
       await ongoingGamesInsert.save();
+
       queueArray.splice(0, queueArray.length);
+
+      await redisInstance.setObject("channelQueues", channelQueues);
     } catch (e) {
       wrongEmbed.setTitle(":x: Error creating teams, resetting queue.");
 
       sendMessage(message, wrongEmbed);
 
       queueArray.splice(0, queueSize);
+
+      await redisInstance.setObject("channelQueues", channelQueues);
 
       logger.error(e);
     }

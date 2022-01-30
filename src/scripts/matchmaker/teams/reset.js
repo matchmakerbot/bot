@@ -1,16 +1,12 @@
 const Discord = require("discord.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  finishedGames,
-  getQueueArray,
-  sendMessage,
-} = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendMessage } = require("../../../utils/utils");
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
 const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
@@ -21,7 +17,9 @@ const execute = async (message, queueSize) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
@@ -52,10 +50,14 @@ const execute = async (message, queueSize) => {
 
       await TeamsScoreCollection.deleteMany({ channelId });
 
+      const finishedGames = await redisInstance.getObject("finishedGames");
+
       const foundGame = finishedGames.find((e) => e.channelId === channelId);
 
       if (foundGame != null) {
         finishedGames.splice(finishedGames.indexOf(foundGame), 1);
+
+        await redisInstance.setObject("finishedGames", finishedGames);
       }
 
       correctEmbed.setTitle(":white_check_mark: Channel score reset!");

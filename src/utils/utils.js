@@ -2,8 +2,6 @@
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
-const { finishedGames, deletableChannels, channelQueues, cancelQueue, invites } = require("./redis.js");
-
 const sendMessage = async (message, messageType) => {
   await message.channel.send(messageType).catch(async () => {
     const user = await client.users.fetch(message.author.id).catch(() => {});
@@ -34,7 +32,7 @@ const messageEndswith = (message) => {
   return split[split.length - 1];
 };
 
-const getQueueArray = (queueSize, channelId, guildId) => {
+const getQueueArray = (channelQueues, queueSize, channelId, guildId) => {
   const channelQueue = channelQueues.find((e) => e.channelId === channelId);
 
   if (channelQueue != null) {
@@ -47,6 +45,7 @@ const getQueueArray = (queueSize, channelId, guildId) => {
     queueSize,
     players: [],
   });
+
   return channelQueues[channelQueues.length - 1].players;
 };
 
@@ -139,13 +138,8 @@ module.exports = {
   EMBED_COLOR_ERROR,
   getQueueArray,
   messageEndswith,
-  finishedGames,
-  deletableChannels,
-  cancelQueue,
   EMBED_COLOR_WARNING,
-  channelQueues,
   gameCount,
-  invites,
   messageArgs,
   shuffle,
   balanceTeamsByMmr,

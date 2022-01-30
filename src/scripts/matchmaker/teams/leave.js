@@ -6,6 +6,8 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../.
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -23,7 +25,9 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id);
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === 2) {
     wrongEmbed.setTitle(":x: You can't leave now!");
@@ -41,6 +45,8 @@ const execute = async (message, queueSize) => {
 
   if (queueArray[0].name === fetchedTeam.name) {
     queueArray.splice(0, queueArray.length);
+
+    await redisInstance.setObject("channelQueues", channelQueues);
 
     correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} left the queue! 0/2`);
 

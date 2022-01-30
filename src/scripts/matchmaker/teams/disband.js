@@ -1,13 +1,8 @@
 const Discord = require("discord.js");
 
-const {
-  messageArgs,
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  channelQueues,
-  invites,
-  sendMessage,
-} = require("../../../utils/utils");
+const { messageArgs, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
@@ -45,6 +40,8 @@ const disbandTeam = async (message, fetchedTeam) => {
     return;
   }
 
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
   const channels = channelQueues.filter((e) => e.guildId === message.guild.id);
 
   const inQueue = channels.find((e) => e.players[0]?.name === fetchedTeam.name);
@@ -62,8 +59,12 @@ const disbandTeam = async (message, fetchedTeam) => {
     name: fetchedTeam.name,
   });
 
+  const invites = await redisInstance.getObject("invites");
+
   if (invites[fetchedTeam.name] != null) {
     invites[fetchedTeam.name].splice(0, invites[fetchedTeam.name].length);
+
+    await redisInstance.setObject("invites", invites);
   }
 
   correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} Deleted!`);

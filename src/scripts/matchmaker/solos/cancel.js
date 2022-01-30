@@ -2,13 +2,9 @@ const Discord = require("discord.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const {
-  sendMessage,
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  cancelQueue,
-  deletableChannels,
-} = require("../../../utils/utils");
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const execute = async (message, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -18,6 +14,10 @@ const execute = async (message, queueSize) => {
   const userId = message.author.id;
 
   const [, secondArg, gameIdInMessage] = message.content.split(" ");
+
+  const cancelQueue = await redisInstance.getObject("cancelQueue");
+
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   if (secondArg === "force") {
     if (!message.member.hasPermission("ADMINISTRATOR")) {
@@ -52,9 +52,13 @@ const execute = async (message, queueSize) => {
 
     deletableChannels.push(deletableChannel);
 
+    await redisInstance.setObject("deletableChannel", deletableChannel);
+
     if (cancelQueue[game.gameId] != null) {
       delete cancelQueue[gameIdInMessage];
     }
+
+    await redisInstance.setObject("cancelQueue", cancelQueue);
 
     sendMessage(message, correctEmbed);
     return;
@@ -96,6 +100,8 @@ const execute = async (message, queueSize) => {
 
   cancelqueuearray.push(userId);
 
+  await redisInstance.setObject("cancelQueue", cancelQueue);
+
   correctEmbed.setTitle(
     `:exclamation: ${message.author.username} wants to cancel game ${gameId}. (${cancelqueuearray.length}/${
       queueSize / 2 + 1
@@ -111,9 +117,13 @@ const execute = async (message, queueSize) => {
 
     deletableChannels.push(deletableChannel);
 
+    await redisInstance.setObject("deletableChannels", deletableChannels);
+
     newCorrectEmbed.setTitle(`:white_check_mark: Game ${selectedGame.gameId} Cancelled!`);
 
     delete cancelQueue[gameId];
+
+    await redisInstance.setObject("cancelQueue", cancelQueue);
 
     await OngoingGamesSolosCollection.deleteOne({
       gameId,

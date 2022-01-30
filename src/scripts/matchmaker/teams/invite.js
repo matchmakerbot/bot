@@ -4,13 +4,9 @@ const client = require("../../../utils/createClientInstance.js");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  invites,
-  EMBED_COLOR_WARNING,
-  sendMessage,
-} = require("../../../utils/utils");
+const { redisInstance } = require("../../../utils/createRedisInstance");
+
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, EMBED_COLOR_WARNING, sendMessage } = require("../../../utils/utils");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -37,6 +33,8 @@ const execute = async (message) => {
     sendMessage(message, wrongEmbed);
     return;
   }
+
+  const invites = await redisInstance.getObject("invites");
 
   if (!Object.keys(invites).includes(fetchedTeam.name)) {
     invites[fetchedTeam.name] = [];
@@ -91,6 +89,8 @@ const execute = async (message) => {
   }
 
   invites[fetchedTeam.name].push(pingedUser.id);
+
+  await redisInstance.setObject("invites", invites);
 
   sendMessage(message, correctEmbed);
 };

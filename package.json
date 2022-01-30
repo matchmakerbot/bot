@@ -4,8 +4,8 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=dev node -r dotenv/config . | pino-pretty",
-    "prod": "cross-env NODE_ENV=prod node .",
+    "dev": "cross-env NODE_ENV=dev node -r dotenv/config .",
+    "prod": "cross-env NODE_ENV=prod node . | pino-pretty",
     "lint": "eslint ./src --ext .js",
     "coverage": "c8 --reporter=lcov --reporter=text-summary yarn lint",
     "sonar": "node sonar-project.js"

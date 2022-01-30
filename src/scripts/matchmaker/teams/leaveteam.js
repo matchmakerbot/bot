@@ -2,7 +2,9 @@ const Discord = require("discord.js");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, channelQueues, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
+
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -20,6 +22,8 @@ const execute = async (message) => {
     sendMessage(message, wrongEmbed);
     return;
   }
+
+  const channelQueues = await redisInstance.getObject("channelQueues");
 
   const channels = channelQueues.filter((e) => e.guildId === message.guild.id);
 
