@@ -43,7 +43,7 @@ const execute = async (message) => {
     return;
   }
 
-  const channelQueues = redisInstance.getObject("channelQueues");
+  const channelQueues = await redisInstance.getObject("channelQueues");
 
   const channels = channelQueues.filter((e) => e.guildId === message.guild.id);
 

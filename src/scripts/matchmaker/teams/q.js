@@ -207,11 +207,7 @@ const execute = async (message, queueSize) => {
             permissionOverwrites: permissionOverwritesTeam1,
           })
           .then((e) => {
-            gameCreatedObj.channelIds.push({
-              id: e.id,
-              channelName: `🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`,
-              channel: channelId,
-            });
+            gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
             sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
@@ -238,11 +234,7 @@ const execute = async (message, queueSize) => {
             permissionOverwrites: permissionOverwritesTeam2,
           })
           .then((e) => {
-            gameCreatedObj.channelIds.push({
-              id: e.id,
-              channelName: `🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`,
-              channel: channelId,
-            });
+            gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
             sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
@@ -277,11 +269,7 @@ const execute = async (message, queueSize) => {
             permissionOverwrites,
           })
           .then(async (e) => {
-            gameCreatedObj.channelIds.push({
-              id: e.id,
-              channelName: e.name,
-              channel: channelId,
-            });
+            gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
             sendMessage(message, "Error creating text chat, are you sure the bot has permissions to do so?")
@@ -365,6 +353,7 @@ const execute = async (message, queueSize) => {
           sendMessage(message, errorEmbed);
         });
       }
+
       const ongoingGamesInsert = new OngoingGamesTeamsCollection(gameCreatedObj);
 
       await ongoingGamesInsert.save();
@@ -377,12 +366,11 @@ const execute = async (message, queueSize) => {
 
       sendMessage(message, wrongEmbed);
 
-      queueArray.splice(0, queueArray.length);
-
-      await redisInstance.setObject("channelQueues", channelQueues);
-
       logger.error(e);
     }
+    queueArray.splice(0, queueArray.length);
+
+    await redisInstance.setObject("channelQueues", channelQueues);
   }
 };
 

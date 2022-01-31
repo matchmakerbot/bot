@@ -4,16 +4,15 @@ const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const MatchmakerUsersScoreSchema = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const changeGame = async (game, param) => {
   const promises = [];
 
   [...game.team1, ...game.team2].forEach(async (user) => {
     const won =
-      (game.winningTeam === 0 && game.team1.includes(user.userId)) ||
-      (game.winningTeam === 1 && game.team2.includes(user.userId));
-
+      (game.winningTeam === 0 && game.team1.map((e) => e.userId).includes(user.userId)) ||
+      (game.winningTeam === 1 && game.team2.map((e) => e.userId).includes(user.userId));
     let mmrAddition;
 
     switch (param) {
@@ -28,7 +27,7 @@ const changeGame = async (game, param) => {
     }
 
     promises.push(
-      await MatchmakerUsersScoreSchema.updateOne(
+      await MatchmakerUsersScoreCollection.updateOne(
         {
           channelId: game.channelId,
           userId: user.userId,
@@ -55,7 +54,7 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  if (thirdArg === "revert" || thirdArg === "cancel") {
+  if (!["revert", "cancel"].includes(thirdArg)) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);

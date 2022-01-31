@@ -4,7 +4,7 @@ const EloRank = require("elo-rank");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
@@ -21,7 +21,7 @@ const assignScoreUsers = async (game) => {
     const score = won ? "wins" : "losses";
 
     promises.push(
-      MatchmakerUsersCollection.updateOne(
+      MatchmakerUsersScoreCollection.updateOne(
         {
           userId: user.userId,
           channelId: game.channelId,

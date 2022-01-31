@@ -5,7 +5,7 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils")
 const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
-
+// broke
 const changeGame = async (game, param) => {
   const promises = [];
 
@@ -18,10 +18,10 @@ const changeGame = async (game, param) => {
 
     switch (param) {
       case "revert":
-        mmrAddition = won ? game.mmrDifference * 2 : -game.mmrDifference * 2;
+        mmrAddition = won ? -game.mmrDifference * 2 : game.mmrDifference * 2;
         break;
       case "cancel":
-        mmrAddition = won ? game.mmrDifference : -game.mmrDifference;
+        mmrAddition = won ? -game.mmrDifference : game.mmrDifference;
         break;
       default:
         break;

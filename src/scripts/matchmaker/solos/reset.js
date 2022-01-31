@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
@@ -48,9 +48,9 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await MatchmakerCollection.deleteMany({ channelId });
+      await MatchmakerUsersScoreCollection.deleteMany({ channelId });
 
-      const finishedGames = redisInstance.getObject("finishedGames");
+      const finishedGames = await redisInstance.getObject("finishedGames");
 
       const foundGame = finishedGames.find((e) => e.channelId === channelId);
 
@@ -93,7 +93,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      const player = await MatchmakerCollection.findOne({
+      const player = await MatchmakerUsersScoreCollection.findOne({
         userId,
         channelId,
       });
@@ -105,7 +105,7 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await MatchmakerCollection.deleteOne({
+      await MatchmakerUsersScoreCollection.deleteOne({
         userId,
         channelId,
       });

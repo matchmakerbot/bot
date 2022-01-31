@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const MatchmakerUsersCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
 const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
@@ -16,7 +16,7 @@ const execute = async (message) => {
   const userId = message.author.id;
   switch (secondArg) {
     case "me": {
-      const user = await MatchmakerUsersCollection.findOne({
+      const user = await MatchmakerUsersScoreCollection.findOne({
         userId,
         channelId,
       });
@@ -52,7 +52,7 @@ const execute = async (message) => {
       }
 
       const storedUsersList = (
-        await MatchmakerUsersCollection.find({
+        await MatchmakerUsersScoreCollection.find({
           channelId,
         })
           .skip(10 * (skipCount - 1))
@@ -66,7 +66,7 @@ const execute = async (message) => {
         return;
       }
 
-      const storedUsersCount = await MatchmakerUsersCollection.countDocuments({});
+      const storedUsersCount = await MatchmakerUsersScoreCollection.countDocuments({});
 
       storedUsersList.sort((a, b) => b.mmr - a.mmr);
 

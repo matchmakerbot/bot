@@ -123,7 +123,7 @@ const execute = async (message) => {
 
   await assignScoreTeams(assignScoreData);
 
-  const finishedGames = redisInstance.getObject("finishedGames");
+  const finishedGames = await redisInstance.getObject("finishedGames");
 
   finishedGames.push(assignScoreData);
 
@@ -135,7 +135,7 @@ const execute = async (message) => {
 
   const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...ongoingGame.channelIds] };
 
-  const deletableChannels = redisInstance.getObject("deletableChannels");
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   deletableChannels.push(deletableChannel);
 

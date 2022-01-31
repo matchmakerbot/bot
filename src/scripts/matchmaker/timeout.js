@@ -14,11 +14,11 @@ const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSol
 
 const OngoingGamesTeamsCollection = require("../../utils/schemas/ongoingGamesTeamsSchema.js");
 
-const MAX_USER_IDLE_TIME_MS = 1000; // 45 * 60 * 1000;
+const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
 
-const MAX_GAME_LENGTH_MS = 1000; // 3 * 60 * 60 * 1000;
+const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
-const UPDATE_INTERVAL_MS = 5000; // 60 * 1000
+const UPDATE_INTERVAL_MS = 60 * 1000;
 
 const warnNonDeletableChannel = async (channel, errorId) => {
   await client.channels
@@ -139,7 +139,7 @@ const updateOngoingGames = async () => {
   });
   await Promise.all(promises);
 };
-// not removing from deletableChannels
+
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];
@@ -148,18 +148,22 @@ const updateChannels = async () => {
 
   deletableChannels.forEach((deletableChannel) => {
     deletableChannel.channelIds.forEach(async (channel) => {
-      const channelToDelete = await client.channels
+      const channelToDelete = client.channels
         .fetch(channel)
         .then(async (e) => {
           if (e.type === "text" || e.members?.array()?.length === 0) {
-            await e.delete().catch(async () => {
-              warnNonDeletableChannel(deletableChannel.originalChannelId, 0);
-            });
-            deleteVC.push(channel);
+            await e
+              .delete()
+              .catch(async () => {
+                warnNonDeletableChannel(deletableChannel.originalChannelId, 0);
+              })
+              .finally(() => {
+                deleteVC.push(channel);
+              });
           }
         })
         .catch(() => {
-          deleteVC.push(...deletableChannel.channelIds);
+          deleteVC.push(channel);
           warnNonDeletableChannel(deletableChannel.originalChannelId, 1);
         });
       promises.push(channelToDelete);
