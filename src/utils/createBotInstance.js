@@ -17,8 +17,6 @@ const { redisInstance } = require("./createRedisInstance");
 
 const ChannelsCollection = require("./schemas/channelsSchema");
 
-const startExpressInstance = require("./express");
-
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
 const { sendMessage } = require("./utils");
@@ -68,7 +66,6 @@ const createBotInstance = async () => {
   startIntervalMatchmakerBot();
   try {
     client.once("ready", async () => {
-      startExpressInstance();
       logger.info(
         `Guilds: ${client.guilds.cache.map((a) => a.name).join(" || ")}\nNumber of Guilds: ${
           client.guilds.cache.map((a) => a.name).length
