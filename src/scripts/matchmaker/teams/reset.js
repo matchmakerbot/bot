@@ -60,7 +60,7 @@ const execute = async (message, queueSize) => {
         await redisInstance.setObject("finishedGames", finishedGames);
       }
 
-      correctEmbed.setTitle(":white_check_mark: Channel score reset!");
+      correctEmbed.setTitle(":white_check_mark: Channel leaderboard reset!");
 
       sendMessage(message, correctEmbed);
       break;

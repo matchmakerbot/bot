@@ -57,6 +57,13 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
+  if (message.content.toLowerCase().includes("revertgame")) {
+    wrongEmbed.setTitle("This command is deprecated, please use !changegame instead!");
+
+    sendMessage(message, wrongEmbed);
+    return;
+  }
+
   if (!["revert", "cancel"].includes(thirdArg)) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
@@ -103,7 +110,7 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "changegame",
+  name: ["changegame", "revertgame"],
   description:
     "Cancels/reverts score of a finished game. Usage: !changegame (gameid) cancel, this example will cancel the game, as it never happen. !changegame (gameid) revert, this example will revert the scores (I know this name is shit plz give better options)",
   execute,

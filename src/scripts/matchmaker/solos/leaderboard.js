@@ -13,6 +13,13 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
+  if (message.content.toLowerCase().includes("score")) {
+    wrongEmbed.setTitle("This command is deprecated, please use !leaderboard instead!");
+
+    sendMessage(message, wrongEmbed);
+    return;
+  }
+
   const userId = message.author.id;
   switch (secondArg) {
     case "me": {
@@ -91,8 +98,8 @@ const execute = async (message) => {
 };
 
 module.exports = {
-  name: "score",
+  name: ["leaderboard", "score"],
   description:
-    "Checks your current score. Usage: !score channel to check score in the channel youre in, or !score me to check your current score",
+    "Checks your current score. Usage: !leaderboard channel to check score in the channel youre in, or !leaderboard me to check your current score",
   execute,
 };

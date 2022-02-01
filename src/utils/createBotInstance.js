@@ -51,7 +51,13 @@ paths.forEach((e, i) => {
   }
   commands.forEach((ee) => {
     const command = require(`../scripts${e}/${ee}.js`);
-    client.commands.set(command.name, command);
+    if (typeof command.name === "string") {
+      client.commands.set(command.name, command);
+    } else if (command.name instanceof Array) {
+      command.name.forEach((name) => {
+        client.commands.set(name, command);
+      });
+    }
   });
 });
 

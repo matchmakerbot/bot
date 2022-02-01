@@ -371,7 +371,7 @@ const execute = async (message, queueSize) => {
           });
 
           const privateDmCaptain2 = await client.users.fetch(captainsObject.captain2.userId).catch(() => {
-            throw new Error("PM'S Disabled");
+            throw new Error("Invalid captain");
           });
 
           const Captain1Embed = new Discord.MessageEmbed()
@@ -455,8 +455,6 @@ const execute = async (message, queueSize) => {
           const teamChosen = !wasLastCaptainTeam1 ? "team1" : "team2";
 
           captainsObject[teamChosen].push(queueArrayCopy[0]);
-
-          queueArrayCopy.splice(0, queueArrayCopy.length);
 
           captainsObject.team1.push(captainsObject.captain1);
 
