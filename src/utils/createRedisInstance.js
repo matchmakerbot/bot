@@ -15,7 +15,7 @@ class RedisInstance {
   constructor() {
     this.client = createClient(
       process.env.NODE_ENV === "prod"
-        ? { url: `redis://${process.env.REDIS_USERNAME_AND_PASSWORD}redis-headless.redis.svc.cluster.local:6379` }
+        ? { url: `redis://${process.env.REDIS_USERNAME_AND_PASSWORD}@redis-headless.redis.svc.cluster.local:6379` }
         : null
     );
     this.client.on("error", (err) => logger.error(err));
