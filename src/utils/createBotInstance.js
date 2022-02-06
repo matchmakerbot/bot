@@ -1,6 +1,9 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
+/* eslint-disable consistent-return */
 /* eslint-disable global-require */
 /* eslint-disable import/no-dynamic-require */
+
+const logger = require("pino")();
 
 const fs = require("fs");
 
@@ -10,9 +13,9 @@ const fastify = require("fastify")();
 
 const client = require("./createClientInstance.js");
 
-const { queueTypeObject } = require("./cache");
+const { redisInstance } = require("./createRedisInstance");
 
-const GuildsCollection = require("./schemas/guildsSchema");
+const ChannelsCollection = require("./schemas/channelsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
@@ -20,50 +23,42 @@ const { sendMessage } = require("./utils");
 
 const { prefix } = process.env;
 
-const commandFiles = fs
-  .readdirSync("./src/scripts/")
-  .filter((file) => file.endsWith(".js"))
-  .map((e) => e.replace(".js", ""));
+const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 
-const commandFilesMatchmakerSolos = fs
-  .readdirSync("./src/scripts/matchmaker/solos/")
-  .filter((file) => file.endsWith(".js"))
-  .map((e) => e.replace(".js", ""));
-
-const commandFilesMatchmakerTeams = fs
-  .readdirSync("./src/scripts/matchmaker/teams/")
-  .filter((file) => file.endsWith(".js"))
-  .map((e) => e.replace(".js", ""));
+const [commandFiles, commandFilesMatchmakerSolos, commandFilesMatchmakerTeams] = paths.map((e) =>
+  fs
+    .readdirSync(`./src/scripts${e}`)
+    .filter((file) => file.endsWith(".js"))
+    .map((ee) => ee.replace(".js", ""))
+);
 
 client.commands = new Discord.Collection();
 
-const NewGuild = (guildId) => {
-  return {
-    id: guildId,
-    channels: {},
-    teams: [],
-  };
-};
-
-commandFiles.forEach((file) => {
-  const command = require(`../scripts/${file}.js`);
-  if (typeof command.name === "string") {
-    client.commands.set(command.name, command);
-  } else if (command.name instanceof Array) {
-    command.name.forEach((name) => {
-      client.commands.set(name, command);
-    });
+paths.forEach((e, i) => {
+  let commands;
+  switch (i) {
+    case 1: {
+      commands = commandFilesMatchmakerSolos;
+      break;
+    }
+    case 2: {
+      commands = commandFilesMatchmakerTeams;
+      break;
+    }
+    default: {
+      commands = commandFiles;
+    }
   }
-});
-
-commandFilesMatchmakerSolos.forEach((file) => {
-  const command = require(`../scripts/matchmaker/solos/${file}.js`);
-  client.commands.set(command.name, command);
-});
-
-commandFilesMatchmakerTeams.forEach((file) => {
-  const command = require(`../scripts/matchmaker/teams/${file}.js`);
-  client.commands.set(command.name, command);
+  commands.forEach((ee) => {
+    const command = require(`../scripts${e}/${ee}.js`);
+    if (typeof command.name === "string") {
+      client.commands.set(command.name, command);
+    } else if (command.name instanceof Array) {
+      command.name.forEach((name) => {
+        client.commands.set(name, command);
+      });
+    }
+  });
 });
 
 const createBotInstance = async () => {
@@ -77,18 +72,7 @@ const createBotInstance = async () => {
   startIntervalMatchmakerBot();
   try {
     client.once("ready", async () => {
-      const guilds = client.guilds.cache.map((a) => a.id);
-      guilds.forEach(async (guildId) => {
-        const guildsInfo = await GuildsCollection.findOne({ id: guildId });
-
-        if (guildsInfo == null) {
-          const insertedGuild = new GuildsCollection(NewGuild(guildId));
-
-          await insertedGuild.save();
-        }
-      });
-
-      console.log(
+      logger.info(
         `Guilds: ${client.guilds.cache.map((a) => a.name).join(" || ")}\nNumber of Guilds: ${
           client.guilds.cache.map((a) => a.name).length
         }`
@@ -99,17 +83,20 @@ const createBotInstance = async () => {
         url: "https://www.twitch.tv/tweenoTV",
       });
     });
-    console.log(`Scripts loaded: ${[...client.commands].length}`);
+    logger.info(`Scripts loaded: ${[...client.commands].length}`);
 
-    console.log("Successfully created socket Client.Once -> Ready");
+    logger.info("Successfully created socket Client.Once -> Ready");
   } catch (e) {
-    console.log("Error creating event listener Client.once -> Ready");
+    logger.error("Error creating event listener Client.once -> Ready");
 
-    console.error(e);
+    logger.error(e);
   }
   try {
     client.on("message", async (message) => {
-      // console.log(` ${(await client.users.fetch(message.author.id)).username} | ${message.channel.id} + ${message.content}`);
+      // eslint-disable-next-line no-console
+      console.log(
+        ` ${message.author.username} | ${message.author.id}| ${message.guild?.name} | ${message.channel.id} | ${message.content}`
+      );
       const args = message.content.slice(prefix.length).split(/ +/);
 
       const command = args.shift().toLowerCase();
@@ -123,70 +110,59 @@ const createBotInstance = async () => {
       if (message.guild === undefined) return;
 
       if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
+        const queueTypeObject = await redisInstance.getObject("queueTypeObject");
         if (queueTypeObject[message.channel.id] == null) {
-          const guildsInfo = await GuildsCollection.findOne({ id: message.guild.id });
-
-          if (guildsInfo?.channels[message.channel.id]?.queueType == null) {
+          const guildsInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
+          if (guildsInfo == null) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x:You need to set the queueType for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !helpsolosmatchmaking or !helpteamsmatchmaking"
+              ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !helpsolosmatchmaking or !helpteamsmatchmaking"
             );
 
             sendMessage(message, embed);
             return;
           }
-          queueTypeObject[message.channel.id] = guildsInfo.channels[message.channel.id];
+          queueTypeObject[message.channel.id] = guildsInfo;
         }
 
         if (
           (!commandFilesMatchmakerSolos.includes(command) &&
-            queueTypeObject[message.channel.id].queueType === "solos") ||
-          (!commandFilesMatchmakerTeams.includes(command) && queueTypeObject[message.channel.id].queueType === "teams")
+            queueTypeObject[message.channel.id].queueMode === "solos") ||
+          (!commandFilesMatchmakerTeams.includes(command) && queueTypeObject[message.channel.id].queueMode === "teams")
         )
           return;
 
-        require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueType}/${command}.js`).execute(
+        require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueMode}/${command}.js`).execute(
           message,
           queueTypeObject[message.channel.id].queueSize
         );
 
         return;
       }
-      try {
-        client.commands.get(command).execute(message);
-      } catch (e) {
-        console.log(e);
-      }
+      client.commands.get(command).execute(message);
     });
-    console.log("Successfully created socket Client.on -> Message");
+    logger.info("Successfully created socket Client.on -> Message");
   } catch (e) {
-    console.log("Error creating event listener Client.on -> Message");
+    logger.error("Error creating event listener Client.on -> Message");
 
-    console.error(e);
+    logger.error(e);
   }
   try {
     client.on("guildCreate", async (guild) => {
-      console.log(`Joined ${guild.name}`);
-      const guildsInfo = await GuildsCollection.findOne({ id: guild.id });
-
-      if (guildsInfo == null) {
-        const insertedGuild = new GuildsCollection(NewGuild(guild.id));
-
-        await insertedGuild.save();
-      }
+      logger.info(`Joined ${guild.name}`);
     });
-    console.log("Successfully created socket Client.on -> guildCreate");
+    logger.info("Successfully created socket Client.on -> guildCreate");
   } catch (e) {
-    console.log("Error creating event listener Client.on -> guildCreate");
+    logger.error("Error creating event listener Client.on -> guildCreate");
 
-    console.error(e);
+    logger.error(e);
   }
   try {
     await client.login(process.env.token);
-    console.log("Sucessfully logged in");
+    logger.info("Successfully logged in");
   } catch (e) {
-    console.log("Error logging in");
-    console.error(e);
+    logger.error("Error logging in");
+    logger.error(e);
   }
 };
 

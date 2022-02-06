@@ -1,10 +1,14 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
-/* eslint-disable no-return-assign */
+/* eslint-disable promise/no-nesting */
+const logger = require("pino")();
+
 const Discord = require("discord.js");
 
 const client = require("../../utils/createClientInstance.js");
 
-const { EMBED_COLOR_WARNING, channelQueues, deletableChannels, fetchGamesSolos, fetchGamesTeams } = require("./utils");
+const { EMBED_COLOR_WARNING } = require("../../utils/utils");
+
+const { redisInstance } = require("../../utils/createRedisInstance.js");
 
 const OngoingGamesSolosCollection = require("../../utils/schemas/ongoingGamesSolosSchema.js");
 
@@ -16,33 +20,41 @@ const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
 const UPDATE_INTERVAL_MS = 60 * 1000;
 
-const warnNonDeletableChannel = async (channel, gameId, errorId) => {
-  const notifyChannel = await client.channels.fetch(channel).catch(() => {
-    return console.log("Cannot find notifyChannel");
-  });
-  const embedRemove = new Discord.MessageEmbed()
-    .setColor(EMBED_COLOR_WARNING)
-    .setTitle(
-      `Unable to delete voice channel ${gameId}: ${
-        errorId === 1
-          ? "Channel not found"
-          : "Maybe the bot doesn't have permissions to do so? Please delete vc manually."
-      }`
-    );
-  await notifyChannel.send(embedRemove).catch(() => {
-    console.log("Cannot send unable to delete voice channel message");
-  });
+const warnNonDeletableChannel = async (channel, errorId) => {
+  await client.channels
+    .fetch(channel)
+    .then(async (e) => {
+      const embedRemove = new Discord.MessageEmbed()
+        .setColor(EMBED_COLOR_WARNING)
+        .setTitle(
+          `Unable to delete voice channels in this guild: ${
+            errorId === 1
+              ? "Channel not found"
+              : "Maybe the bot doesn't have permissions to do so? Please delete channel manually."
+          }`
+        );
+      await e.send(embedRemove).catch(() => {
+        logger.error("Cannot send unable to delete channel message");
+      });
+    })
+    .catch(() => {
+      logger.error("Cannot find notifyChannel");
+    });
 };
 
 const updateUsers = async () => {
   const promises = [];
   const currentTimeMS = Date.now();
 
-  for (const channelUsers of channelQueues.filter((queue) => queue.players.length < queue.queueSize)) {
-    for (const userOrTeam of channelUsers.players.filter(
-      (user1) => currentTimeMS - user1.date > MAX_USER_IDLE_TIME_MS
-    )) {
-      const channel = channelUsers.channelId;
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const filteredChannels = channelQueues.filter((queue) => queue.players.length < queue.queueSize);
+
+  filteredChannels.forEach((filteredChannel) => {
+    const filteredUsers = filteredChannel.players.filter((user) => currentTimeMS - user.date > MAX_USER_IDLE_TIME_MS);
+
+    filteredUsers.forEach((filteredUser) => {
+      const channel = filteredChannel.channelId;
 
       const notifyChannel = client.channels
         .fetch(channel)
@@ -51,100 +63,132 @@ const updateUsers = async () => {
             .setColor(EMBED_COLOR_WARNING)
             .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
-          e.send(`<@${userOrTeam.captain != null ? userOrTeam.captain : userOrTeam.id}>`, embedRemove);
-          channelUsers.players.splice(channelUsers.players.indexOf(userOrTeam), 1);
+          e.send(`<@${filteredUser.captain != null ? filteredUser.captain : filteredUser.userId}>`, embedRemove);
+          filteredChannel.players.splice(filteredChannel.players.indexOf(filteredUser), 1);
         })
         .catch(() => {
-          delete channelQueues[channel];
+          channelQueues.splice(channelQueues.indexOf(filteredChannel), 1);
         });
       promises.push(notifyChannel);
-    }
-  }
+    });
+  });
   await Promise.all(promises);
+
+  await redisInstance.setObject("channelQueues", channelQueues);
 };
 
 const updateOngoingGames = async () => {
   const promises = [];
-  // future: only fetch games that happenned more than 3 hours ago
-  const ongoingGamesSolos = await fetchGamesSolos();
-  const ongoingGamesTeams = await fetchGamesTeams();
-  if (ongoingGamesSolos.length === 0 && ongoingGamesTeams.length === 0) {
-    return;
-  }
+
   const currentTimeMS = Date.now();
 
-  ongoingGamesSolos.forEach((e) => (e.queueType = "solos"));
-  ongoingGamesTeams.forEach((e) => (e.queueType = "teams"));
+  const ongoingGamesSolos = await OngoingGamesSolosCollection.find({
+    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+  });
 
-  for (const game of [
-    ongoingGamesSolos.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
-    ongoingGamesTeams.filter((game1) => currentTimeMS - game1.date > MAX_GAME_LENGTH_MS),
-  ].flat()) {
-    const channelNotif = client.channels.fetch(game.channelId).then(async (e) => {
-      game.channelIds.forEach((channel) => {
-        deletableChannels.push(channel);
-      });
+  const ongoingGamesTeams = await OngoingGamesTeamsCollection.find({
+    date: { $lt: -MAX_GAME_LENGTH_MS + currentTimeMS },
+  });
 
-      const embedRemove = new Discord.MessageEmbed()
-        .setColor(EMBED_COLOR_WARNING)
-        .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
+  const games = [...ongoingGamesSolos, ...ongoingGamesTeams];
 
-      await e.send(embedRemove).catch(() => {
-        console.log("Unable to send message 1");
-      });
-      if (game.queueType === "solos") {
-        await OngoingGamesSolosCollection.deleteOne({
-          gameId: game.gameId,
-        });
-      } else {
-        await OngoingGamesTeamsCollection.deleteOne({
-          gameId: game.gameId,
-        });
-      }
-      return null;
-    });
-    promises.push(channelNotif);
+  if ([...ongoingGamesSolos, ...ongoingGamesTeams].length === 0) {
+    return;
   }
+
+  ongoingGamesSolos.forEach((e) => {
+    e.queueMode = "solos";
+  });
+  ongoingGamesTeams.forEach((e) => {
+    e.queueMode = "teams";
+  });
+
+  games.forEach((game) => {
+    const channelNotif = client.channels
+      .fetch(game.channelId)
+      .then(async (e) => {
+        const embedRemove = new Discord.MessageEmbed()
+          .setColor(EMBED_COLOR_WARNING)
+          .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
+
+        await e.send(embedRemove).catch((err) => {
+          logger.error(err);
+        });
+      })
+      .catch(async () => {})
+      .finally(async () => {
+        const deletableChannels = await redisInstance.getObject("deletableChannels");
+
+        const deletableChannel = { originalChannelId: game.channelId, channelIds: [...game.channelIds] };
+
+        deletableChannels.push(deletableChannel);
+
+        await redisInstance.setObject("deletableChannels", deletableChannels);
+
+        if (game.queueMode === "solos") {
+          await OngoingGamesSolosCollection.deleteOne({
+            gameId: game.gameId,
+          });
+        } else {
+          await OngoingGamesTeamsCollection.deleteOne({
+            gameId: game.gameId,
+          });
+        }
+      });
+    promises.push(channelNotif);
+  });
   await Promise.all(promises);
 };
 
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];
-  for (const deletableChannel of deletableChannels) {
-    const channel = client.channels
-      .fetch(deletableChannel.id)
-      .then(async (e) => {
-        if (e.type === "text") {
-          deleteVC.push(deletableChannel);
-          await e.delete().catch(async () => {
-            warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 0);
-          });
-        }
-        if (e.members.array().length === 0) {
-          deleteVC.push(deletableChannel);
-          await e.delete().catch(async () => {
-            warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 0);
-          });
-        }
-      })
-      .catch(() => {
-        deleteVC.push(deletableChannel);
-        warnNonDeletableChannel(deletableChannel.channel, deletableChannel.channelName, 1);
-      });
-    promises.push(channel);
-  }
+
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
+
+  deletableChannels.forEach((deletableChannel) => {
+    deletableChannel.channelIds.forEach(async (channel) => {
+      const channelToDelete = client.channels
+        .fetch(channel)
+        .then(async (e) => {
+          if (e.type === "text" || e.members?.array()?.length === 0) {
+            await e
+              .delete()
+              .catch(async () => {
+                warnNonDeletableChannel(deletableChannel.originalChannelId, 0);
+              })
+              .finally(() => {
+                deleteVC.push(channel);
+              });
+          }
+        })
+        .catch(() => {
+          deleteVC.push(channel);
+          warnNonDeletableChannel(deletableChannel.originalChannelId, 1);
+        });
+      promises.push(channelToDelete);
+    });
+  });
   await Promise.all(promises);
 
-  for (const item of deleteVC) {
-    deletableChannels.splice(deletableChannels.indexOf(item), 1);
-  }
+  [...deletableChannels].forEach((deletableChannel) => {
+    if (deletableChannel.channelIds.length === 0) {
+      deletableChannels.splice(deletableChannels.indexOf(deletableChannel), 1);
+      return;
+    }
+    deleteVC.forEach((channelToDelete) => {
+      const ids = deletableChannel.channelIds;
+      if (ids.includes(channelToDelete)) {
+        ids.splice(ids.indexOf(channelToDelete), 1);
+      }
+    });
+  });
+  await redisInstance.setObject("deletableChannels", deletableChannels);
 };
 
 const evaluateUpdates = async () => {
-  if (Object.entries(channelQueues).length !== 0) {
-    await updateUsers();
-  }
+  await updateUsers();
+
   await updateOngoingGames();
 
   await updateChannels();

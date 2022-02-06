@@ -1,43 +1,59 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, fetchGamesTeams } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
-const { sendMessage } = require("../../../utils/utils");
+const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const ongoingGames = await fetchGamesTeams(message.channel.id);
+  const [, skip] = message.content.split(" ");
+
+  let skipCount = skip;
+
+  if (Number.isNaN(Number(skip)) || skip == null || skip < 1) {
+    skipCount = 1;
+  }
+
+  const ongoingGames = await OngoingGamesTeamsCollection.find({ guildId: message.guild.id })
+    .skip(5 * (skipCount - 1))
+    .limit(5);
 
   if (ongoingGames.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 
-    return sendMessage(message, wrongEmbed);
+    sendMessage(message, wrongEmbed);
+    return;
   }
 
-  for (let i = 0; i < 6; i++) {
-    const game = ongoingGames[i];
+  if (ongoingGames.length === 0) {
+    wrongEmbed.setTitle(`:x: There are no ongoing games${skipCount !== 1 ? " on this page" : ""}!`);
 
-    if (game == null) {
-      correctEmbed.addField("No more games to list ", "Encourage your friends to play!");
-      break;
-    }
+    sendMessage(message, wrongEmbed);
+    return;
+  }
 
+  const gamesCount = await OngoingGamesTeamsCollection.countDocuments();
+
+  ongoingGames.forEach((game) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
     correctEmbed.addField(
       `:small_orange_diamond: Team ${game.team1.name}`,
-      `<@${game.team1.captain}>, ${game.team1.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
+      `<@${game.team1.captain}>, ${game.team1.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
     );
     correctEmbed.addField(
       `:small_blue_diamond: Team ${game.team2.name}`,
-      `<@${game.team2.captain}>, ${game.team2.members.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
+      `<@${game.team2.captain}>, ${game.team2.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
     );
+  });
 
-    correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(ongoingGames.length / 10)}`);
-  }
-  return sendMessage(message, correctEmbed);
+  correctEmbed.addField("No more games to list on this page", "Encourage your friends to play!");
+
+  correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(gamesCount / 5)}`);
+
+  sendMessage(message, correctEmbed);
 };
 
 module.exports = {

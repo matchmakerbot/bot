@@ -1,37 +1,31 @@
 const Discord = require("discord.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  messageArgs,
-  fetchTeamByGuildIdAndName,
-  fetchTeamByGuildAndUserId,
-} = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, sendMessage } = require("../../../utils/utils");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
-
-const { sendMessage } = require("../../../utils/utils");
+const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  if (messageArgs(message).length > 31) {
+  const teamName = messageArgs(message);
+
+  if (teamName.length > 31) {
     wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (messageArgs(message).length < 2) {
+  if (teamName.length < 2) {
     wrongEmbed.setTitle(":x: Name too short! Minimum characters allowed are 3.");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  const teamByName = await fetchTeamByGuildIdAndName(message.guild.id, messageArgs(message));
+  const teamByName = await MatchmakerTeamsCollection.findOne({ name: teamName, guildId: message.guild.id });
 
   if (teamByName != null) {
     wrongEmbed.setTitle(":x: Name already in use");
@@ -40,9 +34,12 @@ const execute = async (message) => {
     return;
   }
 
-  const teamById = await fetchTeamByGuildAndUserId(message.guild.id, message.author.id);
+  const teamByUser = await MatchmakerTeamsCollection.findOne({
+    guildId: message.guild.id,
+    $or: [{ captain: message.author.id }, { memberIds: { $in: message.author.id } }],
+  });
 
-  if (teamById != null) {
+  if (teamByUser != null) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
     sendMessage(message, wrongEmbed);
@@ -51,24 +48,22 @@ const execute = async (message) => {
 
   const teamsInsert = {
     guildId: message.guild.id,
-    name: messageArgs(message),
+    name: teamName,
     captain: message.author.id,
-    members: [],
-    channels: [],
+    memberIds: [],
   };
 
-  const teamInsert = new TeamsCollection(teamsInsert);
+  const teamInsert = new MatchmakerTeamsCollection(teamsInsert);
 
   await teamInsert.save();
 
-  correctEmbed.setTitle(`:white_check_mark: ${messageArgs(message)} Created!`);
+  correctEmbed.setTitle(`:white_check_mark: ${teamsInsert.name} Created!`);
 
   sendMessage(message, correctEmbed);
 };
 
 module.exports = {
   name: "createteam",
-  description:
-    "Creates a team, usage: !createteam Maniacs, the bot then creates a role with the teams name and assigns a Team Captain role to the person that created the team",
+  description: "Creates a team, usage: !createteam Maniacs",
   execute,
 };

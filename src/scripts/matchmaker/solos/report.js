@@ -1,24 +1,42 @@
 const Discord = require("discord.js");
+
 const EloRank = require("elo-rank");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
-const { sendMessage } = require("../../../utils/utils.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  includesUserId,
-  joinTeam1And2,
-  fetchGamesSolos,
-  finishedGames,
-  messageEndswith,
-  deletableChannels,
-  assignWinLoseDb,
-  TEAM1,
-  TEAM2,
-} = require("../utils");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+
+const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils.js");
+
+const assignScoreUsers = async (game) => {
+  const promises = [];
+
+  [...game.team1, ...game.team2].forEach(async (user) => {
+    const won =
+      (game.winningTeam === 0 && game.team1.map((e) => e.userId).includes(user.userId)) ||
+      (game.winningTeam === 1 && game.team2.map((e) => e.userId).includes(user.userId));
+
+    const score = won ? "wins" : "losses";
+
+    promises.push(
+      MatchmakerUsersScoreCollection.updateOne(
+        {
+          userId: user.userId,
+          channelId: game.channelId,
+        },
+        {
+          $inc: { [score]: 1, mmr: won ? game.mmrDifference : -game.mmrDifference },
+        }
+      )
+    );
+  });
+  await Promise.all(promises);
+};
 
 const execute = async (message) => {
+  const [, secondArg] = message.content.split(" ");
   const elo = new EloRank(16);
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -29,86 +47,90 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  const storedGames = await fetchGamesSolos(message.channel.id);
+  const ongoingGame = await OngoingGamesSolosCollection.findOne({
+    channelId,
+    $or: [
+      {
+        team1: { $elemMatch: { userId } },
+      },
+      {
+        team2: { $elemMatch: { userId } },
+      },
+    ],
+  });
 
-  if (
-    !includesUserId(
-      storedGames
-        .filter((e) => e.guildId === message.guild.id)
-        .map((e) => joinTeam1And2(e))
-        .flat(),
-      userId
-    )
-  ) {
-    wrongEmbed.setTitle(":x: You aren't in a game, or the game is in a different guild!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-  const game = storedGames
-    .filter((e) => e.guildId === message.guild.id)
-    .find((e) => includesUserId(joinTeam1And2(e), userId));
-
-  if (game.channelId !== channelId) {
-    wrongEmbed.setTitle(":x: This is not the correct channel to report the win/lose!");
+  if (ongoingGame == null) {
+    wrongEmbed.setTitle(":x: You aren't in a game, or the game is in a different guild/channel!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
-    wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
+  if (!["win", "lose"].includes(secondArg)) {
+    wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
 
     sendMessage(message, wrongEmbed);
     return;
   }
   if (
-    (game.team1.map((e) => e.id).includes(userId) && messageEndswith(message) === "win") ||
-    (game.team2.map((e) => e.id).includes(userId) && messageEndswith(message) === "lose")
+    (ongoingGame.team1.map((e) => e.userId).includes(userId) && secondArg === "win") ||
+    (ongoingGame.team2.map((e) => e.userId).includes(userId) && secondArg === "lose")
   ) {
-    game.winningTeam = 0;
+    ongoingGame.winningTeam = 0;
   } else {
-    game.winningTeam = 1;
+    ongoingGame.winningTeam = 1;
   }
-
-  const promises = [];
 
   const mmrOfEachTeam = {
-    team1: game.team1.reduce((a, c) => a + c.mmr, 0) / game.team1.length,
-    team2: game.team2.reduce((a, c) => a + c.mmr, 0) / game.team2.length,
+    team1: ongoingGame.team1.reduce((a, c) => a + c.mmr, 0) / ongoingGame.team1.length,
+    team2: ongoingGame.team2.reduce((a, c) => a + c.mmr, 0) / ongoingGame.team2.length,
   };
 
-  const team1EloDifference = Math.round(
-    elo.updateRating(
-      elo.getExpected(mmrOfEachTeam.team1, mmrOfEachTeam.team2),
-      game.winningTeam === 0 ? 1 : 0,
-      mmrOfEachTeam.team1
-    ) - mmrOfEachTeam.team1
+  const winningTeamMmr = ongoingGame.winningTeam === 0 ? mmrOfEachTeam.team1 : mmrOfEachTeam.team2;
+
+  const mmrDifference = Math.abs(
+    Math.round(
+      elo.updateRating(
+        elo.getExpected(
+          winningTeamMmr,
+          winningTeamMmr === ongoingGame.team1 ? mmrOfEachTeam.team2 : mmrOfEachTeam.team1
+        ),
+        1,
+        winningTeamMmr
+      ) - winningTeamMmr
+    )
   );
 
-  const team2EloDifference = -team1EloDifference;
+  const assignScoreData = {
+    channelId: ongoingGame.channelId,
+    guildId: ongoingGame.guildId,
+    gameId: ongoingGame.gameId,
+    winningTeam: ongoingGame.winningTeam,
+    mmrOfEachTeam,
+    mmrDifference,
+    team1: ongoingGame.team1,
+    team2: ongoingGame.team2,
+  };
 
-  for (const user of game.team1) {
-    user.mmrDifference = team1EloDifference;
-    promises.push(assignWinLoseDb(user, game, "solos", TEAM1));
-  }
+  await assignScoreUsers(assignScoreData);
 
-  for (const user of game.team2) {
-    user.mmrDifference = team2EloDifference;
-    promises.push(assignWinLoseDb(user, game, "solos", TEAM2));
-  }
+  const finishedGames = await redisInstance.getObject("finishedGames");
 
-  await Promise.all(promises);
+  finishedGames.push(assignScoreData);
 
-  finishedGames.push(game);
+  await redisInstance.setObject("finishedGames", finishedGames);
 
   await OngoingGamesSolosCollection.deleteOne({
-    gameId: game.gameId,
+    gameId: ongoingGame.gameId,
   });
 
-  game.channelIds.forEach((channel) => {
-    deletableChannels.push(channel);
-  });
+  const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...ongoingGame.channelIds] };
+
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
+
+  deletableChannels.push(deletableChannel);
+
+  await redisInstance.setObject("deletableChannels", deletableChannels);
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 

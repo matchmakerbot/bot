@@ -1,39 +1,28 @@
 const Discord = require("discord.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  finishedGames,
-  fetchGamesSolos,
-  joinTeam1And2,
-  getQueueArray,
-} = require("../utils");
-
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const MatchmakerCollection = require("../../../utils/schemas/matchmakerUsersSchema");
-const { sendMessage } = require("../../../utils/utils");
+const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
+
+const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
 
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const [, mode, userId] = message.content.split(" ");
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "solos");
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (message.content.split(" ").length === 1) {
-    wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -46,7 +35,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  switch (secondArg) {
+  switch (mode) {
     case "channel": {
       const fetchGamesByChannelId = await OngoingGamesSolosCollection.find({
         channelId,
@@ -59,78 +48,54 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      if (message.content.split(" ").length !== 2) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
+      await MatchmakerUsersScoreCollection.deleteMany({ channelId });
 
-        sendMessage(message, wrongEmbed);
-        return;
+      const finishedGames = await redisInstance.getObject("finishedGames");
+
+      const foundGame = finishedGames.find((e) => e.channelId === channelId);
+
+      if (foundGame != null) {
+        finishedGames.splice(finishedGames.indexOf(foundGame), 1);
+
+        await redisInstance.setObject("finishedGames", finishedGames);
       }
-      const promises = [];
-      await MatchmakerCollection.find({
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      }).then(async (storedUsers) => {
-        for (const user of storedUsers) {
-          const channelPos = user.channels
-            .map((e) => e)
-            .map((e) => e.channelId)
-            .indexOf(channelId);
 
-          if (channelPos !== -1) {
-            const updatePromise = MatchmakerCollection.update(
-              {
-                id: user.id,
-              },
-              {
-                $pull: {
-                  channels: {
-                    channelId,
-                  },
-                },
-              }
-            );
-            promises.push(updatePromise);
-          }
-        }
-        await Promise.all(promises);
-      });
-
-      for (const game of finishedGames) {
-        if (game.channelId === channelId) {
-          finishedGames.splice(finishedGames.indexOf(game), 1);
-        }
-      }
-      correctEmbed.setTitle(":white_check_mark: Channel score reset!");
+      correctEmbed.setTitle(":white_check_mark: Channel leaderboard reset!");
 
       sendMessage(message, correctEmbed);
       return;
     }
 
     case "player": {
-      const findUserInGame = (await fetchGamesSolos())
-        .map((e) => joinTeam1And2(e))
-        .flat()
-        .map((e) => e.id)
-        .includes(thirdArg);
-      if (findUserInGame) {
+      if (userId == null) {
+        wrongEmbed.setTitle(":x: You need to specify an user id!");
+
+        sendMessage(message, wrongEmbed);
+        return;
+      }
+
+      const ongoingGame = await OngoingGamesSolosCollection.findOne({
+        channelId,
+        $or: [
+          {
+            team1: { $elemMatch: { userId } },
+          },
+          {
+            team2: { $elemMatch: { userId } },
+          },
+        ],
+      });
+
+      if (ongoingGame != null) {
         wrongEmbed.setTitle(":x: User is in the middle of a game!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
 
-      if (message.content.split(" ").length !== 3) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
-
-        sendMessage(message, wrongEmbed);
-        return;
-      }
-
-      const player = await MatchmakerCollection.findOne({
-        id: thirdArg,
+      const player = await MatchmakerUsersScoreCollection.findOne({
+        userId,
+        channelId,
       });
 
       if (player == null) {
@@ -140,18 +105,10 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      await MatchmakerCollection.update(
-        {
-          id: thirdArg,
-        },
-        {
-          $pull: {
-            channels: {
-              channelId,
-            },
-          },
-        }
-      );
+      await MatchmakerUsersScoreCollection.deleteOne({
+        userId,
+        channelId,
+      });
 
       correctEmbed.setTitle(":white_check_mark: Player's score reset!");
 

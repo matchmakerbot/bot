@@ -1,10 +1,12 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, invites } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
 
-const { sendMessage } = require("../../../utils/utils");
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const execute = async (message) => {
+  const invites = await redisInstance.getObject("invites");
+
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);

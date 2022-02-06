@@ -1,15 +1,10 @@
 const Discord = require("discord.js");
 
-const {
-  fetchGamesTeams,
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  fetchTeamByGuildAndUserId,
-  cancelQueue,
-  deletableChannels,
-} = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
+
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const { sendMessage } = require("../../../utils/utils");
 
@@ -20,11 +15,11 @@ const execute = async (message) => {
 
   const userId = message.author.id;
 
-  const fetchedTeam = await fetchTeamByGuildAndUserId(message.guild.id, userId);
+  const [, secondArg, gameIdInMessage] = message.content.split(" ");
 
-  const ongoingGames = await fetchGamesTeams(null, message.guild.id);
+  const cancelQueue = await redisInstance.getObject("cancelQueue");
 
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   if (secondArg === "force") {
     if (!message.member.hasPermission("ADMINISTRATOR")) {
@@ -34,92 +29,106 @@ const execute = async (message) => {
       return;
     }
 
-    const game = await OngoingGamesTeamsCollection.findOne({ gameId: thirdArg });
+    const fetchedGame = await OngoingGamesTeamsCollection.findOne({
+      gameId: gameIdInMessage,
+    });
 
-    if (game == null) {
+    if (fetchedGame == null) {
       wrongEmbed.setTitle(":x: Game not found!");
 
       sendMessage(message, wrongEmbed);
       return;
     }
 
-    if (game.channelId !== message.channel.id) {
+    if (fetchedGame.channelId !== message.channel.id) {
       wrongEmbed.setTitle(":x: This is the wrong channel!");
 
       sendMessage(message, wrongEmbed);
       return;
     }
-    correctEmbed.setTitle(`:white_check_mark: Game ${game.gameId} Cancelled!`);
 
     await OngoingGamesTeamsCollection.deleteOne({
-      gameId: game.gameId,
+      gameId: fetchedGame.gameId,
     });
 
-    deletableChannels.push(...game.channelIds);
+    if (cancelQueue[fetchedGame.channelId] != null) {
+      delete cancelQueue[fetchedGame.channelId];
+
+      await redisInstance.setObject("cancelQueue", cancelQueue);
+    }
+
+    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
+
+    deletableChannels.push(deletableChannel);
+
+    await redisInstance.setObject("deletableChannel", deletableChannel);
+
+    correctEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
     sendMessage(message, correctEmbed);
     return;
   }
 
-  if (fetchedTeam == null) {
-    wrongEmbed.setTitle(":x: You do not belong to a team");
+  const fetchedGame = await OngoingGamesTeamsCollection.findOne({
+    channelId: message.channel.id,
+    $or: [
+      {
+        "team1.captain": userId,
+      },
+      {
+        "team2.captain": userId,
+      },
+    ],
+  });
+
+  if (fetchedGame == null) {
+    wrongEmbed.setTitle(
+      ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
+    );
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (fetchedTeam.captain !== userId) {
-    wrongEmbed.setTitle(":x: You are not the captain!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (
-    !ongoingGames
-      .map((e) => [e.team1.name, e.team2.name])
-      .flat()
-      .includes(fetchedTeam.name)
-  ) {
-    wrongEmbed.setTitle(":x: Team is not in game");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  const games = ongoingGames.find((game) => game.team1.captain === userId || game.team2.captain === userId);
-
-  const { gameId } = games;
+  const { gameId } = fetchedGame;
 
   if (!Object.keys(cancelQueue).includes(gameId.toString())) {
     cancelQueue[gameId] = [];
   }
 
+  const teamName = fetchedGame.team1.captain === message.author.id ? fetchedGame.team1.name : fetchedGame.team2.name;
+
   const cancelQueueArray = cancelQueue[gameId];
 
-  if (cancelQueueArray.includes(fetchedTeam.name)) {
+  if (cancelQueueArray.includes(teamName)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  cancelQueueArray.push(fetchedTeam.name);
+  cancelQueueArray.push(teamName);
 
-  correctEmbed.setTitle(
-    `:exclamation: ${fetchedTeam.name} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`
-  );
+  await redisInstance.setObject("cancelQueue", cancelQueue);
+
+  correctEmbed.setTitle(`:exclamation: ${teamName} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`);
 
   sendMessage(message, correctEmbed);
 
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    deletableChannels.push(...games.channelIds);
+    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
 
-    newCorrectEmbed.setTitle(`:white_check_mark: Game ${games.gameId} Cancelled!`);
+    deletableChannels.push(deletableChannel);
+
+    await redisInstance.setObject("deletableChannels", deletableChannels);
+
+    newCorrectEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
     delete cancelQueue[gameId];
+
+    await redisInstance.setObject("cancelQueue", cancelQueue);
 
     await OngoingGamesTeamsCollection.deleteOne({
       gameId,

@@ -1,33 +1,28 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, finishedGames, getQueueArray, fetchGamesTeams } = require("../utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendMessage } = require("../../../utils/utils");
 
-const { sendMessage } = require("../../../utils/utils");
+const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
+const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
-const TeamsCollection = require("../../../utils/schemas/teamsSchema");
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const execute = async (message, queueSize) => {
   const channelId = message.channel.id;
 
-  const [, secondArg] = message.content.split(" ");
+  const [, mode] = message.content.split(" ");
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  if (message.content.split(" ").length === 1) {
-    wrongEmbed.setTitle(":x: Invalid Parameters!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -40,9 +35,9 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  switch (secondArg) {
+  switch (mode) {
     case "channel": {
-      const fetchGamesByChannelId = await OngoingGamesTeamsCollection.find({
+      const fetchGamesByChannelId = await OngoingGamesMatchmakerTeamsCollection.find({
         channelId,
       });
 
@@ -53,52 +48,19 @@ const execute = async (message, queueSize) => {
         return;
       }
 
-      if (message.content.split(" ").length !== 2) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
+      await TeamsScoreCollection.deleteMany({ channelId });
 
-        sendMessage(message, wrongEmbed);
-        return;
+      const finishedGames = await redisInstance.getObject("finishedGames");
+
+      const foundGame = finishedGames.find((e) => e.channelId === channelId);
+
+      if (foundGame != null) {
+        finishedGames.splice(finishedGames.indexOf(foundGame), 1);
+
+        await redisInstance.setObject("finishedGames", finishedGames);
       }
-      const promises = [];
-      await TeamsCollection.find({
-        channels: {
-          $elemMatch: {
-            channelId,
-          },
-        },
-      }).then(async (storedTeams) => {
-        for (const team of storedTeams) {
-          const channelPos = team.channels
-            .map((e) => e)
-            .map((e) => e.channelId)
-            .indexOf(channelId);
 
-          if (channelPos !== -1) {
-            const updatePromise = TeamsCollection.update(
-              {
-                name: team.name,
-                guildId: team.guildId,
-              },
-              {
-                $pull: {
-                  channels: {
-                    channelId,
-                  },
-                },
-              }
-            );
-            promises.push(updatePromise);
-          }
-        }
-        await Promise.all(promises);
-      });
-
-      for (const game of finishedGames) {
-        if (game.channelId === channelId) {
-          finishedGames.splice(finishedGames.indexOf(game), 1);
-        }
-      }
-      correctEmbed.setTitle(":white_check_mark: Channel score reset!");
+      correctEmbed.setTitle(":white_check_mark: Channel leaderboard reset!");
 
       sendMessage(message, correctEmbed);
       break;
@@ -109,51 +71,46 @@ const execute = async (message, queueSize) => {
       teamName.splice(0, 2);
       teamName = teamName.join(" ");
 
-      const ongoingGames = await fetchGamesTeams(null, message.guild.id);
+      if (teamName === "" && teamName == null) {
+        wrongEmbed.setTitle(":x: You need to specify a team name!");
 
-      if (
-        ongoingGames
-          .map((e) => [e.team1.name, e.team2.name])
-          .flat()
-          .includes(teamName)
-      ) {
+        sendMessage(message, wrongEmbed);
+        return;
+      }
+
+      const ongoingGame = await OngoingGamesMatchmakerTeamsCollection.findOne({
+        guildId: message.guild.id,
+        $or: [
+          {
+            "team1.name": teamName,
+          },
+          {
+            "team2.name": teamName,
+          },
+        ],
+      });
+
+      if (ongoingGame != null) {
         wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
-      if (message.content.split(" ").length !== 3) {
-        wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-        sendMessage(message, wrongEmbed);
-        return;
-      }
+      const teamScore = TeamsScoreCollection.findOne({ channelId, guildId: message.guild.id, name: teamName });
 
-      const player = await TeamsCollection.findOne({
-        name: teamName,
-        guildId: message.guild.id,
-      });
-
-      if (player == null) {
+      if (teamScore == null) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
         sendMessage(message, wrongEmbed);
         return;
       }
 
-      await TeamsCollection.update(
-        {
-          name: teamName,
-          guildId: message.guild.id,
-        },
-        {
-          $pull: {
-            channels: {
-              channelId,
-            },
-          },
-        }
-      );
+      await TeamsScoreCollection.deleteOne({
+        name: teamScore.name,
+        guildId: message.guild.id,
+        channelId,
+      });
 
       correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 

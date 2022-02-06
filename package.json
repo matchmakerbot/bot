@@ -5,27 +5,26 @@
   "main": "./src/index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=dev node -r dotenv/config .",
-    "prod": "cross-env NODE_ENV=prod node .",
-    "lint": "eslint ./src --ext .js --fix"
+    "prod": "cross-env NODE_ENV=prod node . | pino-pretty",
+    "lint": "eslint ./src --ext .js",
+    "coverage": "c8 --reporter=lcov --reporter=text-summary yarn lint",
+    "sonar": "node sonar-project.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "arpad": "^2.0.0",
     "cross-env": "^7.0.3",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "elo-rank": "^1.0.4",
     "fastify": "^3.15.1",
-    "ffmpeg": "0.0.4",
-    "ffmpeg-static": "^4.2.7",
-    "jsdom": "^16.4.0",
     "mongoose": "^5.9.11",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
-    "ytdl-core": "^4.0.4"
+    "pino": "^7.6.4",
+    "pino-pretty": "^7.5.1",
+    "redis": "^4.0.2"
   },
   "devDependencies": {
+    "c8": "^7.11.0",
     "eslint": "^7.25.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-prettier": "^8.1.0",
@@ -33,6 +32,7 @@
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-promise": "^4.3.1",
-    "prettier": "^2.3.1"
+    "prettier": "^2.3.1",
+    "sonarqube-scanner": "^2.8.1"
   }
 }

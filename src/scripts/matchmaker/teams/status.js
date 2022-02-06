@@ -1,13 +1,15 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, getQueueArray } = require("../utils");
+const { EMBED_COLOR_CHECK, getQueueArray, sendMessage } = require("../../../utils/utils");
 
-const { sendMessage } = require("../../../utils/utils");
+const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const execute = (message, queueSize) => {
+const execute = async (message, queueSize) => {
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const queueArray = getQueueArray(queueSize, message.channel.id, message.guild.id, "teams");
+  const channelQueues = await redisInstance.getObject("channelQueues");
+
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
   correctEmbed.setTitle(`Teams in queue: ${queueArray.length}/2`);
 
