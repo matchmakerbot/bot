@@ -50,4 +50,4 @@ jobs:
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
-        run: helm upgrade matchmakerbot ./chart --install --atomic --namespace matchmaker --timeout 2m --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig --set-string sha=${{ github.sha }} --set-string bot.token="${{ secrets.BOT_TOKEN }}" --set-string mongo.cert="${{ secrets.MONGO_CERT }}" --set-string mongo.key="${{ secrets.MONGO_KEY }}"
+        run: helm upgrade matchmakerbot ./chart --install --atomic --namespace matchmaker --timeout 2m --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig --set-string sha=${{ github.sha }} --set-string redis.username_and_password="${{ secrets.REDIS_USERNAME_AND_PASSWORD }}" --set-string bot.token="${{ secrets.BOT_TOKEN }}" --set-string mongo.cert="${{ secrets.MONGO_CERT }}" --set-string mongo.key="${{ secrets.MONGO_KEY }}"

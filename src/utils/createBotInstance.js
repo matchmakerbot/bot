@@ -158,7 +158,7 @@ const createBotInstance = async () => {
     logger.error(e);
   }
   try {
-    await client.login(process.env.token);
+    await client.login(process.env.TOKEN);
     logger.info("Successfully logged in");
   } catch (e) {
     logger.error("Error logging in");
