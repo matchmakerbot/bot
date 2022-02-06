@@ -93,10 +93,6 @@ const createBotInstance = async () => {
   }
   try {
     client.on("message", async (message) => {
-      // eslint-disable-next-line no-console
-      console.log(
-        ` ${message.author.username} | ${message.author.id}| ${message.guild?.name} | ${message.channel.id} | ${message.content}`
-      );
       const args = message.content.slice(prefix.length).split(/ +/);
 
       const command = args.shift().toLowerCase();
