@@ -20,7 +20,5 @@ const { redisInstance } = require("./utils/createRedisInstance");
     logger.error("Error creating a Bot Instance/Db Connection");
 
     logger.error(e);
-
-    process.exit(1);
   }
 })();
