@@ -73,7 +73,7 @@ const execute = async (message) => {
         return;
       }
 
-      const storedUsersCount = await MatchmakerUsersScoreCollection.countDocuments({});
+      const storedUsersCount = await MatchmakerUsersScoreCollection.countDocuments({ channelId: message.channel.id });
 
       storedUsersList.sort((a, b) => b.mmr - a.mmr);
 

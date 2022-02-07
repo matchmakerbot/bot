@@ -28,7 +28,7 @@ const execute = async (message) => {
     return;
   }
 
-  const gamesCount = await OngoingGamesSolosCollection.countDocuments();
+  const gamesCount = await OngoingGamesSolosCollection.countDocuments({ channelId: message.channel.id });
 
   ongoingGames.forEach((game) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
