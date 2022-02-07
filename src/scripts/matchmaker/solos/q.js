@@ -25,15 +25,15 @@ const {
 
 const reactEmojisCaptains = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
-const reactEmojisrorc = ["🇨", "🇷"];
+const reactEmojisrorc = ["🇨", "🇷", "🇧"];
 
 const filterReactionrorc = (reaction, user, queueArray, rorcCount) => {
   if (
     reactEmojisrorc.includes(reaction.emoji.name) &&
-    queueArray.map((e) => e.userId).includes(user.userId) &&
-    !rorcCount.players.includes(user.userId)
+    queueArray.map((e) => e.userId).includes(user.id) &&
+    !rorcCount.players.includes(user.id)
   ) {
-    rorcCount.players.push(user.userId);
+    rorcCount.players.push(user.id);
     return true;
   }
   return false;
@@ -283,16 +283,16 @@ const execute = async (message, queueSize) => {
         })
         .then((collected) => {
           collected.forEach((e) => {
-            switch (e.emoji.name) {
+            switch (e._emoji.name) {
               case "c":
-                rorcCount.r = e.count;
+                rorcCount.r = e.count - 1;
                 break;
               case "🇷": {
-                rorcCount.r = e.count;
+                rorcCount.r = e.count - 1;
                 break;
               }
               default: {
-                rorcCount.b = e.count;
+                rorcCount.b = e.count - 1;
               }
             }
           });
@@ -361,8 +361,8 @@ const execute = async (message, queueSize) => {
           const CaptainsEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(`Game Id: ${gameCreatedObj.gameId}`)
-            .addField("Captain for team 1", captainsObject.captain1.name)
-            .addField("Captain for team 2", captainsObject.captain2.name);
+            .addField("Captain for team 1", captainsObject.captain1.username)
+            .addField("Captain for team 2", captainsObject.captain2.username);
 
           sendMessage(message, CaptainsEmbed);
 
@@ -378,7 +378,7 @@ const execute = async (message, queueSize) => {
             .setColor(EMBED_COLOR_WARNING)
             .setTitle("Choose one ( you have 30 seconds):");
           for (let k = 0; k < queueArrayCopy.length; k++) {
-            Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].name);
+            Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].username);
           }
 
           const privateDmCaptain1Message = await privateDmCaptain1.send(Captain1Embed).catch(() => {
