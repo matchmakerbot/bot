@@ -223,6 +223,7 @@ const execute = async (message, queueSize) => {
       const usersInDb = await MatchmakerUsersScoreCollection.find({
         $or: queueArray.map((e) => ({
           userId: e.userId,
+          channelId: e.channelId,
         })),
       });
 
@@ -328,15 +329,13 @@ const execute = async (message, queueSize) => {
       switch (rorcCount.choosenMode) {
         case "r": {
           shuffle(playersWithMmr);
-
-          for (let i = 0; i < playersWithMmr.length / 2; i++) {
+          for (let i = 0; i < queueSize / 2; i++) {
             gameCreatedObj.team1.push(playersWithMmr[i]);
           }
 
-          for (let i = playersWithMmr.length / 2; i < playersWithMmr.length; i++) {
+          for (let i = queueSize / 2; i < playersWithMmr.length; i++) {
             gameCreatedObj.team2.push(playersWithMmr[i]);
           }
-
           break;
         }
         case "c": {

@@ -80,7 +80,7 @@ const execute = async (message) => {
         return;
       }
 
-      const storedTeamsCount = await MatchmakerTeamsScoreCollection.countDocuments({});
+      const storedTeamsCount = await MatchmakerTeamsScoreCollection.countDocuments({ channelId: message.channel.id });
 
       storedTeamsList.sort((a, b) => b.mmr - a.mmr);
 

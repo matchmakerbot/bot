@@ -17,7 +17,7 @@ const execute = async (message) => {
     skipCount = 1;
   }
 
-  const ongoingGames = await OngoingGamesTeamsCollection.find({ guildId: message.guild.id })
+  const ongoingGames = await OngoingGamesTeamsCollection.find({ channelId: message.channel.id })
     .skip(5 * (skipCount - 1))
     .limit(5);
 
@@ -35,7 +35,7 @@ const execute = async (message) => {
     return;
   }
 
-  const gamesCount = await OngoingGamesTeamsCollection.countDocuments();
+  const gamesCount = await OngoingGamesTeamsCollection.countDocuments({ channelId: message.channel.id });
 
   ongoingGames.forEach((game) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);

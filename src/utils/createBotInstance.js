@@ -112,7 +112,7 @@ const createBotInstance = async () => {
           if (guildsInfo == null) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !helpsolosmatchmaking or !helpteamsmatchmaking"
+              ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !help"
             );
 
             sendMessage(message, embed);
