@@ -14,7 +14,7 @@ const execute = async (message) => {
   const channelId = message.channel.id;
 
   if (message.content.toLowerCase().includes("score")) {
-    wrongEmbed.setTitle("This command is deprecated, please use !leaderboard instead!");
+    wrongEmbed.setTitle("This command is deprecated, please use !leaderboard channel or !leaderboard me instead!");
 
     sendMessage(message, wrongEmbed);
     return;
@@ -90,7 +90,7 @@ const execute = async (message) => {
       break;
     }
     default: {
-      wrongEmbed.setTitle("Invalid argument!");
+      wrongEmbed.setTitle("Invalid Parameters, please use !leaderboard <me/channel> <page>");
 
       sendMessage(message, wrongEmbed);
     }

@@ -51,7 +51,9 @@ const updateUsers = async () => {
   const filteredChannels = channelQueues.filter((queue) => queue.players.length < queue.queueSize);
 
   filteredChannels.forEach((filteredChannel) => {
-    const filteredUsers = filteredChannel.players.filter((user) => currentTimeMS - user.date > MAX_USER_IDLE_TIME_MS);
+    const filteredUsers = filteredChannel.players.filter(
+      (user) => currentTimeMS - new Date(user.date).getTime() > MAX_USER_IDLE_TIME_MS
+    );
 
     filteredUsers.forEach((filteredUser) => {
       const channel = filteredChannel.channelId;

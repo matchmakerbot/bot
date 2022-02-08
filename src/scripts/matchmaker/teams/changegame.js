@@ -57,8 +57,8 @@ const execute = async (message) => {
 
   const channelId = message.channel.id;
 
-  if (message.content.toLowerCase().includes("revertgame")) {
-    wrongEmbed.setTitle("This command is deprecated, please use !changegame instead!");
+  if (!["revert", "cancel"].includes(thirdArg)) {
+    wrongEmbed.setTitle(":x: Invalid Parameters! Please use !changegame revert/cancel gameId");
 
     sendMessage(message, wrongEmbed);
     return;

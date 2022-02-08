@@ -62,7 +62,7 @@ const execute = async (message) => {
   }
 
   if (!["revert", "cancel"].includes(thirdArg)) {
-    wrongEmbed.setTitle(":x: Invalid Parameters!");
+    wrongEmbed.setTitle(":x: Invalid Parameters! Please use !changegame revert/cancel gameId");
 
     sendMessage(message, wrongEmbed);
     return;

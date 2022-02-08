@@ -99,7 +99,7 @@ const execute = async (message) => {
       return;
     }
     default: {
-      wrongEmbed.setTitle("Invalid Parameters");
+      wrongEmbed.setTitle("Invalid Parameters, please use !leaderboard <me/channel> <page>");
 
       sendMessage(message, wrongEmbed);
     }
