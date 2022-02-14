@@ -20,14 +20,14 @@ const execute = async (message) => {
 
   const [, secondArg] = message.content.split(" ");
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  const kickedUser = message.mentions.members.first() == null ? secondArg : message.mentions.members.first().user.id;
+  const kickedUser = !message.mentions.members.first() ? secondArg : message.mentions.members.first().user.id;
 
   if (!fetchedTeam.memberIds.includes(kickedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");

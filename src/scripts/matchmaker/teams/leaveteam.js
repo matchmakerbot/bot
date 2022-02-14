@@ -16,7 +16,7 @@ const execute = async (message) => {
     memberIds: { $in: message.author.id },
   });
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
     sendMessage(message, wrongEmbed);

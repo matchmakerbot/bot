@@ -307,7 +307,7 @@ const execute = async (message, queueSize) => {
         rorcCount.choosenMode = "b";
       }
 
-      if (rorcCount.choosenMode == null || (rorcCount.choosenMode === "c" && queueSize < 6)) {
+      if (!rorcCount.choosenMode || (rorcCount.choosenMode === "c" && queueSize < 6)) {
         const randomNumberLol = Math.round(Math.random() * 2);
         if (randomNumberLol === 0 && queueSize > 4) {
           rorcCount.choosenMode = "c";

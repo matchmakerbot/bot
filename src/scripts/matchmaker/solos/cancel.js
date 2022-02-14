@@ -29,7 +29,7 @@ const execute = async (message, queueSize) => {
 
     const game = await OngoingGamesSolosCollection.findOne({ gameId: gameIdInMessage });
 
-    if (game == null) {
+    if (!game) {
       wrongEmbed.setTitle(":x: Game not found!");
 
       sendMessage(message, wrongEmbed);
@@ -76,7 +76,7 @@ const execute = async (message, queueSize) => {
     ],
   });
 
-  if (selectedGame == null) {
+  if (!selectedGame) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
     sendMessage(message, wrongEmbed);

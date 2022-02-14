@@ -10,17 +10,17 @@ const discordEmbed = new Discord.MessageEmbed()
   .addField("!credits", "Just some credits :p")
   .addField(
     "!queueType",
-    "Sets the queuetype , for example !queuetype 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games"
+    "Sets the queuetype , for example '!queuetype 6 solos' for 3v3 solo games, or '!queueType 4 teams' for 2v2 teams games"
   )
   .addField(
     "!config",
     "Configures some definitions on a given channel, for example !config createVoiceChannels on/off, !config createTextChannel on/off, !config sendDirectMessage on/off"
   )
+  .addField("!examplesolos", "An example of how the bot should be used in solos mode")
   .setTimestamp();
 
 module.exports = {
   name: "help",
-  description: "Gives you a nice command list",
   execute(message) {
     sendMessage(message, discordEmbed);
   },

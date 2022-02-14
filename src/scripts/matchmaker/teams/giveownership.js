@@ -18,14 +18,14 @@ const execute = async (message, queueSize) => {
     guildId: message.guild.id,
   });
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
     return;
   }
 
-  if (message.mentions.members.first() == null) {
+  if (!message.mentions.members.first()) {
     wrongEmbed.setTitle(":x: Please tag the user");
 
     sendMessage(message, wrongEmbed);

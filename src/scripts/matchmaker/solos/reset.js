@@ -67,7 +67,7 @@ const execute = async (message, queueSize) => {
     }
 
     case "player": {
-      if (userId == null) {
+      if (!userId) {
         wrongEmbed.setTitle(":x: You need to specify an user id!");
 
         sendMessage(message, wrongEmbed);
@@ -98,7 +98,7 @@ const execute = async (message, queueSize) => {
         channelId,
       });
 
-      if (player == null) {
+      if (!player) {
         wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!");
 
         sendMessage(message, wrongEmbed);

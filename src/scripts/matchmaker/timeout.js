@@ -27,7 +27,7 @@ const warnNonDeletableChannel = async (channel, errorId) => {
       const embedRemove = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle(
-          `Unable to delete voice channels in this guild: ${
+          `Unable to delete channel/voiceChannel in this guild: ${
             errorId === 1
               ? "Channel not found"
               : "Maybe the bot doesn't have permissions to do so? Please delete channel manually."

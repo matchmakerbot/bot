@@ -71,7 +71,7 @@ const execute = async (message, queueSize) => {
       teamName.splice(0, 2);
       teamName = teamName.join(" ");
 
-      if (teamName === "" && teamName == null) {
+      if (teamName === "" && !teamName) {
         wrongEmbed.setTitle(":x: You need to specify a team name!");
 
         sendMessage(message, wrongEmbed);
@@ -99,7 +99,7 @@ const execute = async (message, queueSize) => {
 
       const teamScore = TeamsScoreCollection.findOne({ channelId, guildId: message.guild.id, name: teamName });
 
-      if (teamScore == null) {
+      if (!teamScore) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
         sendMessage(message, wrongEmbed);

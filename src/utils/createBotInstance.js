@@ -97,7 +97,7 @@ const createBotInstance = async () => {
 
       const command = args.shift().toLowerCase();
 
-      if (message.guild === null) return;
+      if (!message.guild) return;
 
       if (!message.content.startsWith(prefix) || message.author.bot) return;
 
@@ -107,9 +107,9 @@ const createBotInstance = async () => {
 
       if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
-        if (queueTypeObject[message.channel.id] == null) {
+        if (!queueTypeObject[message.channel.id]) {
           const guildsInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
-          if (guildsInfo == null) {
+          if (!guildsInfo) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
               ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !help"
