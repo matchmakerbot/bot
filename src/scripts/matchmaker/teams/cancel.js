@@ -33,7 +33,7 @@ const execute = async (message) => {
       gameId: gameIdInMessage,
     });
 
-    if (fetchedGame == null) {
+    if (!fetchedGame) {
       wrongEmbed.setTitle(":x: Game not found!");
 
       sendMessage(message, wrongEmbed);
@@ -81,7 +81,7 @@ const execute = async (message) => {
     ],
   });
 
-  if (fetchedGame == null) {
+  if (!fetchedGame) {
     wrongEmbed.setTitle(
       ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
     );

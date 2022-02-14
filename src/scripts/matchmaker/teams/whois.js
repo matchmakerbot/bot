@@ -21,8 +21,8 @@ const execute = async (message) => {
           $or: [{ captain: message.author.id }, { memberIds: { $in: message.author.id } }],
         });
 
-  if (fetchedTeam == null) {
-    wrongEmbed.setTitle(`:x: ${secondArg == null ? "You do not belong to a team!" : "This team doesn't exist!"}`);
+  if (!fetchedTeam) {
+    wrongEmbed.setTitle(`:x: ${!secondArg ? "You do not belong to a team!" : "This team doesn't exist!"}`);
 
     sendMessage(message, wrongEmbed);
     return;

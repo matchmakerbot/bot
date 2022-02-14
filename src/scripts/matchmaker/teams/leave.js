@@ -18,7 +18,7 @@ const execute = async (message, queueSize) => {
     guildId: message.guild.id,
   });
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);

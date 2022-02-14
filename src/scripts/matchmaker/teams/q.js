@@ -40,7 +40,7 @@ const execute = async (message, queueSize) => {
 
   const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
@@ -157,7 +157,7 @@ const execute = async (message, queueSize) => {
 
       queueArray.forEach((team) => {
         const thisTeam = gameCreatedObj.team1.name === team.name ? gameCreatedObj.team1 : gameCreatedObj.team2;
-        if (teamsInDb.find((e) => e.name === team.name) == null) {
+        if (!teamsInDb.find((e) => e.name === team.name)) {
           const newUser = {
             name: team.name,
             guildId: message.guild.id,

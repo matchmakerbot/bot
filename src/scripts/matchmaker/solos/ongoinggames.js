@@ -13,7 +13,7 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  if (Number.isNaN(Number(skip)) || skip == null || skip < 1) {
+  if (Number.isNaN(Number(skip)) || !skip || skip < 1) {
     skipCount = 1;
   }
 

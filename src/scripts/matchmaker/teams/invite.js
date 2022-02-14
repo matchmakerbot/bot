@@ -13,7 +13,7 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  if (message.mentions.members.first() == null) {
+  if (!message.mentions.members.first()) {
     wrongEmbed.setTitle(":x: Please mention the user");
 
     sendMessage(message, wrongEmbed);
@@ -27,7 +27,7 @@ const execute = async (message) => {
 
   const pingedUser = message.mentions.members.first().user;
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
     sendMessage(message, wrongEmbed);
@@ -64,6 +64,10 @@ const execute = async (message) => {
     return;
   }
 
+  invites[fetchedTeam.name].push(pingedUser.id);
+
+  await redisInstance.setObject("invites", invites);
+
   correctEmbed.setTitle(
     `:white_check_mark: Invited ${message.mentions.members.first().user.username} to ${fetchedTeam.name}!`
   );
@@ -87,10 +91,6 @@ const execute = async (message) => {
 
     sendMessage(message, errorEmbed);
   }
-
-  invites[fetchedTeam.name].push(pingedUser.id);
-
-  await redisInstance.setObject("invites", invites);
 
   sendMessage(message, correctEmbed);
 };

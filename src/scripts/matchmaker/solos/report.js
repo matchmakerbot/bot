@@ -59,7 +59,7 @@ const execute = async (message) => {
     ],
   });
 
-  if (ongoingGame == null) {
+  if (!ongoingGame) {
     wrongEmbed.setTitle(":x: You aren't in a game, or the game is in a different guild/channel!");
 
     sendMessage(message, wrongEmbed);

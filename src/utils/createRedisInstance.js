@@ -26,7 +26,7 @@ class RedisInstance {
 
     Object.keys(cacheObject).forEach(async (key) => {
       const value = await this.getObject(key);
-      if (value == null) {
+      if (!value) {
         await this.setObject(key, cacheObject[key]);
       }
     });

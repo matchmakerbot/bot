@@ -13,7 +13,7 @@ const disbandTeam = async (message, fetchedTeam) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  if (fetchedTeam == null) {
+  if (!fetchedTeam) {
     wrongEmbed.setTitle(`:x: ${messageArgs(message) !== "" ? "Team not found" : "You are not the captain of a team!"}`);
 
     sendMessage(message, wrongEmbed);

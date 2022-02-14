@@ -52,7 +52,7 @@ const getQueueArray = (channelQueues, queueSize, channelId, guildId) => {
 const balanceTeamsByMmr = (players, queueSize) => {
   const playersArr = players;
   for (let i = 0; i < playersArr.length; i++) {
-    if (playersArr[i].mmr == null) {
+    if (!playersArr[i].mmr) {
       playersArr[i].mmr = 1000;
     }
   }

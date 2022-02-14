@@ -15,7 +15,7 @@ const execute = async (message) => {
 
   const channelInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
 
-  if (channelInfo == null) {
+  if (!channelInfo) {
     wrongEmbed.setTitle(
       ":x: This channel is not a matchmaker channel, please set the queueMode and queueSize first, to do this check !help"
     );

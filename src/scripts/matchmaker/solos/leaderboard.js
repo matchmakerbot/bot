@@ -9,7 +9,7 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const [, secondArg, thirdArg, fourthArg] = message.content.split(" ");
 
   const channelId = message.channel.id;
 
@@ -28,7 +28,7 @@ const execute = async (message) => {
         channelId,
       });
 
-      if (user == null) {
+      if (!user) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
         sendMessage(message, wrongEmbed);
@@ -54,13 +54,26 @@ const execute = async (message) => {
     case "channel": {
       let skipCount = thirdArg;
 
-      if (Number.isNaN(Number(thirdArg)) || thirdArg == null || thirdArg < 1) {
+      if (Number.isNaN(Number(thirdArg)) || !thirdArg || thirdArg <= 1) {
         skipCount = 1;
+      }
+
+      if (
+        fourthArg != null &&
+        !message.guild.channels.cache
+          .array()
+          .map((e) => e.id)
+          .includes(fourthArg)
+      ) {
+        wrongEmbed.setTitle(":x: That channel does not belong to this server!");
+
+        sendMessage(message, wrongEmbed);
+        return;
       }
 
       const storedUsersList = (
         await MatchmakerUsersScoreCollection.find({
-          channelId,
+          channelId: fourthArg ?? channelId,
         })
           .skip(10 * (skipCount - 1))
           .limit(10)
@@ -90,7 +103,9 @@ const execute = async (message) => {
       break;
     }
     default: {
-      wrongEmbed.setTitle("Invalid Parameters, please use !leaderboard <me/channel> <page>");
+      wrongEmbed.setTitle(
+        "Invalid Parameters, please use !leaderboard <me/channel> <page>(optional) <channelId>(optional)"
+      );
 
       sendMessage(message, wrongEmbed);
     }
@@ -100,6 +115,6 @@ const execute = async (message) => {
 module.exports = {
   name: ["leaderboard", "score"],
   description:
-    "Checks your current score. Usage: !leaderboard channel to check score in the channel youre in, or !leaderboard me to check your current score",
+    "Checks your current score. Usage: !leaderboard channel <page> (default is 1) to check score in the channel youre in, !leaderboard channel <page> <channelid> to check the score of another channel, or !leaderboard me to check your current score",
   execute,
 };
