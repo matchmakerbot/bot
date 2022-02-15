@@ -29,7 +29,7 @@ const execute = async (message) => {
     return sendMessage(message, wrongEmbed);
   }
 
-  const teamsCount = await MatchmakerTeamsCollection.countDocuments();
+  const teamsCount = await MatchmakerTeamsCollection.countDocuments({ guildId: message.guild.id });
 
   teams.forEach((team) => {
     correctEmbed.addField(`Name: ${team.name}`, `Captain: <@${team.captain}>`);
