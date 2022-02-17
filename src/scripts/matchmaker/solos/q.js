@@ -285,8 +285,8 @@ const execute = async (message, queueSize) => {
         .then((collected) => {
           collected.forEach((e) => {
             switch (e._emoji.name) {
-              case "c":
-                rorcCount.r = e.count - 1;
+              case "🇨":
+                rorcCount.c = e.count - 1;
                 break;
               case "🇷": {
                 rorcCount.r = e.count - 1;
