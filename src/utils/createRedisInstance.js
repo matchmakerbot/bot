@@ -28,6 +28,15 @@ class RedisInstance {
       const value = await this.getObject(key);
       if (!value) {
         await this.setObject(key, cacheObject[key]);
+        return;
+      }
+      if (key === "channelQueues") {
+        value.forEach(async (queue) => {
+          if (queue.players.length >= queue.queueSize) {
+            queue.players.splice(0, queue.players.length);
+            await this.setObject(key, value);
+          }
+        });
       }
     });
   }
