@@ -71,13 +71,13 @@ const execute = async (message) => {
         return;
       }
 
-      const storedUsersList = (
-        await MatchmakerUsersScoreCollection.find({
-          channelId: fourthArg ?? channelId,
-        })
-          .skip(10 * (skipCount - 1))
-          .limit(10)
-      ).filter((e) => e.wins + e.losses > 0);
+      const storedUsersList = await MatchmakerUsersScoreCollection.find({
+        channelId: fourthArg ?? channelId,
+        mmr: { $ne: 1000 },
+      })
+        .sort({ mmr: -1 })
+        .skip(10 * (skipCount - 1))
+        .limit(10);
 
       if (storedUsersList.length === 0) {
         wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
@@ -87,8 +87,6 @@ const execute = async (message) => {
       }
 
       const storedUsersCount = await MatchmakerUsersScoreCollection.countDocuments({ channelId: message.channel.id });
-
-      storedUsersList.sort((a, b) => b.mmr - a.mmr);
 
       storedUsersList.forEach((user) => {
         const winrate = user.losses === 0 ? 100 : Math.floor((user.wins / (user.wins + user.losses)) * 100);
