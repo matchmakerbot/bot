@@ -142,11 +142,13 @@ const execute = async (message, queueSize) => {
 
   const userId = message.author.id;
 
+  const channelId = message.channel.id;
+
+  const guildId = message.guild.id;
+
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
-
-  const channelId = message.channel.id;
+  const queueArray = getQueueArray(channelQueues, queueSize, channelId, guildId);
 
   if (queueArray.find((e) => e.userId === userId) != null) {
     wrongEmbed.setTitle(":x: You're already in the queue!");
@@ -212,7 +214,7 @@ const execute = async (message, queueSize) => {
         gameId: gameCount.value,
         date: new Date(),
         channelId,
-        guildId: message.guild.id,
+        guildId,
         team1: [],
         team2: [],
         channelIds: [],
@@ -223,25 +225,28 @@ const execute = async (message, queueSize) => {
       const usersInDb = await MatchmakerUsersScoreCollection.find({
         $or: queueArray.map((e) => ({
           userId: e.userId,
-          channelId: e.channelId,
+          channelId,
+          guildId,
         })),
       });
 
-      queueArray.forEach((user) => {
-        if (usersInDb.find((e) => e.userId === user.userId) == null) {
-          const newUser = {
-            userId: user.userId,
-            username: user.username,
-            guildId: message.guild.id,
-            channelId: message.channel.id,
-          };
+      const usersNotInDb = queueArray.filter(
+        (queueUser) => !usersInDb.map((dbUser) => dbUser.userId).includes(queueUser.userId)
+      );
 
-          usersInDb.push({ ...newUser });
+      usersNotInDb.forEach((user) => {
+        const newUser = {
+          userId: user.userId,
+          username: user.username,
+          guildId,
+          channelId,
+        };
 
-          const matchmakerInsert = new MatchmakerUsersScoreCollection(newUser);
+        usersInDb.push({ ...newUser });
 
-          promises.push(matchmakerInsert.save());
-        }
+        const matchmakerInsert = new MatchmakerUsersScoreCollection(newUser);
+
+        promises.push(matchmakerInsert.save());
       });
       await Promise.all(promises);
 
@@ -482,7 +487,7 @@ const execute = async (message, queueSize) => {
       if (channelData.createVoiceChannels) {
         const permissionOverwritesTeam1 = [
           {
-            id: message.guild.id,
+            id: guildId,
             deny: "CONNECT",
           },
         ];
@@ -509,7 +514,7 @@ const execute = async (message, queueSize) => {
 
         const permissionOverwritesTeam2 = [
           {
-            id: message.guild.id,
+            id: guildId,
             deny: "CONNECT",
           },
         ];
@@ -538,7 +543,7 @@ const execute = async (message, queueSize) => {
       if (channelData.createTextChannels) {
         const permissionOverwrites = [
           {
-            id: message.guild.id,
+            id: guildId,
             deny: "VIEW_CHANNEL",
           },
         ];
