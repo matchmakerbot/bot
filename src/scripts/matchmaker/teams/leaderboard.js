@@ -82,7 +82,9 @@ const execute = async (message) => {
 
       const storedTeamsList = await MatchmakerTeamsScoreCollection.find({
         channelId: fourthArg ?? channelId,
+        mmr: { $ne: 1000 },
       })
+        .sort({ mmr: -1 })
         .skip(10 * (skipCount - 1))
         .limit(10);
 
