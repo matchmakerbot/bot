@@ -33,7 +33,7 @@ class RedisInstance {
       if (key === "channelQueues") {
         value.forEach(async (queue) => {
           if (queue.players.length >= queue.queueSize) {
-            queue.players.splice(0, queue.players.length);
+            queue.players.pop();
             await this.setObject(key, value);
           }
         });
