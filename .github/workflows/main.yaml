@@ -28,13 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Login to github docker
-        run: docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASSWORD }}
+        run: docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.PACKAGES_TOKEN }}
       - name: Build docker image
-        run: docker build -t matchmakerbot .
+        run: docker build -t bot .
       - name: Docker tag
-        run: docker tag matchmakerbot ${{ secrets.DOCKER_USER }}/matchmaker-bot:latest
+        run: docker tag bot ghcr.io/matchmakerbot/bot:latest
       - name: Push docker image
-        run: docker push ${{ secrets.DOCKER_USER }}/matchmaker-bot:latest
+        run: docker push ghcr.io/matchmakerbot/bot:latest
   deploy:
     name: Deploy to kubernetes
     runs-on: ubuntu-latest

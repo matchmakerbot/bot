@@ -1,5 +1,5 @@
 apiVersion: v2
-name: matchmakerbot
+name: bot
 description: nice
 
 type: application
