@@ -82,7 +82,6 @@ const execute = async (message) => {
 
       const storedTeamsList = await MatchmakerTeamsScoreCollection.find({
         channelId: fourthArg ?? channelId,
-        mmr: { $ne: 1000 },
       })
         .sort({ mmr: -1 })
         .skip(10 * (skipCount - 1))
@@ -95,7 +94,9 @@ const execute = async (message) => {
         return;
       }
 
-      const storedTeamsCount = await MatchmakerTeamsScoreCollection.countDocuments({ channelId: message.channel.id });
+      const storedTeamsCount = await MatchmakerTeamsScoreCollection.countDocuments({
+        channelId: fourthArg ?? channelId,
+      });
 
       storedTeamsList.sort((a, b) => b.mmr - a.mmr);
 

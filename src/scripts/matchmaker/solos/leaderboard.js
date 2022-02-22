@@ -73,7 +73,6 @@ const execute = async (message) => {
 
       const storedUsersList = await MatchmakerUsersScoreCollection.find({
         channelId: fourthArg ?? channelId,
-        mmr: { $ne: 1000 },
       })
         .sort({ mmr: -1 })
         .skip(10 * (skipCount - 1))
@@ -86,7 +85,9 @@ const execute = async (message) => {
         return;
       }
 
-      const storedUsersCount = await MatchmakerUsersScoreCollection.countDocuments({ channelId: message.channel.id });
+      const storedUsersCount = await MatchmakerUsersScoreCollection.countDocuments({
+        channelId: fourthArg ?? channelId,
+      });
 
       storedUsersList.forEach((user) => {
         const winrate = user.losses === 0 ? 100 : Math.floor((user.wins / (user.wins + user.losses)) * 100);
