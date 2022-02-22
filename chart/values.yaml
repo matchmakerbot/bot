@@ -12,6 +12,6 @@ resources:
     memory: 256Mi
 image:
   user: tweeno
-  name: "matchmaker-bot"
+  name: bot
   version: latest
 replicas: 1
