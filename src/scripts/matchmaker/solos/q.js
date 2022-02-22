@@ -333,14 +333,16 @@ const execute = async (message, queueSize) => {
 
       switch (rorcCount.choosenMode) {
         case "r": {
-          shuffle(playersWithMmr);
-          for (let i = 0; i < queueSize / 2; i++) {
-            gameCreatedObj.team1.push(playersWithMmr[i]);
-          }
+          const shuffledArray = shuffle(playersWithMmr);
 
-          for (let i = queueSize / 2; i < playersWithMmr.length; i++) {
-            gameCreatedObj.team2.push(playersWithMmr[i]);
-          }
+          const [team1, team2] = [
+            shuffledArray.slice(0, Math.floor(shuffledArray.length / 2)),
+            shuffledArray.slice(Math.floor(shuffledArray.length / 2)),
+          ];
+
+          gameCreatedObj.team1.push(...team1);
+
+          gameCreatedObj.team2.push(...team2);
           break;
         }
         case "c": {
