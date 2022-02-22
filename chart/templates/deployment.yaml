@@ -41,7 +41,7 @@ spec:
         fsGroup: 65532
       containers:
       - name: "{{ .Release.Name }}-pod"
-        image: "https://ghcr.io/matchmakerbot/bot:latest"
+        image: ghcr.io/matchmakerbot/bot:latest
         imagePullPolicy: Always
         ports:
         - name: docker
