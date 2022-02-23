@@ -1,3 +1,15 @@
+# Matchmaker Bot API
+
+The Discord bot, which is the main part of the whole project, that allows users to play games agaisnt each other with a leaderboard.
+
+## Contents
+- [Introduction](#introduction)
+- [Enviroment Variables](#enviroment_variables)
+- [Development](#development)
+- [Deployment](#deployment)
+- [Authors](#authors)
+
+## Introduction
 # Wanna play against friends but no way to set it up? Want to build a competitive community?
 
 Hi there. I'm Tweeno and I've developed a Matchmaking/Pugs/Scrims bot that can be used in any discord.
@@ -16,6 +28,41 @@ All commands can be seen using !helpsolosmatchmaking or !helpteammatchmaking
 
 Hope you enjoy the bot. If you need any help feel free to use the !credits command to either report issues on my github or send me a pm on discord with questions, as i'll be there to answer any questions you may have.
 
- - Tweeno
-
 https://discordapp.com/api/oauth2/authorize?client_id=571839826744180736&permissions=268512272&redirect_uri=http%3A%2F%2Flocalhost%2Fauth%2Fdiscord%2Fcallback&scope=bot
+
+## Enviroment_Variables
+
+The following environment variabled are required to run the container:
+- **PREFIX**: Bot Prefix.
+- **TOKEN**: Discord Bot Token.
+- **REDIS_USERNAME_AND_PASSWORD**: The Redis Username and Password String, joined with :
+
+## Development
+
+Local development requires the following software:
+- NodeJS
+- Yarn
+- MongoDB
+- Redis
+
+The environment variables mentioned in the [Enviroment Variables](#enviroment_variables) section can be placed in a .env file in the project's root.
+
+If everything is set up correctly, run the following command for an optimal development environment, which will watch for changes in the typescript files and auto-restart the server if necessary.
+- `yarn dev`
+
+For Deployment, the correct command is:
+- `yarn prod`
+
+Linting can be run using the following commands:
+- `yarn lint`
+
+For any additional commands, check out the package.json.
+
+## Deployment
+
+I use GitHub Actions CI/CD and Kubernetes for my deployments. All required into regarding deployments can be found in /.github and /chart.
+
+
+## Authors
+
+- **David Pinto** *(iTweeno)*
