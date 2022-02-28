@@ -28,7 +28,7 @@ All commands can be seen using !helpsolosmatchmaking or !helpteammatchmaking
 
 Hope you enjoy the bot. If you need any help feel free to use the !credits command to either report issues on my github or send me a pm on discord with questions, as i'll be there to answer any questions you may have.
 
-https://discordapp.com/api/oauth2/authorize?client_id=571839826744180736&permissions=268512272&redirect_uri=http%3A%2F%2Flocalhost%2Fauth%2Fdiscord%2Fcallback&scope=bot
+https://top.gg/bot/571839826744180736
 
 ## Enviroment_Variables
 
