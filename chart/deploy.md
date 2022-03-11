@@ -1,1 +1,1 @@
-helm upgrade matchmakerbot ./chart --install --atomic --namespace matchmaker --timeout 1m
+helm upgrade bot ./chart --install --atomic --namespace matchmakerbot --timeout 2m --set-string redis.password=${{ secrets.REDIS_PASSWORD }} --set-string bot.token=${{ secrets.BOT_TOKEN }} --set-string mongo.username=${{ secrets.MONGO_USERNAME }} --set-string mongo.password=${{ secrets.MONGO_PASSWORD }}

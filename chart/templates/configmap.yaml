@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Release.Name }}-config"
+  namespace: "{{ .Release.Namespace }}"
+data:
+  PREFIX: "!"
+  REDIS_HOST: redis-service.redis.svc.cluster.local
+  MONGO_HOST:  mongo-service.mongo.svc.cluster.local
