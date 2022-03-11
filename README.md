@@ -1,6 +1,6 @@
 # Matchmaker Bot API
 
-The Discord bot, which is the main part of the whole project, that allows users to play games agaisnt each other with a leaderboard.
+The Discord bot, which is the main part of the whole project, that allows users to play games against each other with a built in leaderboard.
 
 ## Contents
 - [Introduction](#introduction)
@@ -33,10 +33,10 @@ https://top.gg/bot/571839826744180736
 ## Enviroment_Variables
 
 The following environment variabled are required to run the container:
-- **PREFIX**: Bot Prefix.
 - **TOKEN**: Discord Bot Token.
-- **REDIS_USERNAME_AND_PASSWORD**: The Redis Username and Password String, joined with :
-
+- **REDIS_PASSWORD**: Redis Password
+- **MONGO_USERNAME**: MongoDB username.
+- **MONGO_PASSWORD**: MongoDB password.
 ## Development
 
 Local development requires the following software:

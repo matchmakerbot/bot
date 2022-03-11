@@ -21,7 +21,7 @@ const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
 const { sendMessage } = require("./utils");
 
-const { prefix } = process.env;
+const prefix = process.env.PREFIX;
 
 const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 

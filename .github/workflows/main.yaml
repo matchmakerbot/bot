@@ -32,7 +32,7 @@ jobs:
       - name: Build docker image
         run: docker build -t ${{ github.event.repository.name }} .
       - name: Docker tag
-        run: docker tag bot ghcr.io/matchmakerbot/${{ github.event.repository.name }}:latest
+        run: docker tag ${{ github.event.repository.name }} ghcr.io/matchmakerbot/${{ github.event.repository.name }}:latest
       - name: Push docker image
         run: docker push ghcr.io/matchmakerbot/${{ github.event.repository.name }}:latest
   deploy:
@@ -46,8 +46,8 @@ jobs:
         env:
           DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
         with:
-          args: kubernetes cluster kubeconfig show k8s-bandsy > $GITHUB_WORKSPACE/.kubeconfig
+          args: kubernetes cluster kubeconfig show kubernetes > $GITHUB_WORKSPACE/.kubeconfig
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
-        run: helm upgrade ${{ github.event.repository.name }} ./chart --install --atomic --namespace matchmaker --timeout 2m --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig --set-string sha=${{ github.sha }} --set-string redis.username_and_password="${{ secrets.REDIS_USERNAME_AND_PASSWORD }}" --set-string bot.token="${{ secrets.BOT_TOKEN }}" --set-string mongo.cert="${{ secrets.MONGO_CERT }}" --set-string mongo.key="${{ secrets.MONGO_KEY }}"
+        run: helm upgrade ${{ github.event.repository.name }} ./chart --install --atomic --namespace matchmaker --timeout 2m --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig --set-string sha=${{ github.sha }} --set-string redis.password=${{ secrets.REDIS_PASSWORD }} --set-string bot.token=${{ secrets.BOT_TOKEN }} --set-string mongo.username=${{ secrets.MONGO_USERNAME }} --set-string mongo.password=${{ secrets.MONGO_PASSWORD }}
