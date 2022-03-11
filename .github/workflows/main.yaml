@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
-          script: cat ~/.kube/config > $GITHUB_WORKSPACE/.kubeconfig
+          script: scp ${{ secrets.VPS_HOST }}@${{ secrets.VPS_HOST }}:~/.kube/config $GITHUB_WORKSPACE/.kubeconfig
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
