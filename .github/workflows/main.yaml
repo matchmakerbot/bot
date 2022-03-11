@@ -42,13 +42,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Save kubeconfig
-        uses: appleboy/ssh-action@master
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
-          script: scp ${{ secrets.VPS_HOST }}@${{ secrets.VPS_HOST }}:~/.kube/config $GITHUB_WORKSPACE/.kubeconfig
+          source: "~/.kube/config"
+          target: "$GITHUB_WORKSPACE/.kubeconfig"
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
