@@ -48,7 +48,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_KEY }}
-          fingerprint: ${{ secrets.VPS_FINGERPRINT }}
+          insecure_ignore_fingerprint: true
           port: ${{ secrets.VPS_PORT }}
           source: "~/.kube/config"
           target: "$GITHUB_WORKSPACE/.kubeconfig"
