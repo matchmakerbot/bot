@@ -47,7 +47,7 @@ jobs:
           direction: download
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
-          password: ${{ secrets.VPS_PASSWORD }}
+          insecure_password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT }}
           source: "~/.kube/config"
           target: "$GITHUB_WORKSPACE/.kubeconfig"
