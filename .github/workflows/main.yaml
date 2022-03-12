@@ -41,18 +41,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v2
-      - name: Save kubeconfig
-        uses: nicklasfrahm/scp-action@main
-        with:
-          direction: download
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_KEY }}
-          insecure_ignore_fingerprint: true
-          port: ${{ secrets.VPS_PORT }}
-          source: "~/.kube/config"
-          target: "$GITHUB_WORKSPACE/.kubeconfig"
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
-        run: helm upgrade ${{ github.event.repository.name }} ./chart --install --atomic --namespace matchmaker --timeout 2m --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig --set-string sha=${{ github.sha }} --set-string redis.password=${{ secrets.REDIS_PASSWORD }} --set-string bot.token=${{ secrets.BOT_TOKEN }} --set-string mongo.username=${{ secrets.MONGO_USERNAME }} --set-string mongo.password=${{ secrets.MONGO_PASSWORD }}
+        run: helm upgrade ${{ github.event.repository.name }} ./chart --install --atomic --namespace matchmaker --timeout 2m --kubeconfig=${{ secrets.KUBE_CONFIG }} --set-string sha=${{ github.sha }} --set-string redis.password=${{ secrets.REDIS_PASSWORD }} --set-string bot.token=${{ secrets.BOT_TOKEN }} --set-string mongo.username=${{ secrets.MONGO_USERNAME }} --set-string mongo.password=${{ secrets.MONGO_PASSWORD }}
