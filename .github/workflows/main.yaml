@@ -42,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Create Kube Config File
-      - run: echo $KUBE_CONFIG > $GITHUB_WORKSPACE/.kubeconfig
+        run: echo $KUBE_CONFIG > $GITHUB_WORKSPACE/.kubeconfig
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
       - name: Install helm
