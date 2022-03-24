@@ -19,7 +19,7 @@ const ChannelsCollection = require("./schemas/channelsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
-const { sendMessage } = require("./utils");
+const { sendMessage, EMBED_COLOR_WARNING } = require("./utils");
 
 const prefix = process.env.PREFIX;
 
@@ -104,6 +104,22 @@ const createBotInstance = async () => {
       if (!client.commands.has(command)) return;
 
       if (message.guild === undefined) return;
+
+      const redisChannels = await redisInstance.getObject("channels");
+
+      if (!redisChannels.includes(message.guild.id)) {
+        const embed = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
+
+        embed.setTitle(
+          "The prefix for this bot will change from ! to / starting 30th of April, because of discord's new message content policy, which does not allow users to track message content anymore."
+        );
+
+        sendMessage(message, embed);
+
+        redisChannels.push(message.guild.id);
+
+        await redisInstance.setObject("channels", redisChannels);
+      }
 
       if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
