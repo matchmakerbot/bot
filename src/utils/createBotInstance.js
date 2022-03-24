@@ -107,7 +107,7 @@ const createBotInstance = async () => {
 
       const redisChannels = await redisInstance.getObject("channels");
 
-      if (!redisChannels.includes(message.guild.id)) {
+      if (!redisChannels.includes(message.channel.id)) {
         const embed = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 
         embed.setTitle(
@@ -116,7 +116,7 @@ const createBotInstance = async () => {
 
         sendMessage(message, embed);
 
-        redisChannels.push(message.guild.id);
+        redisChannels.push(message.channel.id);
 
         await redisInstance.setObject("channels", redisChannels);
       }
