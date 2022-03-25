@@ -20,7 +20,10 @@ const execute = (message) => {
   commandFilesMatchmakerSolos.forEach((file) => {
     const command = require(`./matchmaker/teams/${file}`);
     if (command.name != null) {
-      discordEmbed.addField(`!${command.name}`, command.description);
+      discordEmbed.addField(
+        `!${command.name}`,
+        command.helpDescription == null ? command.description : command.helpDescription
+      );
     }
   });
   discordEmbed.addField(

@@ -17,10 +17,15 @@ const discordEmbed = new Discord.MessageEmbed()
     "Configures some definitions on a given channel, for example !config createVoiceChannels on/off, !config createTextChannel on/off, !config sendDirectMessage on/off"
   )
   .addField("!examplesolos", "An example of how the bot should be used in solos mode")
+  .addField(
+    "Privacy policy",
+    "This bot has access to the message content of messages sent in channels that the bot has access to. This bot is not allowed to send or see messages in channels that it does not have access to."
+  )
   .setTimestamp();
 
 module.exports = {
   name: "help",
+  description: "Command to check the bot commands",
   execute(message) {
     sendMessage(message, discordEmbed);
   },

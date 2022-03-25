@@ -15,7 +15,7 @@ const correctEmbed = new Discord.MessageEmbed().setColor("#77B255");
 const execute = async (message) => {
   const [, queueSize, queueMode] = message.content.split(" ");
 
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  if (!message.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
     return sendMessage(message, wrongEmbed);
@@ -105,5 +105,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "queuetype",
+  description: "Set the queue type for a channel, usage: !queuetype <queueSize> <queueMode>",
   execute,
 };

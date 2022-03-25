@@ -113,7 +113,8 @@ const execute = async (message) => {
 
 module.exports = {
   name: ["leaderboard", "score"],
-  description:
+  description: "Checks your current score",
+  helpDescription:
     "Checks your current score. Usage: !leaderboard channel <page> (default is 1) to check score in the channel youre in, !leaderboard channel <page> <channelid> to check the score of another channel, or !leaderboard me to check your current score",
   execute,
 };

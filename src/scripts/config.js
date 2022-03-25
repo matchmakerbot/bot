@@ -23,7 +23,7 @@ const execute = async (message) => {
     return sendMessage(message, wrongEmbed);
   }
 
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  if (!message.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
     return sendMessage(message, wrongEmbed);
@@ -57,5 +57,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "config",
+  description: "Configure the matchmaker channel, usage: !config createVoiceChannels on",
   execute,
 };

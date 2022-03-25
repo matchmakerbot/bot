@@ -22,7 +22,7 @@ const execute = async (message) => {
   const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   if (secondArg === "force") {
-    if (!message.member.hasPermission("ADMINISTRATOR")) {
+    if (!message.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
       sendMessage(message, wrongEmbed);
@@ -140,7 +140,6 @@ const execute = async (message) => {
 
 module.exports = {
   name: "cancel",
-  description:
-    "Cancel the game (Only use this in the case of someone not playing etc...) Administrators can also do !cancel force gameId to force a game cancellatio",
+  description: "Cancel the game. Administrators can also do !cancel force gameId to force a game cancellation",
   execute,
 };

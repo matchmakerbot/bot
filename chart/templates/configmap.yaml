@@ -6,4 +6,5 @@ metadata:
 data:
   PREFIX: "!"
   REDIS_HOST: redis-service.redis.svc.cluster.local
-  MONGO_HOST:  mongo-service.mongo.svc.cluster.local
+  MONGO_HOST: mongo-service.mongo.svc.cluster.local
+  CLIENT_ID: "571839826744180736"

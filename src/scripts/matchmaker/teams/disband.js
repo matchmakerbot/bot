@@ -76,7 +76,7 @@ const execute = async (message) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   if (messageArgs(message) !== "") {
-    if (!message.member.hasPermission("ADMINISTRATOR")) {
+    if (!message.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have administrator permission to delete said team");
 
       sendMessage(message, wrongEmbed);

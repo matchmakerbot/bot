@@ -376,7 +376,8 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "q",
-  description:
+  description: "Enter the queue (removes player after 45 minutes if no game has been made)",
+  helpDescription:
     "Enter the queue. To do this do !q and tag your other teammates(depending on the qeueSize) example: !q @Dany @Johny @Tony @David (removes team after 45 minutes if no game has been made)",
   execute,
 };

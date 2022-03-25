@@ -148,7 +148,8 @@ const execute = async (message) => {
 
 module.exports = {
   name: "report",
-  description:
+  helpDescription:
     "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: !report win OR !report lose",
+  description: "Reports the winner/loser of a game",
   execute,
 };

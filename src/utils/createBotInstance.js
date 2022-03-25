@@ -11,6 +11,12 @@ const Discord = require("discord.js");
 
 const fastify = require("fastify")();
 
+const { SlashCommandBuilder } = require("@discordjs/builders");
+
+const { REST } = require("@discordjs/rest");
+
+const { Routes } = require("discord-api-types/v9");
+
 const client = require("./createClientInstance.js");
 
 const { redisInstance } = require("./createRedisInstance");
@@ -20,8 +26,6 @@ const ChannelsCollection = require("./schemas/channelsSchema");
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
 const { sendMessage, EMBED_COLOR_WARNING } = require("./utils");
-
-const prefix = process.env.PREFIX;
 
 const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 
@@ -69,7 +73,9 @@ const createBotInstance = async () => {
   fastify.listen(3000, "0.0.0.0", (err) => {
     if (err) throw err;
   });
+
   startIntervalMatchmakerBot();
+
   try {
     client.once("ready", async () => {
       logger.info(
@@ -83,6 +89,7 @@ const createBotInstance = async () => {
         url: "https://www.twitch.tv/tweenoTV",
       });
     });
+
     logger.info(`Scripts loaded: ${[...client.commands].length}`);
 
     logger.info("Successfully created socket Client.Once -> Ready");
@@ -91,67 +98,84 @@ const createBotInstance = async () => {
 
     logger.error(e);
   }
+
   try {
-    client.on("message", async (message) => {
-      const args = message.content.slice(prefix.length).split(/ +/);
+    const commands = Array.from(client.commands, (e) => {
+      return { name: e[0], description: e[1].description, helpDescription: e[1].helpDescription };
+    })
+      .filter((e, i, arr) => arr.map((ee) => ee.name).indexOf(e.name) === i)
+      .map((e) =>
+        new SlashCommandBuilder()
+          .setName(typeof e.name === "string" ? e.name : e.name[0])
+          .setDescription(e.description)
+          .toJSON()
+      );
 
-      const command = args.shift().toLowerCase();
+    const rest = new REST({ version: "9" }).setToken(process.env.TOKEN);
 
-      if (!message.guild) return;
+    rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
 
-      if (!message.content.startsWith(prefix) || message.author.bot) return;
+    logger.info("Successfully registered application commands.");
+  } catch (e) {
+    logger.error("Error creating event listener Client.on -> Message");
 
-      if (!client.commands.has(command)) return;
+    logger.error(e);
+  }
 
-      if (message.guild === undefined) return;
+  try {
+    client.on("interactionCreate", async (interaction) => {
+      if (!interaction.isCommand()) return;
+
+      const { commandName } = interaction;
 
       const redisChannels = await redisInstance.getObject("channels");
 
-      if (!redisChannels.includes(message.channel.id)) {
+      if (!redisChannels.includes(interaction.channel.id)) {
         const embed = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
 
         embed.setTitle(
-          "The prefix for this bot will change from ! to / starting 30th of April, because of discord's new message content policy, which does not allow users to track message content anymore."
+          "The prefix for this bot will change from ! to / starting 30th of April, because of discord's new message content policy, which does not allow bots to track message content anymore without discord permission"
         );
 
-        sendMessage(message, embed);
+        sendMessage(interaction, embed);
 
-        redisChannels.push(message.channel.id);
+        redisChannels.push(interaction.channel.id);
 
         await redisInstance.setObject("channels", redisChannels);
       }
 
-      if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
+      if (commandFilesMatchmakerSolos.includes(commandName) || commandFilesMatchmakerTeams.includes(commandName)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
-        if (!queueTypeObject[message.channel.id]) {
-          const guildsInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
+        if (!queueTypeObject[interaction.channel.id]) {
+          const guildsInfo = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
           if (!guildsInfo) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
               ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !help"
             );
 
-            sendMessage(message, embed);
+            sendMessage(interaction, embed);
             return;
           }
-          queueTypeObject[message.channel.id] = guildsInfo;
+          queueTypeObject[interaction.channel.id] = guildsInfo;
         }
 
         if (
-          (!commandFilesMatchmakerSolos.includes(command) &&
-            queueTypeObject[message.channel.id].queueMode === "solos") ||
-          (!commandFilesMatchmakerTeams.includes(command) && queueTypeObject[message.channel.id].queueMode === "teams")
+          (!commandFilesMatchmakerSolos.includes(commandName) &&
+            queueTypeObject[interaction.channel.id].queueMode === "solos") ||
+          (!commandFilesMatchmakerTeams.includes(commandName) &&
+            queueTypeObject[interaction.channel.id].queueMode === "teams")
         )
           return;
 
-        require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueMode}/${command}.js`).execute(
-          message,
-          queueTypeObject[message.channel.id].queueSize
+        require(`../scripts/matchmaker/${queueTypeObject[interaction.channel.id].queueMode}/${commandName}.js`).execute(
+          interaction,
+          queueTypeObject[interaction.channel.id].queueSize
         );
 
         return;
       }
-      client.commands.get(command).execute(message);
+      client.commands.get(commandName).execute(interaction);
     });
     logger.info("Successfully created socket Client.on -> Message");
   } catch (e) {

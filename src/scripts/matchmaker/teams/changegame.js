@@ -71,7 +71,7 @@ const execute = async (message) => {
     return;
   }
 
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  if (!message.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
     sendMessage(message, wrongEmbed);
@@ -111,7 +111,8 @@ const execute = async (message) => {
 
 module.exports = {
   name: ["changegame", "revertgame"],
-  description:
-    "Cancels/reverts score of a finished game. Usage: !changegame (gameid) cancel, this example will cancel the game, as it never happen. !changegame (gameid) revert, this example will revert the scores (I know this name is shit plz give better options)",
+  description: "Cancels/reverts score of a finished game",
+  helpdescription:
+    "Cancels/reverts score of a finished game. Usage: !changegame (gameid) cancel, this example will cancel the game, as it never happen. !changegame (gameid) revert, this example will revert the scores",
   execute,
 };

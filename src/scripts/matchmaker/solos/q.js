@@ -148,7 +148,7 @@ const execute = async (message, queueSize) => {
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, channelId, guildId);
+  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, guildId);
 
   if (queueArray.find((e) => e.userId === userId) != null) {
     wrongEmbed.setTitle(":x: You're already in the queue!");
@@ -207,13 +207,15 @@ const execute = async (message, queueSize) => {
 
   if (queueArray.length === queueSize) {
     try {
+      const channelData = await ChannelsCollection.findOne({ channelId: message.channel.id });
+
       gameCount.value++;
 
       const gameCreatedObj = {
         queueSize,
         gameId: gameCount.value,
         date: new Date(),
-        channelId,
+        channelId: channelData.globalmmr ? null : channelId,
         guildId,
         team1: [],
         team2: [],
@@ -225,7 +227,7 @@ const execute = async (message, queueSize) => {
       const usersInDb = await MatchmakerUsersScoreCollection.find({
         $or: queueArray.map((e) => ({
           userId: e.userId,
-          channelId,
+          channelId: channelData.globalmmr ? null : channelId,
           guildId,
         })),
       });
@@ -239,7 +241,7 @@ const execute = async (message, queueSize) => {
           userId: user.userId,
           username: user.username,
           guildId,
-          channelId,
+          channelId: channelData.globalmmr ? null : user.channelId,
         };
 
         usersInDb.push({ ...newUser });
@@ -274,7 +276,7 @@ const execute = async (message, queueSize) => {
         choosenMode: null,
       };
 
-      const rorcMessage = await message.channel.send(correctEmbed);
+      const rorcMessage = await message.followUp(correctEmbed);
 
       await rorcMessage.react("🇨");
 
@@ -483,8 +485,6 @@ const execute = async (message, queueSize) => {
         default:
           break;
       }
-
-      const channelData = await ChannelsCollection.findOne({ channelId: message.channel.id });
 
       if (channelData.createVoiceChannels) {
         const permissionOverwritesTeam1 = [

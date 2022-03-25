@@ -28,7 +28,7 @@ const execute = async (message, queueSize) => {
     return;
   }
 
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  if (!message.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
     sendMessage(message, wrongEmbed);
@@ -125,7 +125,8 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "reset",
-  description:
+  description: "Resets player or channel leaderboard",
+  helpDescription:
     "Resets the score of an individual player (!reset player <discordid>) or the whole channel where this command is inserted (!reset channel)",
   execute,
 };
