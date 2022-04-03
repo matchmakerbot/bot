@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { sendMessage } = require("../utils/utils");
+const { sendReply } = require("../utils/utils");
 
 const discordEmbed = new Discord.MessageEmbed()
 
@@ -26,7 +26,7 @@ const discordEmbed = new Discord.MessageEmbed()
 module.exports = {
   name: "help",
   description: "Command to check the bot commands",
-  execute(message) {
-    sendMessage(message, discordEmbed);
+  execute(interaction) {
+    sendReply(interaction, discordEmbed);
   },
 };

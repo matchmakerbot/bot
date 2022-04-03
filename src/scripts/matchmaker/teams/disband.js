@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { messageArgs, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
+const { messageArgs, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -16,7 +16,7 @@ const disbandTeam = async (message, fetchedTeam) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(`:x: ${messageArgs(message) !== "" ? "Team not found" : "You are not the captain of a team!"}`);
 
-    sendMessage(message, wrongEmbed);
+    sendReply(message, wrongEmbed);
     return;
   }
 
@@ -35,7 +35,7 @@ const disbandTeam = async (message, fetchedTeam) => {
   if (foundGame != null) {
     wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(message, wrongEmbed);
 
     return;
   }
@@ -51,7 +51,7 @@ const disbandTeam = async (message, fetchedTeam) => {
 
     wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since they were disbanded`);
 
-    sendMessage(message, wrongEmbed);
+    sendReply(message, wrongEmbed);
   }
 
   await MatchmakerTeamsCollection.deleteOne({
@@ -69,35 +69,35 @@ const disbandTeam = async (message, fetchedTeam) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} Deleted!`);
 
-  sendMessage(message, correctEmbed);
+  sendReply(message, correctEmbed);
 };
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
-  if (messageArgs(message) !== "") {
-    if (!message.member.permissions.has("ADMINISTRATOR")) {
+  if (messageArgs(interaction) !== "") {
+    if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have administrator permission to delete said team");
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
       return;
     }
     const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-      guildId: message.guild.id,
-      name: messageArgs(message),
+      guildId: interaction.guild.id,
+      name: messageArgs(interaction),
     });
 
-    disbandTeam(message, fetchedTeam);
+    disbandTeam(interaction, fetchedTeam);
 
     return;
   }
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-    captain: message.author.id,
-    guildId: message.guild.id,
+    captain: interaction.member.id,
+    guildId: interaction.guild.id,
   });
 
-  disbandTeam(message, fetchedTeam);
+  disbandTeam(interaction, fetchedTeam);
 };
 
 module.exports = {

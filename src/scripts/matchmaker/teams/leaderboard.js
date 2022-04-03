@@ -1,46 +1,46 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply } = require("../../../utils/utils");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
 const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg, fourthArg] = message.content.split(" ");
+  const [, secondArg, thirdArg, fourthArg] = interaction.content.split(" ");
 
-  const channelId = message.channel.id;
+  const channelId = interaction.channel.id;
 
-  const userId = message.author.id;
+  const userId = interaction.member.id;
 
-  if (message.content.toLowerCase().includes("score")) {
+  if (interaction.content.toLowerCase().includes("score")) {
     wrongEmbed.setTitle("This command is deprecated, please use !leaderboard instead!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   switch (secondArg) {
     case "me": {
       const team = await MatchmakerTeamsCollection.findOne({
-        guildId: message.guild.id,
+        guildId: interaction.guild.id,
         $or: [{ captain: userId }, { memberIds: { $in: userId } }],
       });
 
       const teamScore = await MatchmakerTeamsScoreCollection.findOne({
         channelId,
         name: team.name,
-        guildId: message.guild.id,
+        guildId: interaction.guild.id,
       });
 
       if (!teamScore) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -57,7 +57,7 @@ const execute = async (message) => {
 
       correctEmbed.addField("MMR:", teamScore.mmr);
 
-      sendMessage(message, correctEmbed);
+      sendReply(interaction, correctEmbed);
       return;
     }
     case "channel": {
@@ -69,14 +69,14 @@ const execute = async (message) => {
 
       if (
         fourthArg != null &&
-        !message.guild.channels.cache
+        !interaction.guild.channels.cache
           .array()
           .map((e) => e.id)
           .includes(fourthArg)
       ) {
         wrongEmbed.setTitle(":x: That channel does not belong to this server!");
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -90,7 +90,7 @@ const execute = async (message) => {
       if (storedTeamsList.length === 0) {
         wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -110,14 +110,14 @@ const execute = async (message) => {
         correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedTeamsCount / 10)}`);
       });
 
-      sendMessage(message, correctEmbed);
+      sendReply(interaction, correctEmbed);
 
       return;
     }
     default: {
       wrongEmbed.setTitle("Invalid Parameters, please use !leaderboard <me/channel> <page>");
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
     }
   }
 };

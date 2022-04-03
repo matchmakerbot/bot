@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { sendMessage } = require("../../../utils/utils");
+const { sendReply } = require("../../../utils/utils");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
@@ -8,38 +8,38 @@ const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeam
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
-const execute = async (message, queueSize) => {
+const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-    captain: message.author.id,
-    guildId: message.guild.id,
+    captain: interaction.member.id,
+    guildId: interaction.guild.id,
   });
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, interaction.guild.id);
 
   if (queueArray.length === 2) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (queueArray.length === 0) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -50,11 +50,11 @@ const execute = async (message, queueSize) => {
 
     correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} left the queue! 0/2`);
 
-    sendMessage(message, correctEmbed);
+    sendReply(interaction, correctEmbed);
   } else {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
   }
 };
 

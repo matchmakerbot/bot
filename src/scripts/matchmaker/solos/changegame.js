@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -45,33 +45,33 @@ const changeGame = async (game, param) => {
   await Promise.all(promises);
 };
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg] = message.content.split(" ");
+  const [, secondArg, thirdArg] = interaction.content.split(" ");
 
-  const channelId = message.channel.id;
+  const channelId = interaction.channel.id;
 
-  if (message.content.toLowerCase().includes("revertgame")) {
+  if (interaction.content.toLowerCase().includes("revertgame")) {
     wrongEmbed.setTitle("This command is deprecated, please use !changegame instead!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!["revert", "cancel"].includes(thirdArg)) {
     wrongEmbed.setTitle(":x: Invalid Parameters! Please use !changegame revert/cancel gameId");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (!message.member.permissions.has("ADMINISTRATOR")) {
+  if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -80,7 +80,7 @@ const execute = async (message) => {
   if (!finishedGames.map((e) => e.gameId).includes(Number(secondArg))) {
     wrongEmbed.setTitle(":x: No game with that Id has been played");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -89,7 +89,7 @@ const execute = async (message) => {
   if (selectedGame.channelId !== channelId) {
     wrongEmbed.setTitle(":x: That game hasn't been played in this channel");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -103,7 +103,7 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === "revert" ? "reverted" : "cancelled"}!`);
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

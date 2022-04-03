@@ -2,28 +2,28 @@ const Discord = require("discord.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const execute = async (message, queueSize) => {
+const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const userId = message.author.id;
+  const userId = interaction.member.id;
 
-  const [, secondArg, gameIdInMessage] = message.content.split(" ");
+  const [, secondArg, gameIdInMessage] = interaction.content.split(" ");
 
   const cancelQueue = await redisInstance.getObject("cancelQueue");
 
   const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   if (secondArg === "force") {
-    if (!message.member.permissions.has("ADMINISTRATOR")) {
+    if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
       return;
     }
 
@@ -32,14 +32,14 @@ const execute = async (message, queueSize) => {
     if (!game) {
       wrongEmbed.setTitle(":x: Game not found!");
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
       return;
     }
 
-    if (game.channelId !== message.channel.id) {
+    if (game.channelId !== interaction.channel.id) {
       wrongEmbed.setTitle(":x: This is the wrong channel!");
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
       return;
     }
     correctEmbed.setTitle(`:white_check_mark: Game ${game.gameId} Cancelled!`);
@@ -48,7 +48,7 @@ const execute = async (message, queueSize) => {
       gameId: game.gameId,
     });
 
-    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...game.channelIds] };
+    const deletableChannel = { originalChannelId: interaction.channel.id, channelIds: [...game.channelIds] };
 
     deletableChannels.push(deletableChannel);
 
@@ -60,12 +60,12 @@ const execute = async (message, queueSize) => {
 
     await redisInstance.setObject("cancelQueue", cancelQueue);
 
-    sendMessage(message, correctEmbed);
+    sendReply(interaction, correctEmbed);
     return;
   }
 
   const selectedGame = await OngoingGamesSolosCollection.findOne({
-    channelId: message.channel.id,
+    channelId: interaction.channel.id,
     $or: [
       {
         team1: { $elemMatch: { userId } },
@@ -79,7 +79,7 @@ const execute = async (message, queueSize) => {
   if (!selectedGame) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -94,7 +94,7 @@ const execute = async (message, queueSize) => {
   if (cancelqueuearray.includes(userId)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -103,17 +103,17 @@ const execute = async (message, queueSize) => {
   await redisInstance.setObject("cancelQueue", cancelQueue);
 
   correctEmbed.setTitle(
-    `:exclamation: ${message.author.username} wants to cancel game ${gameId}. (${cancelqueuearray.length}/${
+    `:exclamation: ${interaction.member.user.username} wants to cancel game ${gameId}. (${cancelqueuearray.length}/${
       queueSize / 2 + 1
     })`
   );
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 
   if (cancelqueuearray.length === queueSize / 2 + 1) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...selectedGame.channelIds] };
+    const deletableChannel = { originalChannelId: interaction.channel.id, channelIds: [...selectedGame.channelIds] };
 
     deletableChannels.push(deletableChannel);
 
@@ -129,7 +129,7 @@ const execute = async (message, queueSize) => {
       gameId,
     });
 
-    sendMessage(message, newCorrectEmbed);
+    sendReply(interaction, newCorrectEmbed);
   }
 };
 

@@ -1,11 +1,10 @@
-option for mmr to apply to every channel on server
-allow others to change stats (wins losses mmr)
-rewrite everything in ts ?
-rework captains
+option for mmr to apply to every channel on server 
+allow others to change stats (wins losses mmr) 
+rewrite everything in ts ? 
+rework captains 
 add relations db
-change all cache lists to arrays or objects?
 add analytics
 
 v13 related
-work with reply and followUp in sendMessage()
-delete all message.content
+add required args to files that use message content
+add required params like required etc.. for args

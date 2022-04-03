@@ -6,31 +6,31 @@ const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeam
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, EMBED_COLOR_WARNING, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, EMBED_COLOR_WARNING, sendReply } = require("../../../utils/utils");
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  if (!message.mentions.members.first()) {
+  if (!interaction.mentions.members.first()) {
     wrongEmbed.setTitle(":x: Please mention the user");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-    captain: message.author.id,
-    guildId: message.guild.id,
+    captain: interaction.member.id,
+    guildId: interaction.guild.id,
   });
 
-  const pingedUser = message.mentions.members.first().user;
+  const pingedUser = interaction.mentions.members.first().user;
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -41,14 +41,14 @@ const execute = async (message) => {
   }
 
   if (invites[fetchedTeam.name].includes(pingedUser.id)) {
-    wrongEmbed.setTitle(`:x: ${pingedUser.username} was already invited`);
+    wrongEmbed.setTitle(`:x: ${pingedUser.user.username} was already invited`);
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   const userTeam = await MatchmakerTeamsCollection.findOne({
-    guildId: message.guild.id,
+    guildId: interaction.guild.id,
     $or: [
       {
         captain: pingedUser.id,
@@ -60,7 +60,7 @@ const execute = async (message) => {
   if (userTeam != null) {
     wrongEmbed.setTitle(":x: User already belongs to a team!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -69,7 +69,7 @@ const execute = async (message) => {
   await redisInstance.setObject("invites", invites);
 
   correctEmbed.setTitle(
-    `:white_check_mark: Invited ${message.mentions.members.first().user.username} to ${fetchedTeam.name}!`
+    `:white_check_mark: Invited ${interaction.mentions.members.first().user.user.username} to ${fetchedTeam.name}!`
   );
 
   const pmEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -89,10 +89,10 @@ const execute = async (message) => {
         `:x: Couldn't sent message to <@${pingedUser.id}>, please check if your DM'S aren't set to friends only.`
       );
 
-    sendMessage(message, errorEmbed);
+    sendReply(interaction, errorEmbed);
   }
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

@@ -21,54 +21,55 @@ const {
   getQueueArray,
   shuffle,
   gameCount,
-  sendMessage,
+  sendReply,
+  sendFollowUp,
 } = require("../../../utils/utils");
 
-const execute = async (message, queueSize) => {
+const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const channelId = message.channel.id;
+  const channelId = interaction.channel.id;
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-    guildId: message.guild.id,
-    captain: message.author.id,
+    guildId: interaction.guild.id,
+    captain: interaction.member.id,
   });
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, interaction.guild.id);
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: You're already in the queue");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (
     channelQueues
-      .filter((e) => e.guildId === message.guild.id)
+      .filter((e) => e.guildId === interaction.guild.id)
       .map((e) => e.players[0])
       .map((e) => e?.name)
       .includes(fetchedTeam?.name)
   ) {
     wrongEmbed.setTitle(":x: You're already queued in another channel!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   const ongoingGame = await OngoingGamesTeamsCollection.findOne({
-    guildId: message.guild.id,
+    guildId: interaction.guild.id,
     $or: [
       {
         "team1.name": fetchedTeam.name,
@@ -82,7 +83,7 @@ const execute = async (message, queueSize) => {
   if (ongoingGame != null) {
     wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -91,24 +92,24 @@ const execute = async (message, queueSize) => {
       `:x: You need at least ${queueSize / 2} members on your team to join the queue (including you)`
     );
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (message.content.split(" ").length !== queueSize / 2) {
+  if (interaction.content.split(" ").length !== queueSize / 2) {
     wrongEmbed.setTitle(`:x: Please tag ${queueSize / 2 - 1} teammates to play with you`);
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   let isInTeam = true;
 
-  message.mentions.members.forEach((e) => {
+  interaction.mentions.members.forEach((e) => {
     if (!fetchedTeam.memberIds.includes(e.user.id)) {
       wrongEmbed.setTitle(`:x: ${e.user.username} is not on your team!`);
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
       isInTeam = false;
     }
   });
@@ -119,7 +120,7 @@ const execute = async (message, queueSize) => {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
     mmr: null,
-    memberIds: [...message.mentions.members.map((e) => e.user.id)],
+    memberIds: [...interaction.mentions.members.map((e) => e.user.id)],
     date: new Date(),
   };
 
@@ -129,7 +130,7 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/2`);
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 
   if (queueArray.length === 2) {
     try {
@@ -142,7 +143,7 @@ const execute = async (message, queueSize) => {
         gameId: gameCount.value,
         date: new Date(),
         channelId,
-        guildId: message.guild.id,
+        guildId: interaction.guild.id,
         team1: queueArray[0],
         team2: queueArray[1],
         channelIds: [],
@@ -152,7 +153,7 @@ const execute = async (message, queueSize) => {
 
       const teamsInDb = await MatchmakerTeamsScoreCollection.find({
         $or: queueArray.map((e) => ({ name: e.name })),
-        guildId: message.guild.id,
+        guildId: interaction.guild.id,
       });
 
       queueArray.forEach((team) => {
@@ -160,8 +161,8 @@ const execute = async (message, queueSize) => {
         if (!teamsInDb.find((e) => e.name === team.name)) {
           const newUser = {
             name: team.name,
-            guildId: message.guild.id,
-            channelId: message.channel.id,
+            guildId: interaction.guild.id,
+            channelId: interaction.channel.id,
           };
 
           teamsInDb.push({ ...newUser });
@@ -183,12 +184,12 @@ const execute = async (message, queueSize) => {
         password: Math.floor(Math.random() * 99999) + 100,
       };
 
-      const channelData = await ChannelsCollection.findOne({ channelId: message.channel.id });
+      const channelData = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
 
       if (channelData.createVoiceChannels) {
         const permissionOverwritesTeam1 = [
           {
-            id: message.guild.id,
+            id: interaction.guild.id,
             deny: "CONNECT",
           },
         ];
@@ -200,22 +201,22 @@ const execute = async (message, queueSize) => {
           });
         });
 
-        await message.guild.channels
+        await interaction.guild.channels
           .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
             type: "voice",
-            parent: message.channel.parentID,
+            parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
           })
           .then((e) => {
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
-            sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
+            sendFollowUp(interaction, "Error creating voice channels, are you sure the bot has permissions to do so?")
           );
 
         const permissionOverwritesTeam2 = [
           {
-            id: message.guild.id,
+            id: interaction.guild.id,
             deny: "CONNECT",
           },
         ];
@@ -227,24 +228,24 @@ const execute = async (message, queueSize) => {
           });
         });
 
-        await message.guild.channels
+        await interaction.guild.channels
           .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
             type: "voice",
-            parent: message.channel.parentID,
+            parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
           })
           .then((e) => {
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
-            sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
+            sendFollowUp(interaction, "Error creating voice channels, are you sure the bot has permissions to do so?")
           );
       }
 
       if (channelData.createTextChannels) {
         const permissionOverwrites = [
           {
-            id: message.guild.id,
+            id: interaction.guild.id,
             deny: "VIEW_CHANNEL",
           },
         ];
@@ -262,22 +263,22 @@ const execute = async (message, queueSize) => {
           });
         });
 
-        await message.guild.channels
+        await interaction.guild.channels
           .create(`Matchmaker-Game-${gameCreatedObj.gameId}`, {
             type: "text",
-            parent: message.channel.parentID,
+            parent: interaction.channel.parentID,
             permissionOverwrites,
           })
           .then(async (e) => {
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
-            sendMessage(message, "Error creating text chat, are you sure the bot has permissions to do so?")
+            sendFollowUp(interaction, "Error creating text chat, are you sure the bot has permissions to do so?")
           );
       }
 
-      sendMessage(
-        message,
+      sendFollowUp(
+        interaction,
         `<@${gameCreatedObj.team1.captain}>, ${gameCreatedObj.team1.memberIds.reduce(
           (acc, curr) => `${acc}<@${curr}>, `,
           ""
@@ -305,7 +306,7 @@ const execute = async (message, queueSize) => {
           )}`
         );
 
-      sendMessage(message, discordEmbed1);
+      sendFollowUp(interaction, discordEmbed1);
 
       if (channelData.sendDirectMessage) {
         const JoinMatchEmbed = new Discord.MessageEmbed()
@@ -328,10 +329,10 @@ const execute = async (message, queueSize) => {
                       `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
                     );
 
-                  sendMessage(message, errorEmbed);
+                  sendFollowUp(interaction, errorEmbed);
                 }
               })
-              .catch(() => sendMessage(message, "Invalid User"));
+              .catch(() => sendFollowUp(interaction, "Invalid User"));
             promises.push(fetchedUser);
           }
         );
@@ -350,7 +351,7 @@ const execute = async (message, queueSize) => {
               `:x: Couldn't sent message to <@${gameCreatedObj.team1.captain}>, please check if your DM'S aren't set to friends only.`
             );
 
-          sendMessage(message, errorEmbed);
+          sendFollowUp(interaction, errorEmbed);
         });
       }
 
@@ -364,7 +365,7 @@ const execute = async (message, queueSize) => {
     } catch (e) {
       wrongEmbed.setTitle("Error creating teams, resetting queue.");
 
-      sendMessage(message, wrongEmbed);
+      sendFollowUp(interaction, wrongEmbed);
 
       logger.error(e);
     }

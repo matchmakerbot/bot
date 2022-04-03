@@ -4,14 +4,14 @@ const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGames
 
 const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const execute = async (message, queueSize) => {
-  const channelId = message.channel.id;
+const execute = async (interaction, queueSize) => {
+  const channelId = interaction.channel.id;
 
-  const [, mode, userId] = message.content.split(" ");
+  const [, mode, userId] = interaction.content.split(" ");
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -19,19 +19,19 @@ const execute = async (message, queueSize) => {
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, interaction.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (!message.member.permissions.has("ADMINISTRATOR")) {
+  if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -44,7 +44,7 @@ const execute = async (message, queueSize) => {
       if (fetchGamesByChannelId.length !== 0) {
         wrongEmbed.setTitle(":x: There are users in game!");
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -62,7 +62,7 @@ const execute = async (message, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Channel leaderboard reset!");
 
-      sendMessage(message, correctEmbed);
+      sendReply(interaction, correctEmbed);
       return;
     }
 
@@ -70,7 +70,7 @@ const execute = async (message, queueSize) => {
       if (!userId) {
         wrongEmbed.setTitle(":x: You need to specify an user id!");
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -89,7 +89,7 @@ const execute = async (message, queueSize) => {
       if (ongoingGame != null) {
         wrongEmbed.setTitle(":x: User is in the middle of a game!");
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -101,7 +101,7 @@ const execute = async (message, queueSize) => {
       if (!player) {
         wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!");
 
-        sendMessage(message, wrongEmbed);
+        sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -112,13 +112,13 @@ const execute = async (message, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Player's score reset!");
 
-      sendMessage(message, correctEmbed);
+      sendReply(interaction, correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-      sendMessage(message, wrongEmbed);
+      sendReply(interaction, wrongEmbed);
     }
   }
 };

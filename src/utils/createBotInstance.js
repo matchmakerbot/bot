@@ -25,7 +25,8 @@ const ChannelsCollection = require("./schemas/channelsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
-const { sendMessage, EMBED_COLOR_WARNING } = require("./utils");
+const { sendReply, EMBED_COLOR_WARNING } = require("./utils");
+const { args } = require("../scripts/queuetype.js");
 
 const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 
@@ -101,23 +102,31 @@ const createBotInstance = async () => {
 
   try {
     const commands = Array.from(client.commands, (e) => {
-      return { name: e[0], description: e[1].description, helpDescription: e[1].helpDescription };
+      return { name: e[0], ...e[1] };
     })
       .filter((e, i, arr) => arr.map((ee) => ee.name).indexOf(e.name) === i)
-      .map((e) =>
-        new SlashCommandBuilder()
+      .map((e) => {
+        const builder = new SlashCommandBuilder()
           .setName(typeof e.name === "string" ? e.name : e.name[0])
-          .setDescription(e.description)
-          .toJSON()
-      );
+          .setDescription(e.description);
+        if (e.args) {
+          args.forEach((arg) => {
+            builder.addStringOption((option) => {
+              return option.setName(arg.name).setRequired(true).setDescription(arg.description);
+            });
+          });
+        }
+        builder.toJSON();
+        return builder;
+      });
 
     const rest = new REST({ version: "9" }).setToken(process.env.TOKEN);
 
-    rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
 
     logger.info("Successfully registered application commands.");
   } catch (e) {
-    logger.error("Error creating event listener Client.on -> Message");
+    logger.error("Error registering application commands.");
 
     logger.error(e);
   }
@@ -137,7 +146,7 @@ const createBotInstance = async () => {
           "The prefix for this bot will change from ! to / starting 30th of April, because of discord's new message content policy, which does not allow bots to track message content anymore without discord permission"
         );
 
-        sendMessage(interaction, embed);
+        sendReply(interaction, embed);
 
         redisChannels.push(interaction.channel.id);
 
@@ -154,7 +163,7 @@ const createBotInstance = async () => {
               ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !help"
             );
 
-            sendMessage(interaction, embed);
+            sendReply(interaction, embed);
             return;
           }
           queueTypeObject[interaction.channel.id] = guildsInfo;
@@ -177,9 +186,9 @@ const createBotInstance = async () => {
       }
       client.commands.get(commandName).execute(interaction);
     });
-    logger.info("Successfully created socket Client.on -> Message");
+    logger.info("Successfully created socket Client.on -> interactionCreate");
   } catch (e) {
-    logger.error("Error creating event listener Client.on -> Message");
+    logger.error("Error creating event listener Client.on -> interactionCreate");
 
     logger.error(e);
   }

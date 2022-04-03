@@ -4,49 +4,49 @@ const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeam
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const execute = async (message, queueSize) => {
+const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
-    captain: message.author.id,
-    guildId: message.guild.id,
+    captain: interaction.member.id,
+    guildId: interaction.guild.id,
   });
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (!message.mentions.members.first()) {
+  if (!interaction.mentions.members.first()) {
     wrongEmbed.setTitle(":x: Please tag the user");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  const pingedUser = message.mentions.members.first().user.id;
+  const pingedUser = interaction.mentions.members.first().user.id;
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, interaction.guild.id);
 
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: Please leave the queue first!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   const ongoingGames = await OngoingGamesMatchmakerTeamsCollection.findOne({
-    guildId: message.guild.id,
+    guildId: interaction.guild.id,
     $or: [
       {
         "team1.name": fetchedTeam.name,
@@ -60,26 +60,26 @@ const execute = async (message, queueSize) => {
   if (ongoingGames != null) {
     wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!fetchedTeam.memberIds.includes(pingedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  fetchedTeam.memberIds.push(message.author.id);
+  fetchedTeam.memberIds.push(interaction.member.id);
 
   fetchedTeam.memberIds.splice(fetchedTeam.memberIds.indexOf(pingedUser), 1);
 
-  correctEmbed.setTitle(`:white_check_mark: Given ownership to ${message.mentions.members.first().user.username}`);
+  correctEmbed.setTitle(`:white_check_mark: Given ownership to ${interaction.mentions.members.first().user.username}`);
 
   await MatchmakerTeamsCollection.updateOne(
     {
-      guildId: message.guild.id,
+      guildId: interaction.guild.id,
       name: fetchedTeam.name,
     },
     {
@@ -88,7 +88,7 @@ const execute = async (message, queueSize) => {
     }
   );
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

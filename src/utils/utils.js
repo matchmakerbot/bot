@@ -2,10 +2,26 @@
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
-const sendMessage = async (interaction, messageType) => {
+const handleMesssageError = async (memberId) => {
+  await client.users
+    .fetch(memberId)
+    .then(async (fetchedUser) => {
+      await fetchedUser
+        .send("Unable to send messages in channel, bot likely does not have permissions")
+        .catch(() => {});
+    })
+    .catch(() => {});
+};
+
+const sendReply = async (interaction, messageType) => {
   await interaction.reply(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
-    const user = await client.users.fetch(interaction.author.id).catch(() => {});
-    await user.send("Unable to send messages in channel, bot likely does not have permissions").catch(() => {});
+    await handleMesssageError(interaction.member.id);
+  });
+};
+
+const sendFollowUp = async (interaction, messageType) => {
+  await interaction.followUp(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
+    await handleMesssageError(interaction.member.id);
   });
 };
 
@@ -143,5 +159,6 @@ module.exports = {
   messageArgs,
   shuffle,
   balanceTeamsByMmr,
-  sendMessage,
+  sendReply,
+  sendFollowUp,
 };

@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { sendMessage } = require("../utils/utils");
+const { sendReply } = require("../utils/utils");
 
 const discordEmbed = new Discord.MessageEmbed()
 
@@ -15,7 +15,7 @@ const discordEmbed = new Discord.MessageEmbed()
 module.exports = {
   name: "examplesolos",
   description: "Gives you an example of how to use the solos version for the bot.",
-  execute(message) {
-    sendMessage(message, discordEmbed);
+  execute(interaction) {
+    sendReply(interaction, discordEmbed);
   },
 };

@@ -1,13 +1,13 @@
 const Discord = require("discord.js");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema.js");
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
-  const [, skip] = message.content.split(" ");
+  const [, skip] = interaction.content.split(" ");
 
   let skipCount = skip;
 
@@ -17,18 +17,18 @@ const execute = async (message) => {
     skipCount = 1;
   }
 
-  const ongoingGames = await OngoingGamesSolosCollection.find({ channelId: message.channel.id })
+  const ongoingGames = await OngoingGamesSolosCollection.find({ channelId: interaction.channel.id })
     .skip(5 * (skipCount - 1))
     .limit(5);
 
   if (ongoingGames.length === 0) {
     wrongEmbed.setTitle(`:x: There are no ongoing games${skipCount !== 1 ? " on this page" : ""}!`);
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  const gamesCount = await OngoingGamesSolosCollection.countDocuments({ channelId: message.channel.id });
+  const gamesCount = await OngoingGamesSolosCollection.countDocuments({ channelId: interaction.channel.id });
 
   ongoingGames.forEach((game) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
@@ -46,7 +46,7 @@ const execute = async (message) => {
 
   correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(gamesCount / 5)}`);
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

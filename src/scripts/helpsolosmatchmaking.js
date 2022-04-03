@@ -6,13 +6,13 @@ const Discord = require("discord.js");
 
 const fs = require("fs");
 
-const { sendMessage } = require("../utils/utils");
+const { sendReply } = require("../utils/utils");
 
 const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/solos")
   .filter((file) => file.endsWith(".js"));
 
-const execute = (message) => {
+const execute = (interaction) => {
   const discordEmbed = new Discord.MessageEmbed()
 
     .setAuthor("MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
@@ -27,7 +27,7 @@ const execute = (message) => {
       );
     }
   });
-  sendMessage(message, discordEmbed);
+  sendReply(interaction, discordEmbed);
 };
 
 module.exports = {

@@ -1,15 +1,15 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, skip] = message.content.split(" ");
+  const [, skip] = interaction.content.split(" ");
 
   let skipCount = skip;
 
@@ -17,25 +17,25 @@ const execute = async (message) => {
     skipCount = 1;
   }
 
-  const ongoingGames = await OngoingGamesTeamsCollection.find({ channelId: message.channel.id })
+  const ongoingGames = await OngoingGamesTeamsCollection.find({ channelId: interaction.channel.id })
     .skip(5 * (skipCount - 1))
     .limit(5);
 
   if (ongoingGames.length === 0) {
     wrongEmbed.setTitle(":x: No games are currently having place!");
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (ongoingGames.length === 0) {
     wrongEmbed.setTitle(`:x: There are no ongoing games${skipCount !== 1 ? " on this page" : ""}!`);
 
-    sendMessage(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
-  const gamesCount = await OngoingGamesTeamsCollection.countDocuments({ channelId: message.channel.id });
+  const gamesCount = await OngoingGamesTeamsCollection.countDocuments({ channelId: interaction.channel.id });
 
   ongoingGames.forEach((game) => {
     correctEmbed.addField("Game ID:", ` ${game.gameId}`);
@@ -53,7 +53,7 @@ const execute = async (message) => {
 
   correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(gamesCount / 5)}`);
 
-  sendMessage(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 };
 
 module.exports = {
