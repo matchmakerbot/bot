@@ -93,6 +93,6 @@ const execute = async (interaction, queueSize) => {
 
 module.exports = {
   name: "giveownership",
-  description: "Gives team ownership to a specific user. Usage: !giveownership @dany or !giveownership",
+  description: "Gives team ownership to a specific user. Usage: /giveownership @dany",
   execute,
 };

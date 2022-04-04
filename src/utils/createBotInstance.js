@@ -112,7 +112,7 @@ const createBotInstance = async () => {
         if (e.args) {
           args.forEach((arg) => {
             builder.addStringOption((option) => {
-              return option.setName(arg.name).setRequired(true).setDescription(arg.description);
+              return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
             });
           });
         }
@@ -160,7 +160,7 @@ const createBotInstance = async () => {
           if (!guildsInfo) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !help"
+              ":x:You need to set the Queue Type for this channel! For example /queueType 6 solos for 3v3 solo games, or /queueType 4 teams for 2v2 teams games. For list of commands do /help"
             );
 
             sendReply(interaction, embed);

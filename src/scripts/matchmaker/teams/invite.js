@@ -97,6 +97,6 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "invite",
-  description: "Invites an user, usage: !invite @dany",
+  description: "Invites an user, usage: /invite @dany",
   execute,
 };

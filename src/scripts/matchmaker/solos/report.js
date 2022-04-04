@@ -8,7 +8,7 @@ const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmake
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
-const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils.js");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils.js");
 
 const assignScoreUsers = async (game) => {
   const promises = [];
@@ -36,7 +36,8 @@ const assignScoreUsers = async (game) => {
 };
 
 const execute = async (interaction) => {
-  const [, secondArg] = interaction.content.split(" ");
+  const [secondArg] = getContent(interaction);
+
   const elo = new EloRank(16);
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -67,7 +68,7 @@ const execute = async (interaction) => {
   }
 
   if (!["win", "lose"].includes(secondArg)) {
-    wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
+    wrongEmbed.setTitle(":x: Invalid parameter, please use /report win or /report lose");
 
     sendReply(interaction, wrongEmbed);
     return;
@@ -140,7 +141,7 @@ const execute = async (interaction) => {
 module.exports = {
   name: "report",
   helpDescription:
-    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: !report win OR !report lose",
+    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: /report win OR /report lose",
   description: "Reports the winner/loser of a game",
   execute,
 };

@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply, getContent } = require("../../../utils/utils");
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
@@ -11,7 +11,7 @@ const { redisInstance } = require("../../../utils/createRedisInstance");
 const execute = async (interaction, queueSize) => {
   const channelId = interaction.channel.id;
 
-  const [, mode] = interaction.content.split(" ");
+  const [mode] = getContent(interaction);
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -67,7 +67,7 @@ const execute = async (interaction, queueSize) => {
     }
 
     case "team": {
-      let teamName = interaction.content.split(" ");
+      let teamName = getContent(interaction);
       teamName.splice(0, 2);
       teamName = teamName.join(" ");
 
@@ -129,6 +129,6 @@ module.exports = {
   name: "reset",
   description: "Resets player or channel leaderboard",
   helpDescription:
-    "Resets the score of an individual team (!reset team teamName) or the whole channel where this command is inserted (!reset channel)",
+    "Resets the score of an individual team (/reset team teamName) or the whole channel where this command is inserted (/reset channel)",
   execute,
 };

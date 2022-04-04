@@ -2,6 +2,10 @@
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
+const getContent = (interaction) => {
+  return interaction.options._hoistedOptions.map((e) => e.value);
+};
+
 const handleMesssageError = async (memberId) => {
   await client.users
     .fetch(memberId)
@@ -43,8 +47,8 @@ const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
   return user;
 };
 
-const messageEndswith = (message) => {
-  const split = message.content.split(" ");
+const messageEndswith = (interaction) => {
+  const split = getContent(interaction);
   return split[split.length - 1];
 };
 
@@ -161,4 +165,5 @@ module.exports = {
   balanceTeamsByMmr,
   sendReply,
   sendFollowUp,
+  getContent,
 };

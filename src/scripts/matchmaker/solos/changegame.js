@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -50,19 +50,12 @@ const execute = async (interaction) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg] = interaction.content.split(" ");
+  const [secondArg, thirdArg] = getContent(interaction);
 
   const channelId = interaction.channel.id;
 
-  if (interaction.content.toLowerCase().includes("revertgame")) {
-    wrongEmbed.setTitle("This command is deprecated, please use !changegame instead!");
-
-    sendReply(interaction, wrongEmbed);
-    return;
-  }
-
   if (!["revert", "cancel"].includes(thirdArg)) {
-    wrongEmbed.setTitle(":x: Invalid Parameters! Please use !changegame revert/cancel gameId");
+    wrongEmbed.setTitle(":x: Invalid Parameters! Please use /changegame revert/cancel gameId");
 
     sendReply(interaction, wrongEmbed);
     return;
@@ -107,9 +100,9 @@ const execute = async (interaction) => {
 };
 
 module.exports = {
-  name: ["changegame", "revertgame"],
+  name: "changegame",
   description: "Cancels/reverts score of a finished game",
   helpdescription:
-    "Cancels/reverts score of a finished game. Usage: !changegame (gameid) cancel, this example will cancel the game, as it never happen. !changegame (gameid) revert, this example will revert the scores",
+    "Cancels/reverts score of a finished game. Usage: /changegame (gameid) cancel, this example will cancel the game, as it never happen. /changegame (gameid) revert, this example will revert the scores",
   execute,
 };

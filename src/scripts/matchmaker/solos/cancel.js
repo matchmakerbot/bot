@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -13,7 +13,7 @@ const execute = async (interaction, queueSize) => {
 
   const userId = interaction.member.id;
 
-  const [, secondArg, gameIdInMessage] = interaction.content.split(" ");
+  const [secondArg, gameIdInMessage] = getContent(interaction);
 
   const cancelQueue = await redisInstance.getObject("cancelQueue");
 
@@ -135,6 +135,6 @@ const execute = async (interaction, queueSize) => {
 
 module.exports = {
   name: "cancel",
-  description: "Cancel the game. Administrators can also do !cancel force gameId to force a game cancellation",
+  description: "Cancel the game. Administrators can also do /cancel force gameId to force a game cancellation",
   execute,
 };

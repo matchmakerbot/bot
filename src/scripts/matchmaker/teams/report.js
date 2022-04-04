@@ -7,7 +7,13 @@ const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmake
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageEndswith, sendReply } = require("../../../utils/utils");
+const {
+  EMBED_COLOR_CHECK,
+  EMBED_COLOR_ERROR,
+  messageEndswith,
+  sendReply,
+  getContent,
+} = require("../../../utils/utils");
 
 const assignScoreTeams = async (game) => {
   const promises = [];
@@ -35,7 +41,7 @@ const assignScoreTeams = async (game) => {
 };
 
 const execute = async (interaction) => {
-  const [, secondArg] = interaction.content.split(" ");
+  const [secondArg] = getContent(interaction);
 
   const elo = new EloRank(16);
 
@@ -149,7 +155,7 @@ const execute = async (interaction) => {
 module.exports = {
   name: "report",
   helpDescription:
-    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: !report win OR !report lose",
+    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: /report win OR /report lose",
   description: "Reports the winner/loser of a game",
   execute,
 };

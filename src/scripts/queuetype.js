@@ -107,10 +107,10 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "queuetype",
-  description: "Set the queue type for a channel, usage: !queuetype <queueSize> <queueMode>",
+  description: "Set the queue type for a channel, usage: /queuetype <queueSize> <queueMode>",
   args: [
-    { name: "queue_size", description: "queue Mode, from 2 to 12" },
-    { name: "queue_mode", description: "queue Size, solos or teams" },
+    { name: "queue_size", description: "queue size, from 2 to 12", required: true },
+    { name: "queue_mode", description: "queue mode, solos or teams", required: true },
   ],
   execute,
 };

@@ -102,6 +102,6 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "disband",
-  description: "Deletes your team, admins can also delete a team by typing !disband teamname",
+  description: "Deletes your team, admins can also delete a team by typing /disband teamname",
   execute,
 };

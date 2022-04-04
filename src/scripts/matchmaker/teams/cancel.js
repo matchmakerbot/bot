@@ -1,12 +1,10 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent, sendReply } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
-
-const { sendReply } = require("../../../utils/utils");
 
 const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -15,7 +13,7 @@ const execute = async (interaction) => {
 
   const userId = interaction.member.id;
 
-  const [, secondArg, gameIdInMessage] = interaction.content.split(" ");
+  const [secondArg, gameIdInMessage] = getContent(interaction);
 
   const cancelQueue = await redisInstance.getObject("cancelQueue");
 
@@ -141,6 +139,6 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "cancel",
-  description: "Cancel the game. Administrators can also do !cancel force gameId to force a game cancellation",
+  description: "Cancel the game. Administrators can also do /cancel force gameId to force a game cancellation",
   execute,
 };

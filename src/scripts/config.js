@@ -6,10 +6,10 @@ const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F");
 
 const correctEmbed = new Discord.MessageEmbed().setColor("#77B255");
 
-const { sendReply } = require("../utils/utils");
+const { sendReply, getContent } = require("../utils/utils");
 
 const execute = async (interaction) => {
-  const [, option, value] = interaction.content.split(" ");
+  const [option, value] = getContent(interaction);
 
   const options = ["createVoiceChannels", "createTextChannels", "sendDirectMessage"];
 
@@ -17,7 +17,7 @@ const execute = async (interaction) => {
 
   if (!channelInfo) {
     wrongEmbed.setTitle(
-      ":x: This channel is not a matchmaker channel, please set the queueMode and queueSize first, to do this check !help"
+      ":x: This channel is not a matchmaker channel, please set the queueMode and queueSize first, to do this check /help"
     );
 
     return sendReply(interaction, wrongEmbed);
@@ -57,6 +57,6 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "config",
-  description: "Configure the matchmaker channel, usage: !config createVoiceChannels on",
+  description: "Configure the matchmaker channel, usage: /config createVoiceChannels on",
   execute,
 };

@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
@@ -18,7 +18,7 @@ const execute = async (interaction) => {
     guildId: interaction.guild.id,
   });
 
-  const [, secondArg] = interaction.content.split(" ");
+  const [secondArg] = getContent(interaction);
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
@@ -74,6 +74,6 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "kickplayer",
-  description: "Kicks a player from your team, usage:!kickplayer @dany or !kickplayer discordid",
+  description: "Kicks a player from your team, usage: /kickplayer @dany or /kickplayer discordid",
   execute,
 };

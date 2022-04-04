@@ -2,14 +2,14 @@ const Discord = require("discord.js");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const { EMBED_COLOR_CHECK, messageArgs, EMBED_COLOR_ERROR, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, messageArgs, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg] = interaction.content.split(" ");
+  const [secondArg] = getContent(interaction);
 
   const teamName = messageArgs(interaction);
 
@@ -40,6 +40,6 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "whois",
-  description: "Check for team members, usage: !whois Maniacs, or !whois to check your team",
+  description: "Check for team members, usage: /whois Maniacs, or /whois to check your team",
   execute,
 };

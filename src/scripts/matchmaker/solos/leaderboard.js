@@ -2,23 +2,16 @@ const Discord = require("discord.js");
 
 const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
-const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils");
 
 const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg, fourthArg] = interaction.content.split(" ");
+  const [secondArg, thirdArg, fourthArg] = getContent(interaction);
 
   const channelId = interaction.channel.id;
-
-  if (interaction.content.toLowerCase().includes("score")) {
-    wrongEmbed.setTitle("This command is deprecated, please use !leaderboard channel or !leaderboard me instead!");
-
-    sendReply(interaction, wrongEmbed);
-    return;
-  }
 
   const userId = interaction.member.id;
   switch (secondArg) {
@@ -103,7 +96,7 @@ const execute = async (interaction) => {
     }
     default: {
       wrongEmbed.setTitle(
-        "Invalid Parameters, please use !leaderboard <me/channel> <page>(optional) <channelId>(optional)"
+        "Invalid Parameters, please use /leaderboard <me/channel> <page>(optional) <channelId>(optional)"
       );
 
       sendReply(interaction, wrongEmbed);
@@ -112,9 +105,9 @@ const execute = async (interaction) => {
 };
 
 module.exports = {
-  name: ["leaderboard", "score"],
+  name: "leaderboard",
   description: "Checks your current score",
   helpDescription:
-    "Checks your current score. Usage: !leaderboard channel <page> (default is 1) to check score in the channel youre in, !leaderboard channel <page> <channelid> to check the score of another channel, or !leaderboard me to check your current score",
+    "Checks your current score. Usage: /leaderboard channel <page> (default is 1) to check score in the channel youre in, /leaderboard channel <page> <channelid> to check the score of another channel, or /leaderboard me to check your current score",
   execute,
 };

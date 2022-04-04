@@ -15,14 +15,14 @@ const commandFilesMatchmakerSolos = fs
 const execute = (interaction) => {
   const discordEmbed = new Discord.MessageEmbed()
 
-    .setAuthor("MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
+    .setAuthor({ name: "Matchmaker Bot Help Page", iconURL: "https://i.ibb.co/4drZsvN/Screenshot-4.png" })
     .setColor("#F8534F")
-    .setTitle("For teams matchmaking help, please type !helpteamsmatchmaking");
+    .setTitle("For teams matchmaking help, please type /helpteamsmatchmaking");
   commandFilesMatchmakerSolos.forEach((file) => {
     const command = require(`./matchmaker/solos/${file}`);
     if (command.name != null) {
       discordEmbed.addField(
-        `!${command.name}`,
+        `/${command.name}`,
         command.helpDescription == null ? command.description : command.helpDescription
       );
     }

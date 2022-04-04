@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
@@ -11,18 +11,11 @@ const execute = async (interaction) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg, fourthArg] = interaction.content.split(" ");
+  const [secondArg, thirdArg, fourthArg] = getContent(interaction);
 
   const channelId = interaction.channel.id;
 
   const userId = interaction.member.id;
-
-  if (interaction.content.toLowerCase().includes("score")) {
-    wrongEmbed.setTitle("This command is deprecated, please use !leaderboard instead!");
-
-    sendReply(interaction, wrongEmbed);
-    return;
-  }
 
   switch (secondArg) {
     case "me": {
@@ -123,9 +116,9 @@ const execute = async (interaction) => {
 };
 
 module.exports = {
-  name: ["leaderboard", "score"],
+  name: "leaderboard",
   description: "Checks your current score",
   helpDescription:
-    "Checks your current score. Usage: !leaderboard channel <page> (default is 1) to check score in the channel youre in, !leaderboard channel <page> <channelid> to check the score of another channel, or !leaderboard me to check your current score",
+    "Checks your current score. Usage: /leaderboard channel <page> (default is 1) to check score in the channel youre in, /leaderboard channel <page> <channelid> to check the score of another channel, or /leaderboard me to check your current score",
   execute,
 };

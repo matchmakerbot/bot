@@ -23,6 +23,7 @@ const {
   gameCount,
   sendReply,
   sendFollowUp,
+  getContent,
 } = require("../../../utils/utils");
 
 const execute = async (interaction, queueSize) => {
@@ -96,7 +97,7 @@ const execute = async (interaction, queueSize) => {
     return;
   }
 
-  if (interaction.content.split(" ").length !== queueSize / 2) {
+  if (getContent(interaction).length !== queueSize / 2) {
     wrongEmbed.setTitle(`:x: Please tag ${queueSize / 2 - 1} teammates to play with you`);
 
     sendReply(interaction, wrongEmbed);
@@ -379,6 +380,6 @@ module.exports = {
   name: "q",
   description: "Enter the queue (removes player after 45 minutes if no game has been made)",
   helpDescription:
-    "Enter the queue. To do this do !q and tag your other teammates(depending on the qeueSize) example: !q @Dany @Johny @Tony @David (removes team after 45 minutes if no game has been made)",
+    "Enter the queue. To do this do /q and tag your other teammates(depending on the qeueSize) example: /q @Dany @Johny @Tony @David (removes team after 45 minutes if no game has been made)",
   execute,
 };
