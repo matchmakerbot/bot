@@ -21,7 +21,7 @@ const execute = async (interaction, queueSize) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -32,14 +32,14 @@ const execute = async (interaction, queueSize) => {
   if (queueArray.length === 2) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (queueArray.length === 0) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -50,11 +50,11 @@ const execute = async (interaction, queueSize) => {
 
     correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} left the queue! 0/2`);
 
-    sendReply(interaction, correctEmbed);
+    await sendReply(interaction, correctEmbed);
   } else {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
   }
 };
 

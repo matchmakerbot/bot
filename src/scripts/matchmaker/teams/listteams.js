@@ -26,7 +26,8 @@ const execute = async (interaction) => {
   if (teams.length === 0) {
     wrongEmbed.setTitle(":x: There are no teams on this page!");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+    return;
   }
 
   const teamsCount = await MatchmakerTeamsCollection.countDocuments({ guildId: interaction.guild.id });
@@ -37,7 +38,7 @@ const execute = async (interaction) => {
     correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(teamsCount / 10)}`);
   });
 
-  return sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

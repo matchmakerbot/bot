@@ -18,14 +18,14 @@ const execute = async (interaction, queueSize) => {
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (index === -1) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -37,7 +37,7 @@ const execute = async (interaction, queueSize) => {
     `:white_check_mark: ${interaction.member.user.username} left the queue! ${queueArray.length}/${queueSize}`
   );
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

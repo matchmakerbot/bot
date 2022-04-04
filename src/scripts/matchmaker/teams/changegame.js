@@ -60,14 +60,14 @@ const execute = async (interaction) => {
   if (!["revert", "cancel"].includes(thirdArg)) {
     wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -76,7 +76,7 @@ const execute = async (interaction) => {
   if (!finishedGames.map((e) => e.gameId).includes(Number(secondArg))) {
     wrongEmbed.setTitle(":x: No game with that Id has been played");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -85,7 +85,7 @@ const execute = async (interaction) => {
   if (selectedGame.channelId !== channelId) {
     wrongEmbed.setTitle(":x: That game hasn't been played in this channel");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -99,7 +99,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: Game ${thirdArg === "revert" ? "reverted" : "cancelled"}!`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

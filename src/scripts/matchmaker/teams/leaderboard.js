@@ -33,7 +33,7 @@ const execute = async (interaction) => {
       if (!teamScore) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -50,7 +50,7 @@ const execute = async (interaction) => {
 
       correctEmbed.addField("MMR:", teamScore.mmr);
 
-      sendReply(interaction, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       return;
     }
     case "channel": {
@@ -69,7 +69,7 @@ const execute = async (interaction) => {
       ) {
         wrongEmbed.setTitle(":x: That channel does not belong to this server!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -83,7 +83,7 @@ const execute = async (interaction) => {
       if (storedTeamsList.length === 0) {
         wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -103,14 +103,14 @@ const execute = async (interaction) => {
         correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedTeamsCount / 10)}`);
       });
 
-      sendReply(interaction, correctEmbed);
+      await sendReply(interaction, correctEmbed);
 
       return;
     }
     default: {
       wrongEmbed.setTitle("Invalid Parameters, please use !leaderboard <me/channel> <page>");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
     }
   }
 };

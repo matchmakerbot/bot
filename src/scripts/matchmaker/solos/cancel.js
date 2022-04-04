@@ -23,7 +23,7 @@ const execute = async (interaction, queueSize) => {
     if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
@@ -32,14 +32,14 @@ const execute = async (interaction, queueSize) => {
     if (!game) {
       wrongEmbed.setTitle(":x: Game not found!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
     if (game.channelId !== interaction.channel.id) {
       wrongEmbed.setTitle(":x: This is the wrong channel!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
     correctEmbed.setTitle(`:white_check_mark: Game ${game.gameId} Cancelled!`);
@@ -60,7 +60,7 @@ const execute = async (interaction, queueSize) => {
 
     await redisInstance.setObject("cancelQueue", cancelQueue);
 
-    sendReply(interaction, correctEmbed);
+    await sendReply(interaction, correctEmbed);
     return;
   }
 
@@ -79,7 +79,7 @@ const execute = async (interaction, queueSize) => {
   if (!selectedGame) {
     wrongEmbed.setTitle(":x: You aren't in a game!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -94,7 +94,7 @@ const execute = async (interaction, queueSize) => {
   if (cancelqueuearray.includes(userId)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -108,7 +108,7 @@ const execute = async (interaction, queueSize) => {
     })`
   );
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   if (cancelqueuearray.length === queueSize / 2 + 1) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -129,7 +129,7 @@ const execute = async (interaction, queueSize) => {
       gameId,
     });
 
-    sendReply(interaction, newCorrectEmbed);
+    await sendReply(interaction, newCorrectEmbed);
   }
 };
 

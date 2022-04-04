@@ -11,7 +11,7 @@ const { sendReply } = require("../utils/utils");
 const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/teams")
   .filter((file) => file.endsWith(".js"));
-const execute = (message) => {
+const execute = async (message) => {
   const discordEmbed = new Discord.MessageEmbed()
 
     .setAuthor({ name: "Matchmaker Bot Help Page", iconURL: "https://i.ibb.co/4drZsvN/Screenshot-4.png" })
@@ -30,7 +30,7 @@ const execute = (message) => {
     "Info for teams:",
     " ONLY the captain has acess to some commands like /q, /leave, /cancel etc..."
   );
-  sendReply(message, discordEmbed);
+  await sendReply(message, discordEmbed);
 };
 module.exports = {
   name: "helpteamsmatchmaking",

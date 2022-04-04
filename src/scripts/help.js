@@ -26,7 +26,7 @@ const discordEmbed = new Discord.MessageEmbed()
 module.exports = {
   name: "help",
   description: "Command to check the bot commands",
-  execute(interaction) {
-    sendReply(interaction, discordEmbed);
+  async execute(interaction) {
+    await sendReply(interaction, discordEmbed);
   },
 };

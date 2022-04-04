@@ -4,7 +4,7 @@ const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeam
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply, getContent } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -21,18 +21,18 @@ const execute = async (interaction, queueSize) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!interaction.mentions.members.first()) {
     wrongEmbed.setTitle(":x: Please tag the user");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  const pingedUser = interaction.mentions.members.first().user.id;
+  const pingedUser = getContent(interaction)[0];
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
@@ -41,7 +41,7 @@ const execute = async (interaction, queueSize) => {
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: Please leave the queue first!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -60,14 +60,14 @@ const execute = async (interaction, queueSize) => {
   if (ongoingGames != null) {
     wrongEmbed.setTitle(":x: You are in the middle of a game!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!fetchedTeam.memberIds.includes(pingedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -88,7 +88,7 @@ const execute = async (interaction, queueSize) => {
     }
   );
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

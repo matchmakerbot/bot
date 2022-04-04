@@ -20,25 +20,34 @@ const execute = async (interaction) => {
       ":x: This channel is not a matchmaker channel, please set the queueMode and queueSize first, to do this check /help"
     );
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (!options.includes(option)) {
     wrongEmbed.setTitle(
       ":x: Invalid option. Available options are: createVoiceChannels, createTextChannels, sendDirectMessage"
     );
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (!["on", "off"].includes(value)) {
     wrongEmbed.setTitle(":x: Invalid value, please use either on or off");
-    return sendReply(interaction, wrongEmbed);
+
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   await ChannelsCollection.updateOne(
@@ -52,7 +61,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${option} set to ${value}`);
 
-  return sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

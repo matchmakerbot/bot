@@ -12,7 +12,7 @@ const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/solos")
   .filter((file) => file.endsWith(".js"));
 
-const execute = (interaction) => {
+const execute = async (interaction) => {
   const discordEmbed = new Discord.MessageEmbed()
 
     .setAuthor({ name: "Matchmaker Bot Help Page", iconURL: "https://i.ibb.co/4drZsvN/Screenshot-4.png" })
@@ -27,7 +27,7 @@ const execute = (interaction) => {
       );
     }
   });
-  sendReply(interaction, discordEmbed);
+  await sendReply(interaction, discordEmbed);
 };
 
 module.exports = {

@@ -15,7 +15,7 @@ const discordEmbed = new Discord.MessageEmbed()
 module.exports = {
   name: "examplesolos",
   description: "Gives you an example of how to use the solos version for the bot.",
-  execute(interaction) {
-    sendReply(interaction, discordEmbed);
+  async execute(interaction) {
+    await sendReply(interaction, discordEmbed);
   },
 };

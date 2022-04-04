@@ -14,14 +14,14 @@ const execute = async (interaction) => {
   if (teamName.length > 31) {
     wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (teamName.length < 2) {
     wrongEmbed.setTitle(":x: Name too short! Minimum characters allowed are 3.");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -30,7 +30,7 @@ const execute = async (interaction) => {
   if (teamByName != null) {
     wrongEmbed.setTitle(":x: Name already in use");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -42,7 +42,7 @@ const execute = async (interaction) => {
   if (teamByUser != null) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -59,7 +59,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${teamsInsert.name} Created!`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

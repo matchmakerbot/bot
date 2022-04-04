@@ -22,7 +22,7 @@ const execute = async (interaction) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(`:x: ${!teamName ? "You do not belong to a team!" : "This team doesn't exist!"}`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -33,7 +33,7 @@ const execute = async (interaction) => {
     `<@${fetchedTeam.captain}> (Captain), ${fetchedTeam.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
   );
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

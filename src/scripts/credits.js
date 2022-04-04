@@ -12,7 +12,7 @@ const execute = async (interaction) => {
     .addField("https://www.twitch.tv/tweenotv", "Feel free to follow me on twitch, i usually stream some random stuff.")
     .addField("https://tinyurl.com/y6zr773c", "Invite the bot to your server here ^^")
     .addField("https://github.com/iTweeno/MatchMaker-Bot/issues/new/choose", "To request bug fixes and new features");
-  sendReply(interaction, embed);
+  await sendReply(interaction, embed);
 };
 
 module.exports = {

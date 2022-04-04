@@ -23,7 +23,7 @@ const execute = async (interaction) => {
     if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
@@ -34,14 +34,14 @@ const execute = async (interaction) => {
     if (!fetchedGame) {
       wrongEmbed.setTitle(":x: Game not found!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
     if (fetchedGame.channelId !== interaction.channel.id) {
       wrongEmbed.setTitle(":x: This is the wrong channel!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
@@ -63,7 +63,7 @@ const execute = async (interaction) => {
 
     correctEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
-    sendReply(interaction, correctEmbed);
+    await sendReply(interaction, correctEmbed);
     return;
   }
 
@@ -84,7 +84,7 @@ const execute = async (interaction) => {
       ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
     );
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -102,7 +102,7 @@ const execute = async (interaction) => {
   if (cancelQueueArray.includes(teamName)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -112,7 +112,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:exclamation: ${teamName} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
@@ -133,7 +133,7 @@ const execute = async (interaction) => {
       gameId,
     });
 
-    sendReply(interaction, newCorrectEmbed);
+    await sendReply(interaction, newCorrectEmbed);
   }
 };
 

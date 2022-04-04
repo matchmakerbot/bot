@@ -25,7 +25,7 @@ const execute = async (interaction) => {
   if (!pingedUser) {
     wrongEmbed.setTitle(":x: Please mention the user");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -37,7 +37,7 @@ const execute = async (interaction) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -50,7 +50,7 @@ const execute = async (interaction) => {
   if (invites[fetchedTeam.name].includes(pingedUser)) {
     wrongEmbed.setTitle(`:x: <@${pingedUser}> was already invited`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -67,7 +67,7 @@ const execute = async (interaction) => {
   if (userTeam != null) {
     wrongEmbed.setTitle(":x: User already belongs to a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -77,7 +77,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: Invited <@${pingedUser}> to ${fetchedTeam.name}!`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   try {
     const pmEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);

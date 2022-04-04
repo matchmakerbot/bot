@@ -70,21 +70,21 @@ const execute = async (interaction) => {
       ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
     );
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!["win", "lose"].includes(secondArg)) {
     wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (messageEndswith(interaction) !== "win" && messageEndswith(interaction) !== "lose") {
     wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
   if (
@@ -149,7 +149,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

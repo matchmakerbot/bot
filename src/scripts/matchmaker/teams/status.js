@@ -15,7 +15,7 @@ const execute = async (interaction, queueSize) => {
 
   correctEmbed.setDescription(queueArray.map((e) => e.name).join(", "));
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

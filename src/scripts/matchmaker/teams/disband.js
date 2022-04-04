@@ -18,7 +18,7 @@ const disbandTeam = async (interaction, fetchedTeam) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(`:x: ${teamName !== "" ? "Team not found" : "You are not the captain of a team!"}`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -37,7 +37,7 @@ const disbandTeam = async (interaction, fetchedTeam) => {
   if (foundGame != null) {
     wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
 
     return;
   }
@@ -53,7 +53,7 @@ const disbandTeam = async (interaction, fetchedTeam) => {
 
     wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since they were disbanded`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
   }
 
   await MatchmakerTeamsCollection.deleteOne({
@@ -71,7 +71,7 @@ const disbandTeam = async (interaction, fetchedTeam) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} Deleted!`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 const execute = async (interaction) => {
@@ -83,7 +83,7 @@ const execute = async (interaction) => {
     if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have administrator permission to delete said team");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
     const fetchedTeam = await MatchmakerTeamsCollection.findOne({

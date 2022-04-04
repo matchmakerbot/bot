@@ -24,14 +24,14 @@ const execute = async (interaction, queueSize) => {
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -44,7 +44,7 @@ const execute = async (interaction, queueSize) => {
       if (fetchGamesByChannelId.length !== 0) {
         wrongEmbed.setTitle(":x: There are users in game!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -62,7 +62,7 @@ const execute = async (interaction, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Channel leaderboard reset!");
 
-      sendReply(interaction, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       return;
     }
 
@@ -70,7 +70,7 @@ const execute = async (interaction, queueSize) => {
       if (!userId) {
         wrongEmbed.setTitle(":x: You need to specify an user id!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -89,7 +89,7 @@ const execute = async (interaction, queueSize) => {
       if (ongoingGame != null) {
         wrongEmbed.setTitle(":x: User is in the middle of a game!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -101,7 +101,7 @@ const execute = async (interaction, queueSize) => {
       if (!player) {
         wrongEmbed.setTitle(":x: This user hasn't played any games in this channel!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -112,13 +112,13 @@ const execute = async (interaction, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Player's score reset!");
 
-      sendReply(interaction, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
     }
   }
 };

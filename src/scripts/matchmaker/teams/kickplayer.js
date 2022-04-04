@@ -23,21 +23,21 @@ const execute = async (interaction) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!fetchedTeam.memberIds.includes(kickedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (kickedUser === interaction.member.id) {
     wrongEmbed.setTitle(":x: You cannot kick yourself dummy!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -52,7 +52,7 @@ const execute = async (interaction) => {
 
     wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members was kicked`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
   }
 
   await MatchmakerTeamsCollection.updateOne(
@@ -67,7 +67,7 @@ const execute = async (interaction) => {
     `:white_check_mark: ${interaction.member.user.username} just kicked ${kickedUser} from ${fetchedTeam.name}`
   );
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

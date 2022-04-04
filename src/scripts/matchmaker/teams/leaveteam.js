@@ -19,7 +19,7 @@ const execute = async (interaction) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You do not belong to a team");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -34,7 +34,7 @@ const execute = async (interaction) => {
 
     wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since one of their members was kicked`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
   }
 
   await MatchmakerTeamsCollection.updateOne(
@@ -47,7 +47,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${interaction.member.user.username} just left ${fetchedTeam.name}`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

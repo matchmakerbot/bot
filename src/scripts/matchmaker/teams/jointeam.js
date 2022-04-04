@@ -24,14 +24,14 @@ const execute = async (interaction) => {
   ) {
     wrongEmbed.setTitle(":x: You already belong to a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (!guildTeams.map((e) => e.name).includes(teamName)) {
     wrongEmbed.setTitle(":x: This team doesn't exist");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -40,7 +40,7 @@ const execute = async (interaction) => {
   if (!Object.keys(invites).includes(teamName)) {
     wrongEmbed.setTitle(":x: This team didn't invite anyone!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -49,7 +49,7 @@ const execute = async (interaction) => {
   if (!invitePath.includes(interaction.member.id)) {
     wrongEmbed.setTitle(":x: This team didn't invite you!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -71,7 +71,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${interaction.member.user.username} joined ${teamName}!`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

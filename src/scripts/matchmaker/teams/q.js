@@ -45,14 +45,14 @@ const execute = async (interaction, queueSize) => {
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (queueArray[0]?.name === fetchedTeam.name) {
     wrongEmbed.setTitle(":x: You're already in the queue");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -65,7 +65,7 @@ const execute = async (interaction, queueSize) => {
   ) {
     wrongEmbed.setTitle(":x: You're already queued in another channel!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -84,7 +84,7 @@ const execute = async (interaction, queueSize) => {
   if (ongoingGame != null) {
     wrongEmbed.setTitle(":x: Your team is in the middle of a game!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -93,35 +93,34 @@ const execute = async (interaction, queueSize) => {
       `:x: You need at least ${queueSize / 2} members on your team to join the queue (including you)`
     );
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (getContent(interaction).length !== queueSize / 2) {
+  const pingedUsers = getContent(interaction);
+
+  if (pingedUsers.length !== queueSize / 2) {
     wrongEmbed.setTitle(`:x: Please tag ${queueSize / 2 - 1} teammates to play with you`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  let isInTeam = true;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const pingedUser of pingedUsers) {
+    if (!fetchedTeam.memberIds.includes(pingedUser)) {
+      wrongEmbed.setTitle(`:x: <@${pingedUser} is not on your team!`);
 
-  interaction.mentions.members.forEach((e) => {
-    if (!fetchedTeam.memberIds.includes(e.user.id)) {
-      wrongEmbed.setTitle(`:x: ${e.user.username} is not on your team!`);
-
-      sendReply(interaction, wrongEmbed);
-      isInTeam = false;
+      // eslint-disable-next-line no-await-in-loop
+      await sendReply(interaction, wrongEmbed);
     }
-  });
-
-  if (!isInTeam) return;
+  }
 
   const toPush = {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
     mmr: null,
-    memberIds: [...interaction.mentions.members.map((e) => e.user.id)],
+    memberIds: pingedUsers,
     date: new Date(),
   };
 
@@ -131,7 +130,7 @@ const execute = async (interaction, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/2`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   if (queueArray.length === 2) {
     try {

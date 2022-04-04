@@ -51,14 +51,14 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   for (let k = 0; k < queue.length; k++) {
     CaptainRepeatingEmbed.addField(`${k + 1} :`, queue[k].username);
   }
-  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch(() => {
+  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch(async () => {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(
         `:x: Couldn't sent message to ${dm.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
       );
 
-    sendReply(message, errorEmbed);
+    await sendReply(message, errorEmbed);
     throw new Error("PM'S Disabled");
   });
 
@@ -71,7 +71,7 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(`Error reacting to message, likely a Discord API Issue`);
 
-    sendReply(message, errorEmbed);
+    await sendReply(message, errorEmbed);
     throw new Error("PM'S Disabled");
   }
 
@@ -109,12 +109,12 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
         }
       }
     })
-    .catch(() => {
+    .catch(async () => {
       const errorEmbed = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle(`:x: Error choosing captains, please try again or contact a developer.`);
 
-      sendReply(message, errorEmbed);
+      await sendReply(message, errorEmbed);
       throw new Error("Error captains mode");
     });
 
@@ -154,7 +154,7 @@ const execute = async (interaction, queueSize) => {
   if (queueArray.find((e) => e.userId === userId) != null) {
     wrongEmbed.setTitle(":x: You're already in the queue!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -164,7 +164,7 @@ const execute = async (interaction, queueSize) => {
     const channelQueued = (await client.channels.fetch(otherChannelWhereUserMightBe.channelId)).name;
     wrongEmbed.setTitle(`:x: You're already queued in the channel ${channelQueued}!`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -181,14 +181,14 @@ const execute = async (interaction, queueSize) => {
 
   if (ongoingGame != null) {
     wrongEmbed.setTitle(":x: You're already in a game!");
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: Please wait for the next game to be decided!");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -204,7 +204,7 @@ const execute = async (interaction, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/${queueSize}`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   if (queueArray.length === queueSize) {
     try {

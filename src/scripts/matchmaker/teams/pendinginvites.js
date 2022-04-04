@@ -16,7 +16,7 @@ const execute = async (interaction) => {
   if (pendingInvites.length === 0) {
     wrongEmbed.setTitle(":x: You have no pending invites.");
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -24,7 +24,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setDescription(pendingInvites.join(", "), "Show what you can do in order to get more invites!");
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

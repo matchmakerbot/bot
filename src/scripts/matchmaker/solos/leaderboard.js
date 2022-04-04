@@ -24,7 +24,7 @@ const execute = async (interaction) => {
       if (!user) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -41,7 +41,7 @@ const execute = async (interaction) => {
 
       correctEmbed.addField("MMR:", user.mmr);
 
-      sendReply(interaction, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       return;
     }
     case "channel": {
@@ -60,7 +60,7 @@ const execute = async (interaction) => {
       ) {
         wrongEmbed.setTitle(":x: That channel does not belong to this server!");
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -74,7 +74,7 @@ const execute = async (interaction) => {
       if (storedUsersList.length === 0) {
         wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
 
-        sendReply(interaction, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -91,7 +91,7 @@ const execute = async (interaction) => {
         correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}`);
       });
 
-      sendReply(interaction, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       break;
     }
     default: {
@@ -99,7 +99,7 @@ const execute = async (interaction) => {
         "Invalid Parameters, please use /leaderboard <me/channel> <page>(optional) <channelId>(optional)"
       );
 
-      sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
     }
   }
 };

@@ -24,7 +24,7 @@ const execute = async (interaction) => {
   if (ongoingGames.length === 0) {
     wrongEmbed.setTitle(`:x: There are no ongoing games${skipCount !== 1 ? " on this page" : ""}!`);
 
-    sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -46,7 +46,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(gamesCount / 5)}`);
 
-  sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {
