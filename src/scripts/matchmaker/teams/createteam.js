@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
@@ -9,7 +9,7 @@ const execute = async (interaction) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const teamName = messageArgs(interaction);
+  const teamName = getContent(interaction).join("");
 
   if (teamName.length > 31) {
     wrongEmbed.setTitle(":x: Name too big! Maximum characters allowed are 32.");

@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { messageArgs, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -8,20 +8,22 @@ const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeam
 
 const OngoingGames = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const disbandTeam = async (message, fetchedTeam) => {
+const disbandTeam = async (interaction, fetchedTeam) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  if (!fetchedTeam) {
-    wrongEmbed.setTitle(`:x: ${messageArgs(message) !== "" ? "Team not found" : "You are not the captain of a team!"}`);
+  const teamName = getContent(interaction).join("");
 
-    sendReply(message, wrongEmbed);
+  if (!fetchedTeam) {
+    wrongEmbed.setTitle(`:x: ${teamName !== "" ? "Team not found" : "You are not the captain of a team!"}`);
+
+    sendReply(interaction, wrongEmbed);
     return;
   }
 
   const foundGame = await OngoingGames.findOne({
-    guildId: message.channel.id,
+    guildId: interaction.channel.id,
     $or: [
       {
         "team1.name": fetchedTeam.name,
@@ -35,14 +37,14 @@ const disbandTeam = async (message, fetchedTeam) => {
   if (foundGame != null) {
     wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-    sendReply(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
 
     return;
   }
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const channels = channelQueues.filter((e) => e.guildId === message.guild.id);
+  const channels = channelQueues.filter((e) => e.guildId === interaction.guild.id);
 
   const inQueue = channels.find((e) => e.players[0]?.name === fetchedTeam.name);
 
@@ -51,11 +53,11 @@ const disbandTeam = async (message, fetchedTeam) => {
 
     wrongEmbed.setTitle(`:x: ${fetchedTeam.name} was kicked from the queue since they were disbanded`);
 
-    sendReply(message, wrongEmbed);
+    sendReply(interaction, wrongEmbed);
   }
 
   await MatchmakerTeamsCollection.deleteOne({
-    guildId: message.guild.id,
+    guildId: interaction.guild.id,
     name: fetchedTeam.name,
   });
 
@@ -69,13 +71,15 @@ const disbandTeam = async (message, fetchedTeam) => {
 
   correctEmbed.setTitle(`:white_check_mark: ${fetchedTeam.name} Deleted!`);
 
-  sendReply(message, correctEmbed);
+  sendReply(interaction, correctEmbed);
 };
 
 const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
-  if (messageArgs(interaction) !== "") {
+  const teamName = getContent(interaction).join("");
+
+  if (teamName !== "") {
     if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have administrator permission to delete said team");
 
@@ -84,7 +88,7 @@ const execute = async (interaction) => {
     }
     const fetchedTeam = await MatchmakerTeamsCollection.findOne({
       guildId: interaction.guild.id,
-      name: messageArgs(interaction),
+      name: teamName,
     });
 
     disbandTeam(interaction, fetchedTeam);

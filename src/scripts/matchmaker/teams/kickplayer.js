@@ -18,7 +18,7 @@ const execute = async (interaction) => {
     guildId: interaction.guild.id,
   });
 
-  const [secondArg] = getContent(interaction);
+  const [kickedUser] = getContent(interaction);
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
@@ -26,8 +26,6 @@ const execute = async (interaction) => {
     sendReply(interaction, wrongEmbed);
     return;
   }
-
-  const kickedUser = !interaction.mentions.members.first() ? secondArg : interaction.mentions.members.first().user.id;
 
   if (!fetchedTeam.memberIds.includes(kickedUser)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");

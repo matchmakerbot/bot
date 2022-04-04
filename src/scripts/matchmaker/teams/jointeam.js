@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageArgs, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -13,7 +13,7 @@ const execute = async (interaction) => {
 
   const guildTeams = await MatchmakerTeamsCollection.find({ guildId: interaction.guild.id });
 
-  const teamName = messageArgs(interaction);
+  const teamName = getContent(interaction).join("");
 
   if (
     guildTeams

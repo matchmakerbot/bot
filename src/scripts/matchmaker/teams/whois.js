@@ -2,19 +2,17 @@ const Discord = require("discord.js");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const { EMBED_COLOR_CHECK, messageArgs, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [secondArg] = getContent(interaction);
-
-  const teamName = messageArgs(interaction);
+  const [teamName] = getContent(interaction);
 
   const fetchedTeam =
-    secondArg != null
+    teamName != null
       ? await MatchmakerTeamsCollection.findOne({ guildId: interaction.guild.id, name: teamName })
       : await MatchmakerTeamsCollection.findOne({
           guildId: interaction.guild.id,
@@ -22,7 +20,7 @@ const execute = async (interaction) => {
         });
 
   if (!fetchedTeam) {
-    wrongEmbed.setTitle(`:x: ${!secondArg ? "You do not belong to a team!" : "This team doesn't exist!"}`);
+    wrongEmbed.setTitle(`:x: ${!teamName ? "You do not belong to a team!" : "This team doesn't exist!"}`);
 
     sendReply(interaction, wrongEmbed);
     return;

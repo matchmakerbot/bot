@@ -1,7 +1,7 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
-
+// shits dumb, but cant be arsed to do it the right way, because im lazy
 const getContent = (interaction) => {
   return interaction.options._hoistedOptions.map((e) => e.value);
 };
@@ -127,10 +127,6 @@ const balanceTeamsByMmr = (players, queueSize) => {
   return { team1: playersArrA, team2: playersArrB };
 };
 
-const messageArgs = (message) => {
-  return message.content.split(" ").slice(1).join(" ");
-};
-
 const shuffle = (array) => {
   const arrayToShuffle = array;
   let currentIndex = array.length;
@@ -160,7 +156,6 @@ module.exports = {
   messageEndswith,
   EMBED_COLOR_WARNING,
   gameCount,
-  messageArgs,
   shuffle,
   balanceTeamsByMmr,
   sendReply,
