@@ -6,5 +6,4 @@ add relations db
 add analytics
 
 v13 related
-add required params like required etc.. for args
-work on how to get teams pings
+test lol

@@ -94,5 +94,6 @@ const execute = async (interaction, queueSize) => {
 module.exports = {
   name: "giveownership",
   description: "Gives team ownership to a specific user. Usage: /giveownership @dany",
+  args: [{ name: "user", description: "user", required: true, type: "mention" }],
   execute,
 };

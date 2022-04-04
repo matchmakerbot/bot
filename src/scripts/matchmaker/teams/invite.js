@@ -98,5 +98,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "invite",
   description: "Invites an user, usage: /invite @dany",
+  args: [{ name: "user", description: "user", required: true, type: "mention" }],
   execute,
 };

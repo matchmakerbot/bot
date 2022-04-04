@@ -140,5 +140,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "cancel",
   description: "Cancel the game. Administrators can also do /cancel force gameId to force a game cancellation",
+  args: [{ name: "cancel_type", description: "force", required: false }],
   execute,
 };

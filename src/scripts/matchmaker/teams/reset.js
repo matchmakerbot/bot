@@ -130,5 +130,9 @@ module.exports = {
   description: "Resets player or channel leaderboard",
   helpDescription:
     "Resets the score of an individual team (/reset team teamName) or the whole channel where this command is inserted (/reset channel)",
+  args: [
+    { name: "reset_type", description: "player or channel", required: true },
+    { name: "player_id", description: "player id", required: false },
+  ],
   execute,
 };

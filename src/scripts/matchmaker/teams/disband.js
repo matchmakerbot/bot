@@ -103,5 +103,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "disband",
   description: "Deletes your team, admins can also delete a team by typing /disband teamname",
+  args: [{ name: "team_name", description: "team_name", required: false }],
   execute,
 };

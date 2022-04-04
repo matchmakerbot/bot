@@ -104,5 +104,9 @@ module.exports = {
   description: "Cancels/reverts score of a finished game",
   helpdescription:
     "Cancels/reverts score of a finished game. Usage: /changegame (gameid) cancel, this example will cancel the game, as it never happen. /changegame (gameid) revert, this example will revert the scores",
+  args: [
+    { name: "gameid", description: "game id", required: true },
+    { name: "changegame_type", description: "type of command, revert or cancel", required: true },
+  ],
   execute,
 };

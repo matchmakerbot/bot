@@ -26,7 +26,6 @@ const ChannelsCollection = require("./schemas/channelsSchema");
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
 const { sendReply, EMBED_COLOR_WARNING } = require("./utils");
-const { args } = require("../scripts/queuetype.js");
 
 const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 
@@ -109,11 +108,18 @@ const createBotInstance = async () => {
         const builder = new SlashCommandBuilder()
           .setName(typeof e.name === "string" ? e.name : e.name[0])
           .setDescription(e.description);
+
         if (e.args) {
-          args.forEach((arg) => {
-            builder.addStringOption((option) => {
-              return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
-            });
+          e.args.forEach((arg) => {
+            if (arg.type) {
+              builder.addUserOption((option) => {
+                return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+              });
+            } else {
+              builder.addStringOption((option) => {
+                return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+              });
+            }
           });
         }
         builder.toJSON();

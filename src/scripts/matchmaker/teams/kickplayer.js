@@ -75,5 +75,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "kickplayer",
   description: "Kicks a player from your team, usage: /kickplayer @dany or /kickplayer discordid",
+  args: [{ name: "user", description: "user", required: true, type: "mention" }],
   execute,
 };

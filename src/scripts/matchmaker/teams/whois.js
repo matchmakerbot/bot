@@ -41,5 +41,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "whois",
   description: "Check for team members, usage: /whois Maniacs, or /whois to check your team",
+  args: [{ name: "team_name", description: "team_name", required: false }],
   execute,
 };
