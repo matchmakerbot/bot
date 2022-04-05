@@ -216,7 +216,7 @@ const execute = async (interaction, queueSize) => {
         queueSize,
         gameId: gameCount.value,
         date: new Date(),
-        channelId: channelData.globalmmr ? null : channelId,
+        channelId,
         guildId,
         team1: [],
         team2: [],
@@ -228,7 +228,7 @@ const execute = async (interaction, queueSize) => {
       const usersInDb = await MatchmakerUsersScoreCollection.find({
         $or: queueArray.map((e) => ({
           userId: e.userId,
-          channelId: channelData.globalmmr ? null : channelId,
+          channelId,
           guildId,
         })),
       });
@@ -242,7 +242,7 @@ const execute = async (interaction, queueSize) => {
           userId: user.userId,
           username: user.username,
           guildId,
-          channelId: channelData.globalmmr ? null : user.channelId,
+          channelId,
         };
 
         usersInDb.push({ ...newUser });
@@ -504,8 +504,8 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔸team-1-Game-${gameCreatedObj.gameId}`, {
-            type: "voice",
+          .create(`🔸Team-1-Game-${gameCreatedObj.gameId}`, {
+            type: "GUILD_VOICE",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
           })
@@ -531,8 +531,8 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔹team-2-Game-${gameCreatedObj.gameId}`, {
-            type: "voice",
+          .create(`🔹Team-2-Game-${gameCreatedObj.gameId}`, {
+            type: "GUILD_VOICE",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
           })
@@ -605,7 +605,7 @@ const execute = async (interaction, queueSize) => {
               .fetch(users.userId)
               .then(async (user) => {
                 try {
-                  await user.send(JoinMatchEmbed);
+                  await user.send({ embeds: [JoinMatchEmbed] });
                 } catch (error) {
                   const errorEmbed = new Discord.MessageEmbed()
                     .setColor(EMBED_COLOR_WARNING)
@@ -633,7 +633,7 @@ const execute = async (interaction, queueSize) => {
           .fetch(gameCreatedObj.team1[0].userId)
           .catch(() => sendFollowUp(interaction, "Invalid User"));
 
-        await fetchedUser.send(CreateMatchEmbed).catch(() => {
+        await fetchedUser.send({ embeds: [CreateMatchEmbed] }).catch(() => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(

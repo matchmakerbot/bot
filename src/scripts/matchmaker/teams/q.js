@@ -202,8 +202,8 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔸team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
-            type: "voice",
+          .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
+            type: "GUILD_VOICE",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
           })
@@ -229,8 +229,8 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔹team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
-            type: "voice",
+          .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
+            type: "GUILD_VOICE",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
           })
@@ -321,7 +321,7 @@ const execute = async (interaction, queueSize) => {
               .fetch(id)
               .then(async (user) => {
                 try {
-                  await user.send(JoinMatchEmbed);
+                  await user.send({ embeds: [JoinMatchEmbed] });
                 } catch (error) {
                   const errorEmbed = new Discord.MessageEmbed()
                     .setColor(EMBED_COLOR_WARNING)
@@ -344,7 +344,7 @@ const execute = async (interaction, queueSize) => {
           .addField("You have to:", "Create Custom Match");
 
         const create1 = await client.users.fetch(gameCreatedObj.team1.captain);
-        create1.send(CreateMatchEmbed).catch(() => {
+        create1.send({ embeds: [CreateMatchEmbed] }).catch(() => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_ERROR)
             .setTitle(

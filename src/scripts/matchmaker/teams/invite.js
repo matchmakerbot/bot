@@ -88,7 +88,7 @@ const execute = async (interaction) => {
       `You have been invited to join ${fetchedTeam.name}. Please do !jointeam ${fetchedTeam.name} in the server to join the team`
     );
 
-    await fetchedUser.send(pmEmbed);
+    await fetchedUser.send({ embeds: [pmEmbed] });
   } catch (error) {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)

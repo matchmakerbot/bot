@@ -67,5 +67,9 @@ const execute = async (interaction) => {
 module.exports = {
   name: "config",
   description: "Configure the matchmaker channel, usage: /config createVoiceChannels on",
+  args: [
+    { name: "type", description: "createVoiceChannels, createTextChannels, sendDirectMessage", required: true },
+    { name: "mode", description: "on/off", required: true },
+  ],
   execute,
 };

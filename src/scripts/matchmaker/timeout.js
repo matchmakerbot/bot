@@ -18,7 +18,7 @@ const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
 
 const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
-const UPDATE_INTERVAL_MS = 60 * 1000;
+const UPDATE_INTERVAL_MS = 10 * 1000;
 
 const warnNonDeletableChannel = async (channel, errorId) => {
   await client.channels
@@ -153,7 +153,7 @@ const updateChannels = async () => {
       const channelToDelete = client.channels
         .fetch(channel)
         .then(async (e) => {
-          if (e.type === "text" || e.members?.array()?.length === 0) {
+          if (e.type === "text" || e.members?.size === 0) {
             await e
               .delete()
               .catch(async () => {
