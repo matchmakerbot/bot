@@ -28,9 +28,9 @@ const execute = async (interaction) => {
         return;
       }
 
-      correctEmbed.addField("Wins:", user.wins);
+      correctEmbed.addField("Wins:", user.wins.toString());
 
-      correctEmbed.addField("Losses:", user.losses);
+      correctEmbed.addField("Losses:", user.losses.toString());
 
       correctEmbed.addField(
         "Winrate:",
@@ -39,7 +39,7 @@ const execute = async (interaction) => {
           : `${Math.floor((user.wins / (user.wins + user.losses)) * 100)}%`
       );
 
-      correctEmbed.addField("MMR:", user.mmr);
+      correctEmbed.addField("MMR:", user.mmr.toString());
 
       await sendReply(interaction, correctEmbed);
       return;
@@ -88,7 +88,7 @@ const execute = async (interaction) => {
           user.username,
           `Wins: ${user.wins} | Losses: ${user.losses} | Winrate: ${winrate}% | MMR: ${user.mmr}`
         );
-        correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}`);
+        correctEmbed.setFooter({ text: `Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}` });
       });
 
       await sendReply(interaction, correctEmbed);

@@ -35,7 +35,7 @@ const execute = async (interaction) => {
   teams.forEach((team) => {
     correctEmbed.addField(`Name: ${team.name}`, `Captain: <@${team.captain}>`);
 
-    correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(teamsCount / 10)}`);
+    correctEmbed.setFooter({ text: `Showing page ${skipCount}/${Math.ceil(teamsCount / 10)}` });
   });
 
   await sendReply(interaction, correctEmbed);

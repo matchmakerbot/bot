@@ -141,7 +141,7 @@ const updateOngoingGames = async () => {
   });
   await Promise.all(promises);
 };
-
+// fix lol
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];

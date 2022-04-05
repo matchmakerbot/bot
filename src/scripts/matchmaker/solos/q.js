@@ -286,9 +286,10 @@ const execute = async (interaction, queueSize) => {
       await rorcMessage.react("🇧");
 
       await rorcMessage
-        .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount), {
+        .awaitReactions({
+          filter: (reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount),
           max: queueSize,
-          time: 20000,
+          time: 2000, // add zero
         })
         .then((collected) => {
           collected.forEach((e) => {
@@ -503,7 +504,7 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔸Team-1-Game-${gameCreatedObj.gameId}`, {
+          .create(`🔸team-1-Game-${gameCreatedObj.gameId}`, {
             type: "voice",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
@@ -530,7 +531,7 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔹Team-2-Game-${gameCreatedObj.gameId}`, {
+          .create(`🔹team-2-Game-${gameCreatedObj.gameId}`, {
             type: "voice",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
@@ -590,9 +591,11 @@ const execute = async (interaction, queueSize) => {
       if (channelData.sendDirectMessage) {
         const JoinMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name)
-          .addField("Password:", valuesforpm.password)
-          .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].username})`);
+          .addFields(
+            { name: "Name:", value: valuesforpm.name.toString() },
+            { name: "Password:", value: valuesforpm.password.toString() },
+            { name: "You have to", value: `Join match(Created by ${gameCreatedObj.team1[0].username})` }
+          );
 
         const playersArray = gameCreatedObj.team1.concat(gameCreatedObj.team2);
 
@@ -622,8 +625,8 @@ const execute = async (interaction, queueSize) => {
 
         const CreateMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name)
-          .addField("Password:", valuesforpm.password)
+          .addField("Name:", valuesforpm.name.toString())
+          .addField("Password:", valuesforpm.password.toString())
           .addField("You have to:", "Create Custom Match");
 
         const fetchedUser = await client.users

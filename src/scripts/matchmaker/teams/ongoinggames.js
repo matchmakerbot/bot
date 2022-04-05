@@ -51,7 +51,7 @@ const execute = async (interaction) => {
 
   correctEmbed.addField("No more games to list on this page", "Encourage your friends to play!");
 
-  correctEmbed.setFooter(`Showing page ${1}/${Math.ceil(gamesCount / 5)}`);
+  correctEmbed.setFooter({ text: `Showing page ${1}/${Math.ceil(gamesCount / 5)}` });
 
   await sendReply(interaction, correctEmbed);
 };

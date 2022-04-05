@@ -25,7 +25,7 @@ const ChannelsCollection = require("./schemas/channelsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
-const { sendReply, EMBED_COLOR_WARNING } = require("./utils");
+const { sendReply } = require("./utils");
 
 const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 
@@ -83,7 +83,7 @@ const createBotInstance = async () => {
           client.guilds.cache.map((a) => a.name).length
         }`
       );
-
+      // change to /
       client.user.setActivity("!help", {
         type: "STREAMING",
         url: "https://www.twitch.tv/tweenoTV",
@@ -137,27 +137,20 @@ const createBotInstance = async () => {
     logger.error(e);
   }
 
+  client.on("messageCreate", async (message) => {
+    // add correct prefix
+    if (message.content.startsWith(".") && client.commands.has(message.content.slice(1).split(" ")[0])) {
+      message.channel.send(
+        "The prefix for this bot has changed from ! to / , because of discord's new message content policy, which does not allow bots to track message content anymore without discord validation"
+      );
+    }
+  });
+
   try {
     client.on("interactionCreate", async (interaction) => {
       if (!interaction.isCommand()) return;
 
       const { commandName } = interaction;
-
-      const redisChannels = await redisInstance.getObject("channels");
-
-      if (!redisChannels.includes(interaction.channel.id)) {
-        const embed = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
-
-        embed.setTitle(
-          "The prefix for this bot will change from ! to / starting 30th of April, because of discord's new message content policy, which does not allow bots to track message content anymore without discord permission"
-        );
-
-        sendReply(interaction, embed);
-
-        redisChannels.push(interaction.channel.id);
-
-        await redisInstance.setObject("channels", redisChannels);
-      }
 
       if (commandFilesMatchmakerSolos.includes(commandName) || commandFilesMatchmakerTeams.includes(commandName)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
@@ -169,7 +162,7 @@ const createBotInstance = async () => {
               ":x:You need to set the Queue Type for this channel! For example /queueType 6 solos for 3v3 solo games, or /queueType 4 teams for 2v2 teams games. For list of commands do /help"
             );
 
-            sendReply(interaction, embed);
+            await sendReply(interaction, embed);
             return;
           }
           queueTypeObject[interaction.channel.id] = guildsInfo;

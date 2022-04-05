@@ -37,9 +37,9 @@ const execute = async (interaction) => {
         return;
       }
 
-      correctEmbed.addField("Wins:", teamScore.wins);
+      correctEmbed.addField("Wins:", teamScore.wins.toString());
 
-      correctEmbed.addField("Losses:", teamScore.losses);
+      correctEmbed.addField("Losses:", teamScore.losses.toString());
 
       correctEmbed.addField(
         "Winrate:",
@@ -48,7 +48,7 @@ const execute = async (interaction) => {
           : `${Math.floor((teamScore.wins / (teamScore.wins + teamScore.losses)) * 100)}%`
       );
 
-      correctEmbed.addField("MMR:", teamScore.mmr);
+      correctEmbed.addField("MMR:", teamScore.mmr.toString());
 
       await sendReply(interaction, correctEmbed);
       return;
@@ -100,7 +100,7 @@ const execute = async (interaction) => {
           team.name,
           `Wins: ${team.wins} | Losses: ${team.losses} | Winrate: ${winrate}% | MMR: ${team.mmr}`
         );
-        correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedTeamsCount / 10)}`);
+        correctEmbed.setFooter({ text: `Showing page ${skipCount}/${Math.ceil(storedTeamsCount / 10)}` });
       });
 
       await sendReply(interaction, correctEmbed);

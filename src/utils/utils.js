@@ -18,13 +18,13 @@ const handleMesssageError = async (memberId) => {
 };
 
 const sendReply = async (interaction, messageType) => {
-  await interaction.reply(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
+  return interaction.reply(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
     await handleMesssageError(interaction.member.id);
   });
 };
 
 const sendFollowUp = async (interaction, messageType) => {
-  await interaction.followUp(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
+  return interaction.followUp(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
     await handleMesssageError(interaction.member.id);
   });
 };

@@ -20,7 +20,9 @@ const execute = async (interaction) => {
   if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   const intGamemode = Number(queueSize);
@@ -28,25 +30,33 @@ const execute = async (interaction) => {
   if (Number.isNaN(intGamemode)) {
     wrongEmbed.setTitle(":x: Invalid parameter");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (intGamemode % 2 !== 0) {
     wrongEmbed.setTitle(":x: Please choose an even number");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (intGamemode < 2 || intGamemode > 12) {
     wrongEmbed.setTitle(":x: QueueSize must range between 2 and 12");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (!availableQueueModes.includes(queueMode)) {
     wrongEmbed.setTitle(":x: Invalid Queue Mode, please use either solos or teams");
 
-    return sendReply(interaction, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   const channelInfo = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
@@ -60,7 +70,9 @@ const execute = async (interaction) => {
     if (isInGame) {
       wrongEmbed.setTitle(":x: Cannot change queue type once a game has been made");
 
-      return sendReply(interaction, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
+
+      return;
     }
 
     const channelInQueue = channelQueues.find((e) => e.channelId === interaction.channel.id);
@@ -102,7 +114,7 @@ const execute = async (interaction) => {
 
   correctEmbed.setTitle(`:white_check_mark: QueueType set to ${queueSize} ${queueMode}`);
 
-  return sendReply(interaction, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

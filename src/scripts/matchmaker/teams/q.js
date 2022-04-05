@@ -202,7 +202,7 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
+          .create(`🔸team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
             type: "voice",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
@@ -229,7 +229,7 @@ const execute = async (interaction, queueSize) => {
         });
 
         await interaction.guild.channels
-          .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
+          .create(`🔹team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
             type: "voice",
             parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
@@ -311,8 +311,8 @@ const execute = async (interaction, queueSize) => {
       if (channelData.sendDirectMessage) {
         const JoinMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name)
-          .addField("Password:", valuesforpm.password)
+          .addField("Name:", valuesforpm.name.toString())
+          .addField("Password:", valuesforpm.password.toString())
           .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
 
         [...gameCreatedObj.team1.memberIds, ...gameCreatedObj.team2.memberIds, gameCreatedObj.team2.captain].forEach(
@@ -339,8 +339,8 @@ const execute = async (interaction, queueSize) => {
 
         const CreateMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name)
-          .addField("Password:", valuesforpm.password)
+          .addField("Name:", valuesforpm.name.toString())
+          .addField("Password:", valuesforpm.password.toString())
           .addField("You have to:", "Create Custom Match");
 
         const create1 = await client.users.fetch(gameCreatedObj.team1.captain);

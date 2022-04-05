@@ -44,7 +44,7 @@ const execute = async (interaction) => {
 
   correctEmbed.addField("No more games to list on this page", "Encourage your friends to play!");
 
-  correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(gamesCount / 5)}`);
+  correctEmbed.setFooter({ text: `Showing page ${skipCount}/${Math.ceil(gamesCount / 5)}` });
 
   await sendReply(interaction, correctEmbed);
 };
