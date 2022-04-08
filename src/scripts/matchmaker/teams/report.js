@@ -7,13 +7,7 @@ const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmake
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
-const {
-  EMBED_COLOR_CHECK,
-  EMBED_COLOR_ERROR,
-  messageEndswith,
-  sendReply,
-  getContent,
-} = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const assignScoreTeams = async (game) => {
   const promises = [];
@@ -41,7 +35,7 @@ const assignScoreTeams = async (game) => {
 };
 
 const execute = async (interaction) => {
-  const [secondArg] = getContent(interaction);
+  const param = getContent(interaction)[0];
 
   const elo = new EloRank(16);
 
@@ -74,22 +68,16 @@ const execute = async (interaction) => {
     return;
   }
 
-  if (!["win", "lose"].includes(secondArg)) {
+  if (!["win", "lose"].includes(param)) {
     wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
 
     await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (messageEndswith(interaction) !== "win" && messageEndswith(interaction) !== "lose") {
-    wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
-
-    await sendReply(interaction, wrongEmbed);
-    return;
-  }
   if (
-    (ongoingGame.team1.captain === interaction.member.id && messageEndswith(interaction) === "win") ||
-    (ongoingGame.team2.captain === interaction.member.id && messageEndswith(interaction) === "lose")
+    (ongoingGame.team1.captain === interaction.member.id && param === "win") ||
+    (ongoingGame.team2.captain === interaction.member.id && param === "lose")
   ) {
     ongoingGame.winningTeam = 0;
   } else {

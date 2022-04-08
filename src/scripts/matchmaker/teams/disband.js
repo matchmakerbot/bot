@@ -6,6 +6,8 @@ const { redisInstance } = require("../../../utils/createRedisInstance");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
+const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
+
 const OngoingGames = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
 const disbandTeam = async (interaction, fetchedTeam) => {
@@ -61,6 +63,11 @@ const disbandTeam = async (interaction, fetchedTeam) => {
     name: fetchedTeam.name,
   });
 
+  await MatchmakerTeamsScoreCollection.deleteOne({
+    guildId: interaction.guild.id,
+    name: fetchedTeam.name,
+  });
+
   const invites = await redisInstance.getObject("invites");
 
   if (invites[fetchedTeam.name] != null) {
@@ -107,6 +114,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "disband",
   description: "Deletes your team, admins can also delete a team by typing /disband teamname",
-  args: [{ name: "team_name", description: "team_name", required: false }],
+  args: [{ name: "teamname", description: "Team Name", required: false }],
   execute,
 };

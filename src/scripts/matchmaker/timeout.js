@@ -33,7 +33,7 @@ const warnNonDeletableChannel = async (channel, errorId) => {
               : "Maybe the bot doesn't have permissions to do so? Please delete channel manually."
           }`
         );
-      await e.send(embedRemove).catch(() => {
+      await e.send({ embeds: [embedRemove] }).catch(() => {
         logger.error("Cannot send unable to delete channel message");
       });
     })
@@ -60,12 +60,13 @@ const updateUsers = async () => {
 
       const notifyChannel = client.channels
         .fetch(channel)
-        .then((e) => {
+        .then(async (e) => {
           const embedRemove = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle("You were removed from the queue after no game has been made in 45 minutes!");
 
-          e.send(`<@${filteredUser.captain != null ? filteredUser.captain : filteredUser.userId}>`, embedRemove);
+          await e.send(`<@${filteredUser.captain != null ? filteredUser.captain : filteredUser.userId}>`);
+          await e.send({ embeds: [embedRemove] });
           filteredChannel.players.splice(filteredChannel.players.indexOf(filteredUser), 1);
         })
         .catch(() => {
@@ -113,7 +114,7 @@ const updateOngoingGames = async () => {
           .setColor(EMBED_COLOR_WARNING)
           .setTitle(`:white_check_mark: Game ${game.gameId} Cancelled due to not being finished in 3 Hours!`);
 
-        await e.send(embedRemove).catch((err) => {
+        await e.send({ embeds: [embedRemove] }).catch((err) => {
           logger.error(err);
         });
       })
@@ -153,7 +154,7 @@ const updateChannels = async () => {
       const channelToDelete = client.channels
         .fetch(channel)
         .then(async (e) => {
-          if (e.type === "text" || e.members?.size === 0) {
+          if (e.type === "GUILD_TEXT" || e.members?.size === 0) {
             await e
               .delete()
               .catch(async () => {

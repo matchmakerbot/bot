@@ -6,4 +6,4 @@ add relations db
 add analytics
 
 v13 related
-test teams
+test captains

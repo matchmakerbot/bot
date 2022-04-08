@@ -13,7 +13,7 @@ const execute = async (interaction) => {
 
   const guildTeams = await MatchmakerTeamsCollection.find({ guildId: interaction.guild.id });
 
-  const teamName = getContent(interaction).join("");
+  const teamName = getContent(interaction)[0];
 
   if (
     guildTeams
@@ -77,6 +77,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "jointeam",
   description: "Join a team that invited you, usage: /jointeam Maniacs",
-  args: [{ name: "user", description: "user", required: true, type: "mention" }],
+  args: [{ name: "teamname", description: "Team Name", required: true }],
   execute,
 };

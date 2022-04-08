@@ -51,7 +51,7 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   for (let k = 0; k < queue.length; k++) {
     CaptainRepeatingEmbed.addField(`${k + 1} :`, queue[k].username);
   }
-  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch(async () => {
+  const privateDmMessage = await dm.send({ embeds: [CaptainRepeatingEmbed] }).catch(async () => {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(
@@ -76,7 +76,7 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   }
 
   await privateDmMessage
-    .awaitReactions(filterReactionCaptains, { max: 2, time: 30000 })
+    .awaitReactions({ filter: filterReactionCaptains, max: 2, time: 30000 })
     .then((collected) => {
       if (collected.first() != null) {
         if (reactEmojisCaptains.indexOf(collected.first().emoji.name) < queue.length) {
@@ -289,7 +289,7 @@ const execute = async (interaction, queueSize) => {
         .awaitReactions({
           filter: (reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount),
           max: queueSize,
-          time: 2000, // add zero
+          time: 20000,
         })
         .then((collected) => {
           collected.forEach((e) => {
@@ -391,7 +391,7 @@ const execute = async (interaction, queueSize) => {
             Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].username);
           }
 
-          const privateDmCaptain1Message = await privateDmCaptain1.send(Captain1Embed).catch(() => {
+          const privateDmCaptain1Message = await privateDmCaptain1.send({ embeds: [Captain1Embed] }).catch(() => {
             const errorEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR_WARNING)
               .setTitle(
@@ -407,7 +407,7 @@ const execute = async (interaction, queueSize) => {
           }
 
           await privateDmCaptain1Message
-            .awaitReactions(filterReactionCaptains, { max: 1, time: 30000 })
+            .awaitReactions({ filter: filterReactionCaptains, max: 1, time: 30000 })
             .then((collected) => {
               if (collected.first() != null) {
                 const num = reactEmojisCaptains.indexOf(collected.first().emoji.name);
@@ -506,10 +506,10 @@ const execute = async (interaction, queueSize) => {
         await interaction.guild.channels
           .create(`🔸Team-1-Game-${gameCreatedObj.gameId}`, {
             type: "GUILD_VOICE",
-            parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
           })
           .then((e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -533,10 +533,10 @@ const execute = async (interaction, queueSize) => {
         await interaction.guild.channels
           .create(`🔹Team-2-Game-${gameCreatedObj.gameId}`, {
             type: "GUILD_VOICE",
-            parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
           })
           .then((e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -563,10 +563,10 @@ const execute = async (interaction, queueSize) => {
         await interaction.guild.channels
           .create(`Matchmaker-Game-${gameCreatedObj.gameId}`, {
             type: "text",
-            parent: interaction.channel.parentID,
             permissionOverwrites,
           })
           .then(async (e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -666,6 +666,7 @@ const execute = async (interaction, queueSize) => {
 
 module.exports = {
   name: "q",
-  description: "Enter the queue (removes player after 45 minutes if no game has been made)",
+  description:
+    "Enter the queue (removes player after 45 minutes if no game has been made) (no need to set user if mode is solos)",
   execute,
 };

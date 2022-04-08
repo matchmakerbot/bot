@@ -23,8 +23,9 @@ const {
   gameCount,
   sendReply,
   sendFollowUp,
-  getContent,
 } = require("../../../utils/utils");
+
+const numberOfUsersArr = [1, 2, 3, 4, 5];
 
 const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
@@ -97,9 +98,9 @@ const execute = async (interaction, queueSize) => {
     return;
   }
 
-  const pingedUsers = getContent(interaction);
+  const pingedUsers = numberOfUsersArr.map((e) => interaction.options.getUser(`user${e}`)).filter((e) => e != null);
 
-  if (pingedUsers.length !== queueSize / 2) {
+  if (pingedUsers.length !== queueSize / 2 - 1) {
     wrongEmbed.setTitle(`:x: Please tag ${queueSize / 2 - 1} teammates to play with you`);
 
     await sendReply(interaction, wrongEmbed);
@@ -108,11 +109,12 @@ const execute = async (interaction, queueSize) => {
 
   // eslint-disable-next-line no-restricted-syntax
   for (const pingedUser of pingedUsers) {
-    if (!fetchedTeam.memberIds.includes(pingedUser)) {
-      wrongEmbed.setTitle(`:x: <@${pingedUser} is not on your team!`);
+    if (!fetchedTeam.memberIds.includes(pingedUser.id)) {
+      wrongEmbed.setTitle(`:x: <@${pingedUser.username} is not on your team!`);
 
       // eslint-disable-next-line no-await-in-loop
       await sendReply(interaction, wrongEmbed);
+      return;
     }
   }
 
@@ -120,7 +122,7 @@ const execute = async (interaction, queueSize) => {
     name: fetchedTeam.name,
     captain: fetchedTeam.captain,
     mmr: null,
-    memberIds: pingedUsers,
+    memberIds: pingedUsers.map((e) => e.id),
     date: new Date(),
   };
 
@@ -204,10 +206,10 @@ const execute = async (interaction, queueSize) => {
         await interaction.guild.channels
           .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
             type: "GUILD_VOICE",
-            parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam1,
           })
           .then((e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -231,10 +233,10 @@ const execute = async (interaction, queueSize) => {
         await interaction.guild.channels
           .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
             type: "GUILD_VOICE",
-            parent: interaction.channel.parentID,
             permissionOverwrites: permissionOverwritesTeam2,
           })
           .then((e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -266,10 +268,10 @@ const execute = async (interaction, queueSize) => {
         await interaction.guild.channels
           .create(`Matchmaker-Game-${gameCreatedObj.gameId}`, {
             type: "text",
-            parent: interaction.channel.parentID,
             permissionOverwrites,
           })
           .then(async (e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -326,13 +328,18 @@ const execute = async (interaction, queueSize) => {
                   const errorEmbed = new Discord.MessageEmbed()
                     .setColor(EMBED_COLOR_WARNING)
                     .setTitle(
-                      `:x: Couldn't sent message to <@${id}>, please check if your DM'S aren't set to friends only.`
+                      `:x: Couldn't sent message to ${
+                        (await client.users.fetch(id)).username
+                      }, please check if your DM'S aren't set to friends only.`
                     );
 
                   sendFollowUp(interaction, errorEmbed);
                 }
               })
-              .catch(() => sendFollowUp(interaction, "Invalid User"));
+              .catch((e) => {
+                console.log(e);
+                sendFollowUp(interaction, "Invalid User");
+              });
             promises.push(fetchedUser);
           }
         );
@@ -380,7 +387,7 @@ module.exports = {
   description: "Enter the queue (removes player after 45 minutes if no game has been made)",
   helpDescription:
     "Enter the queue. To do this do /q and tag your other teammates(depending on the qeueSize) example: /q @Dany @Johny @Tony @David (removes team after 45 minutes if no game has been made)",
-  args: [1, 2, 3, 4, 5].map((e) => {
+  args: numberOfUsersArr.map((e) => {
     return { name: `user${e}`, description: "user", required: false, type: "mention" };
   }),
   execute,

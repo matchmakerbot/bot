@@ -18,7 +18,7 @@ const execute = async (interaction) => {
     guildId: interaction.guild.id,
   });
 
-  const [kickedUser] = getContent(interaction);
+  const kickedUser = getContent(interaction);
 
   if (!fetchedTeam) {
     wrongEmbed.setTitle(":x: You are not the captain of a team!");
@@ -27,14 +27,14 @@ const execute = async (interaction) => {
     return;
   }
 
-  if (!fetchedTeam.memberIds.includes(kickedUser)) {
+  if (!fetchedTeam.memberIds.includes(kickedUser.id)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (kickedUser === interaction.member.id) {
+  if (kickedUser.id === interaction.member.id) {
     wrongEmbed.setTitle(":x: You cannot kick yourself dummy!");
 
     await sendReply(interaction, wrongEmbed);
@@ -60,11 +60,11 @@ const execute = async (interaction) => {
       guildId: interaction.guild.id,
       name: fetchedTeam.name,
     },
-    { $pull: { memberIds: kickedUser } }
+    { $pull: { memberIds: kickedUser.id } }
   );
 
   correctEmbed.setTitle(
-    `:white_check_mark: ${interaction.member.user.username} just kicked ${kickedUser} from ${fetchedTeam.name}`
+    `:white_check_mark: ${interaction.member.user.username} just kicked ${kickedUser.username} from ${fetchedTeam.name}`
   );
 
   await sendReply(interaction, correctEmbed);
@@ -73,6 +73,9 @@ const execute = async (interaction) => {
 module.exports = {
   name: "kickplayer",
   description: "Kicks a player from your team, usage: /kickplayer @dany or /kickplayer discordid",
-  args: [{ name: "user", description: "user", required: true, type: "mention" }],
+  args: [
+    { name: "user", description: "user", required: false, type: "mention" },
+    { name: "userdiscordid", description: "Users Discord Id", required: false },
+  ],
   execute,
 };

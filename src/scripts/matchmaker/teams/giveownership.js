@@ -4,7 +4,7 @@ const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeam
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply, getContent } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -32,7 +32,7 @@ const execute = async (interaction, queueSize) => {
     return;
   }
 
-  const pingedUser = getContent(interaction)[0];
+  const pingedUser = interaction.options.getUser("user");
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
@@ -64,7 +64,7 @@ const execute = async (interaction, queueSize) => {
     return;
   }
 
-  if (!fetchedTeam.memberIds.includes(pingedUser)) {
+  if (!fetchedTeam.memberIds.includes(pingedUser.id)) {
     wrongEmbed.setTitle(":x: User does not belong to your team!");
 
     await sendReply(interaction, wrongEmbed);
@@ -73,9 +73,9 @@ const execute = async (interaction, queueSize) => {
 
   fetchedTeam.memberIds.push(interaction.member.id);
 
-  fetchedTeam.memberIds.splice(fetchedTeam.memberIds.indexOf(pingedUser), 1);
+  fetchedTeam.memberIds.splice(fetchedTeam.memberIds.indexOf(pingedUser.id), 1);
 
-  correctEmbed.setTitle(`:white_check_mark: Given ownership to ${interaction.mentions.members.first().user.username}`);
+  correctEmbed.setTitle(`:white_check_mark: Given ownership to ${pingedUser.username}`);
 
   await MatchmakerTeamsCollection.updateOne(
     {
@@ -83,7 +83,7 @@ const execute = async (interaction, queueSize) => {
       name: fetchedTeam.name,
     },
     {
-      captain: pingedUser,
+      captain: pingedUser.id,
       memberIds: fetchedTeam.memberIds,
     }
   );
@@ -94,6 +94,6 @@ const execute = async (interaction, queueSize) => {
 module.exports = {
   name: "giveownership",
   description: "Gives team ownership to a specific user. Usage: /giveownership @dany",
-  args: [{ name: "user", description: "user", required: true, type: "mention" }],
+  args: [{ name: "user", description: "User", required: true, type: "mention" }],
   execute,
 };

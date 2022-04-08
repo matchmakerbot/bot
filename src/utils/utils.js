@@ -1,6 +1,17 @@
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
+
+const EMBED_COLOR_ERROR = "#F8534F";
+
+const EMBED_COLOR_CHECK = "#77B255";
+
+const EMBED_COLOR_WARNING = "#B78727";
+
+const gameCount = {
+  value: 0,
+};
+
 // shits dumb, but cant be arsed to do it the right way, because im lazy
 const getContent = (interaction) => {
   return interaction.options._hoistedOptions.map((e) => e.value);
@@ -27,29 +38,6 @@ const sendFollowUp = async (interaction, messageType) => {
   return interaction.followUp(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
     await handleMesssageError(interaction.member.id);
   });
-};
-
-const EMBED_COLOR_ERROR = "#F8534F";
-
-const EMBED_COLOR_CHECK = "#77B255";
-
-const EMBED_COLOR_WARNING = "#B78727";
-
-const gameCount = {
-  value: 0,
-};
-
-const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
-  const user = await client.users.fetch(id).catch(() => {
-    wrongEmbedParam.setTitle("Please tag the user");
-    messageParam.channel.send(wrongEmbedParam);
-  });
-  return user;
-};
-
-const messageEndswith = (interaction) => {
-  const split = getContent(interaction);
-  return split[split.length - 1];
 };
 
 const getQueueArray = (channelQueues, queueSize, channelId, guildId) => {
@@ -149,11 +137,9 @@ const shuffle = (array) => {
 };
 
 module.exports = {
-  fetchFromId,
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   getQueueArray,
-  messageEndswith,
   EMBED_COLOR_WARNING,
   gameCount,
   shuffle,
