@@ -121,9 +121,9 @@ module.exports = {
   helpDescription:
     "Checks your current score. Usage: /leaderboard channel <page> (default is 1) to check score in the channel youre in, /leaderboard channel <page> <channelid> to check the score of another channel, or /leaderboard me to check your current score",
   args: [
-    { name: "leaderboard_type", description: "channel or me", required: true },
-    { name: "page", description: "page", required: false },
-    { name: "channel_id", description: "channelId", required: false },
+    { name: "leaderboard_type", description: "channel or me", required: true, type: "string" },
+    { name: "page", description: "page", required: false, type: "string" },
+    { name: "channel_id", description: "channelId", required: false, type: "string" },
   ],
   execute,
 };

@@ -145,6 +145,6 @@ module.exports = {
   helpDescription:
     "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: /report win OR /report lose",
   description: "Reports the winner/loser of a game",
-  args: [{ name: "report_type", description: "win or lose", required: true }],
+  args: [{ name: "report_type", description: "win or lose", required: true, type: "string" }],
   execute,
 };

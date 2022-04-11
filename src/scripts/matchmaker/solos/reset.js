@@ -129,8 +129,8 @@ module.exports = {
   helpDescription:
     "Resets the score of an individual player (/reset player <discordid>) or the whole channel where this command is inserted (/reset channel)",
   args: [
-    { name: "reset_type", description: "player or channel", required: true },
-    { name: "playerid", description: "player id", required: false },
+    { name: "reset_type", description: "player or channel", required: true, type: "string" },
+    { name: "playerid", description: "player id", required: false, type: "string" },
   ],
   execute,
 };

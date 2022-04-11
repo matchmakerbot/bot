@@ -75,7 +75,7 @@ module.exports = {
   description: "Kicks a player from your team, usage: /kickplayer @dany or /kickplayer discordid",
   args: [
     { name: "user", description: "user", required: false, type: "mention" },
-    { name: "userdiscordid", description: "Users Discord Id", required: false },
+    { name: "userdiscordid", description: "Users Discord Id", required: false, type: "string" },
   ],
   execute,
 };

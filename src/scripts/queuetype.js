@@ -121,8 +121,8 @@ module.exports = {
   name: "queuetype",
   description: "Set the queue type for a channel, usage: /queuetype <queueSize> <queueMode>",
   args: [
-    { name: "queue_size", description: "queue size, from 2 to 12", required: true },
-    { name: "queue_mode", description: "queue mode, solos or teams", required: true },
+    { name: "queue_size", description: "queue size, from 2 to 12", required: true, type: "string" },
+    { name: "queue_mode", description: "queue mode, solos or teams", required: true, type: "string" },
   ],
   execute,
 };

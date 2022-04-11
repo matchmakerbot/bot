@@ -68,8 +68,13 @@ module.exports = {
   name: "config",
   description: "Configure the matchmaker channel, usage: /config createVoiceChannels on",
   args: [
-    { name: "type", description: "createVoiceChannels, createTextChannels, sendDirectMessage", required: true },
-    { name: "mode", description: "on/off", required: true },
+    {
+      name: "type",
+      description: "createVoiceChannels, createTextChannels, sendDirectMessage",
+      required: true,
+      type: "string",
+    },
+    { name: "mode", description: "on/off", required: true, type: "string" },
   ],
   execute,
 };

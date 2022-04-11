@@ -5,7 +5,7 @@ const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../u
 const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
-// broke
+
 const changeGame = async (game, param) => {
   const promises = [];
 
@@ -108,8 +108,8 @@ module.exports = {
   helpdescription:
     "Cancels/reverts score of a finished game. Usage: /changegame (gameid) cancel, this example will cancel the game, as it never happen. /changegame (gameid) revert, this example will revert the scores",
   args: [
-    { name: "gameid", description: "gameid", required: true },
-    { name: "changegame_type", description: "type of command, revert or cancel", required: true },
+    { name: "gameid", description: "gameid", required: true, type: "string" },
+    { name: "changegame_type", description: "type of command, revert or cancel", required: true, type: "string" },
   ],
   execute,
 };

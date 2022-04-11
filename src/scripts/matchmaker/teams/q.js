@@ -336,8 +336,7 @@ const execute = async (interaction, queueSize) => {
                   sendFollowUp(interaction, errorEmbed);
                 }
               })
-              .catch((e) => {
-                console.log(e);
+              .catch(() => {
                 sendFollowUp(interaction, "Invalid User");
               });
             promises.push(fetchedUser);
@@ -384,7 +383,7 @@ const execute = async (interaction, queueSize) => {
 
 module.exports = {
   name: "q",
-  description: "Enter the queue (removes player after 45 minutes if no game has been made)",
+  description: "Enter the queue (removes player after 45 minutes) (no need to set user if mode is solos)",
   helpDescription:
     "Enter the queue. To do this do /q and tag your other teammates(depending on the qeueSize) example: /q @Dany @Johny @Tony @David (removes team after 45 minutes if no game has been made)",
   args: numberOfUsersArr.map((e) => {

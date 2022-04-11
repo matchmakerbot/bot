@@ -111,14 +111,21 @@ const createBotInstance = async () => {
 
         if (e.args) {
           e.args.forEach((arg) => {
-            if (arg.type) {
-              builder.addUserOption((option) => {
-                return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
-              });
-            } else {
-              builder.addStringOption((option) => {
-                return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
-              });
+            switch (arg.type) {
+              case "mention": {
+                builder.addUserOption((option) => {
+                  return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+                });
+                break;
+              }
+              case "string": {
+                builder.addStringOption((option) => {
+                  return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+                });
+                break;
+              }
+              default:
+                break;
             }
           });
         }
@@ -139,7 +146,7 @@ const createBotInstance = async () => {
 
   client.on("messageCreate", async (message) => {
     // add correct prefix
-    if (message.content.startsWith(".") && client.commands.has(message.content.slice(1).split(" ")[0])) {
+    if (message.content.startsWith(process.env.PREFIX) && client.commands.has(message.content.slice(1).split(" ")[0])) {
       message.channel.send(
         "The prefix for this bot has changed from ! to / , because of discord's new message content policy, which does not allow bots to track message content anymore without discord validation"
       );

@@ -44,6 +44,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "listteams",
   description: "Lists all the team in a guild. Usage: /listteam 1 for the first page, and so on",
-  args: [{ name: "page", description: "page", required: false }],
+  args: [{ name: "page", description: "page", required: false, type: "string" }],
   execute,
 };

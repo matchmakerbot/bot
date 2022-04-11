@@ -18,7 +18,7 @@ const MAX_USER_IDLE_TIME_MS = 45 * 60 * 1000;
 
 const MAX_GAME_LENGTH_MS = 3 * 60 * 60 * 1000;
 
-const UPDATE_INTERVAL_MS = 10 * 1000;
+const UPDATE_INTERVAL_MS = 60 * 10 * 1000;
 
 const warnNonDeletableChannel = async (channel, errorId) => {
   await client.channels
@@ -142,7 +142,7 @@ const updateOngoingGames = async () => {
   });
   await Promise.all(promises);
 };
-// fix lol
+
 const updateChannels = async () => {
   const promises = [];
   const deleteVC = [];

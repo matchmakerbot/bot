@@ -77,6 +77,6 @@ const execute = async (interaction) => {
 module.exports = {
   name: "jointeam",
   description: "Join a team that invited you, usage: /jointeam Maniacs",
-  args: [{ name: "teamname", description: "Team Name", required: true }],
+  args: [{ name: "teamname", description: "Team Name", required: true, type: "string" }],
   execute,
 };
