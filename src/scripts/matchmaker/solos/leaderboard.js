@@ -2,25 +2,18 @@ const Discord = require("discord.js");
 
 const MatchmakerUsersScoreCollection = require("../../../utils/schemas/matchmakerUsersScoreSchema");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils");
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg, thirdArg, fourthArg] = message.content.split(" ");
+  const [secondArg, thirdArg, fourthArg] = getContent(interaction);
 
-  const channelId = message.channel.id;
+  const channelId = interaction.channel.id;
 
-  if (message.content.toLowerCase().includes("score")) {
-    wrongEmbed.setTitle("This command is deprecated, please use !leaderboard channel or !leaderboard me instead!");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
-
-  const userId = message.author.id;
+  const userId = interaction.member.id;
   switch (secondArg) {
     case "me": {
       const user = await MatchmakerUsersScoreCollection.findOne({
@@ -31,13 +24,13 @@ const execute = async (message) => {
       if (!user) {
         wrongEmbed.setTitle(":x: You haven't played any games yet!");
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
-      correctEmbed.addField("Wins:", user.wins);
+      correctEmbed.addField("Wins:", user.wins.toString());
 
-      correctEmbed.addField("Losses:", user.losses);
+      correctEmbed.addField("Losses:", user.losses.toString());
 
       correctEmbed.addField(
         "Winrate:",
@@ -46,9 +39,9 @@ const execute = async (message) => {
           : `${Math.floor((user.wins / (user.wins + user.losses)) * 100)}%`
       );
 
-      correctEmbed.addField("MMR:", user.mmr);
+      correctEmbed.addField("MMR:", user.mmr.toString());
 
-      sendMessage(message, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       return;
     }
     case "channel": {
@@ -60,14 +53,14 @@ const execute = async (message) => {
 
       if (
         fourthArg != null &&
-        !message.guild.channels.cache
+        !interaction.guild.channels.cache
           .array()
           .map((e) => e.id)
           .includes(fourthArg)
       ) {
         wrongEmbed.setTitle(":x: That channel does not belong to this server!");
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -81,7 +74,7 @@ const execute = async (message) => {
       if (storedUsersList.length === 0) {
         wrongEmbed.setTitle(`:x: No games have been played in ${skipCount !== 1 ? "this page" : "here"}!`);
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -95,25 +88,31 @@ const execute = async (message) => {
           user.username,
           `Wins: ${user.wins} | Losses: ${user.losses} | Winrate: ${winrate}% | MMR: ${user.mmr}`
         );
-        correctEmbed.setFooter(`Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}`);
+        correctEmbed.setFooter({ text: `Showing page ${skipCount}/${Math.ceil(storedUsersCount / 10)}` });
       });
 
-      sendMessage(message, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle(
-        "Invalid Parameters, please use !leaderboard <me/channel> <page>(optional) <channelId>(optional)"
+        "Invalid Parameters, please use /leaderboard <me/channel> <page>(optional) <channelId>(optional)"
       );
 
-      sendMessage(message, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
     }
   }
 };
 
 module.exports = {
-  name: ["leaderboard", "score"],
-  description:
-    "Checks your current score. Usage: !leaderboard channel <page> (default is 1) to check score in the channel youre in, !leaderboard channel <page> <channelid> to check the score of another channel, or !leaderboard me to check your current score",
+  name: "leaderboard",
+  description: "Checks your current score",
+  helpDescription:
+    "Checks your current score. Usage: /leaderboard channel <page> (default is 1) to check score in the channel youre in, /leaderboard channel <page> <channelid> to check the score of another channel, or /leaderboard me to check your current score",
+  args: [
+    { name: "leaderboard_type", description: "channel or me", required: true, type: "string" },
+    { name: "page", description: "page", required: false, type: "string" },
+    { name: "channel_id", description: "channelId", required: false, type: "string" },
+  ],
   execute,
 };

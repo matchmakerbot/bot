@@ -2,13 +2,6 @@
 /* eslint-disable promise/no-nesting */
 const client = require("./createClientInstance.js");
 
-const sendMessage = async (message, messageType) => {
-  await message.channel.send(messageType).catch(async () => {
-    const user = await client.users.fetch(message.author.id).catch(() => {});
-    await user.send("Unable to send messages in channel, bot likely does not have permissions").catch(() => {});
-  });
-};
-
 const EMBED_COLOR_ERROR = "#F8534F";
 
 const EMBED_COLOR_CHECK = "#77B255";
@@ -19,17 +12,30 @@ const gameCount = {
   value: 0,
 };
 
-const fetchFromId = async (id, wrongEmbedParam, messageParam) => {
-  const user = await client.users.fetch(id).catch(() => {
-    wrongEmbedParam.setTitle("Please tag the user");
-    messageParam.channel.send(wrongEmbedParam);
-  });
-  return user;
+// shits dumb, but cant be arsed to do it the right way, because im lazy
+const getContent = (interaction) => interaction.options._hoistedOptions.map((e) => e.value);
+
+const handleMesssageError = async (memberId) => {
+  await client.users
+    .fetch(memberId)
+    .then(async (fetchedUser) => {
+      await fetchedUser
+        .send("Unable to send messages in channel, bot likely does not have permissions")
+        .catch(() => {});
+    })
+    .catch(() => {});
 };
 
-const messageEndswith = (message) => {
-  const split = message.content.split(" ");
-  return split[split.length - 1];
+const sendReply = async (interaction, messageType) => {
+  return interaction.reply(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
+    await handleMesssageError(interaction.member.id);
+  });
+};
+
+const sendFollowUp = async (interaction, messageType) => {
+  return interaction.followUp(messageType.type ? { embeds: [messageType] } : messageType).catch(async () => {
+    await handleMesssageError(interaction.member.id);
+  });
 };
 
 const getQueueArray = (channelQueues, queueSize, channelId, guildId) => {
@@ -107,10 +113,6 @@ const balanceTeamsByMmr = (players, queueSize) => {
   return { team1: playersArrA, team2: playersArrB };
 };
 
-const messageArgs = (message) => {
-  return message.content.split(" ").slice(1).join(" ");
-};
-
 const shuffle = (array) => {
   const arrayToShuffle = array;
   let currentIndex = array.length;
@@ -133,15 +135,14 @@ const shuffle = (array) => {
 };
 
 module.exports = {
-  fetchFromId,
   EMBED_COLOR_CHECK,
   EMBED_COLOR_ERROR,
   getQueueArray,
-  messageEndswith,
   EMBED_COLOR_WARNING,
   gameCount,
-  messageArgs,
   shuffle,
   balanceTeamsByMmr,
-  sendMessage,
+  sendReply,
+  sendFollowUp,
+  getContent,
 };

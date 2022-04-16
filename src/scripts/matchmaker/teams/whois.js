@@ -2,29 +2,27 @@ const Discord = require("discord.js");
 
 const MatchmakerTeamsCollection = require("../../../utils/schemas/matchmakerTeamsSchema");
 
-const { EMBED_COLOR_CHECK, messageArgs, EMBED_COLOR_ERROR, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const [, secondArg] = message.content.split(" ");
-
-  const teamName = messageArgs(message);
+  const [teamName] = getContent(interaction);
 
   const fetchedTeam =
-    secondArg != null
-      ? await MatchmakerTeamsCollection.findOne({ guildId: message.guild.id, name: teamName })
+    teamName != null
+      ? await MatchmakerTeamsCollection.findOne({ guildId: interaction.guild.id, name: teamName })
       : await MatchmakerTeamsCollection.findOne({
-          guildId: message.guild.id,
-          $or: [{ captain: message.author.id }, { memberIds: { $in: message.author.id } }],
+          guildId: interaction.guild.id,
+          $or: [{ captain: interaction.member.id }, { memberIds: { $in: interaction.member.id } }],
         });
 
   if (!fetchedTeam) {
-    wrongEmbed.setTitle(`:x: ${!secondArg ? "You do not belong to a team!" : "This team doesn't exist!"}`);
+    wrongEmbed.setTitle(`:x: ${!teamName ? "You do not belong to a team!" : "This team doesn't exist!"}`);
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -35,11 +33,12 @@ const execute = async (message) => {
     `<@${fetchedTeam.captain}> (Captain), ${fetchedTeam.memberIds.reduce((acc, curr) => `${acc}<@${curr}>, `, "")}`
   );
 
-  sendMessage(message, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {
   name: "whois",
-  description: "Check for team members, usage: !whois Maniacs, or !whois to check your team",
+  description: "Check for team members, usage: /whois Maniacs, or /whois to check your team",
+  args: [{ name: "team_name", description: "team_name", required: false, type: "string" }],
   execute,
 };

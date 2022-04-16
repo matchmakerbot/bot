@@ -13,7 +13,8 @@ const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
 const {
-  sendMessage,
+  sendReply,
+  sendFollowUp,
   EMBED_COLOR_CHECK,
   getQueueArray,
   EMBED_COLOR_ERROR,
@@ -50,14 +51,14 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   for (let k = 0; k < queue.length; k++) {
     CaptainRepeatingEmbed.addField(`${k + 1} :`, queue[k].username);
   }
-  const privateDmMessage = await dm.send(CaptainRepeatingEmbed).catch(() => {
+  const privateDmMessage = await dm.send({ embeds: [CaptainRepeatingEmbed] }).catch(async () => {
     const errorEmbed = new Discord.MessageEmbed()
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(
         `:x: Couldn't sent message to ${dm.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
       );
 
-    sendMessage(message, errorEmbed);
+    await sendReply(message, errorEmbed);
     throw new Error("PM'S Disabled");
   });
 
@@ -70,12 +71,12 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
       .setColor(EMBED_COLOR_WARNING)
       .setTitle(`Error reacting to message, likely a Discord API Issue`);
 
-    sendMessage(message, errorEmbed);
+    await sendReply(message, errorEmbed);
     throw new Error("PM'S Disabled");
   }
 
   await privateDmMessage
-    .awaitReactions(filterReactionCaptains, { max: 2, time: 30000 })
+    .awaitReactions({ filter: filterReactionCaptains, max: 2, time: 30000 })
     .then((collected) => {
       if (collected.first() != null) {
         if (reactEmojisCaptains.indexOf(collected.first().emoji.name) < queue.length) {
@@ -108,12 +109,12 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
         }
       }
     })
-    .catch(() => {
+    .catch(async () => {
       const errorEmbed = new Discord.MessageEmbed()
         .setColor(EMBED_COLOR_WARNING)
         .setTitle(`:x: Error choosing captains, please try again or contact a developer.`);
 
-      sendMessage(message, errorEmbed);
+      await sendReply(message, errorEmbed);
       throw new Error("Error captains mode");
     });
 
@@ -135,25 +136,25 @@ const choose2Players = async (dm, team, queue, captainsObject, message) => {
   return true;
 };
 
-const execute = async (message, queueSize) => {
+const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const userId = message.author.id;
+  const userId = interaction.member.id;
 
-  const channelId = message.channel.id;
+  const channelId = interaction.channel.id;
 
-  const guildId = message.guild.id;
+  const guildId = interaction.guild.id;
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, channelId, guildId);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, guildId);
 
   if (queueArray.find((e) => e.userId === userId) != null) {
     wrongEmbed.setTitle(":x: You're already in the queue!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -163,7 +164,7 @@ const execute = async (message, queueSize) => {
     const channelQueued = (await client.channels.fetch(otherChannelWhereUserMightBe.channelId)).name;
     wrongEmbed.setTitle(`:x: You're already queued in the channel ${channelQueued}!`);
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -180,20 +181,20 @@ const execute = async (message, queueSize) => {
 
   if (ongoingGame != null) {
     wrongEmbed.setTitle(":x: You're already in a game!");
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: Please wait for the next game to be decided!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   const toAdd = {
     userId,
-    username: message.author.username,
+    username: interaction.member.user.username,
     date: new Date(),
   };
 
@@ -203,10 +204,12 @@ const execute = async (message, queueSize) => {
 
   correctEmbed.setTitle(`:white_check_mark: Added to queue! ${queueArray.length}/${queueSize}`);
 
-  sendMessage(message, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   if (queueArray.length === queueSize) {
     try {
+      const channelData = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
+
       gameCount.value++;
 
       const gameCreatedObj = {
@@ -257,13 +260,13 @@ const execute = async (message, queueSize) => {
         password: Math.floor(Math.random() * 99999) + 100,
       };
 
-      await sendMessage(
-        message,
+      await sendFollowUp(
+        interaction,
         queueArray.reduce((acc, curr) => `${acc}<@${curr.userId}>, `, "")
       );
 
       correctEmbed.setTitle(
-        "A game has been made! Please select your preferred gamemode: Captains (Reaction C), Random (Reaction R) or Balance by MMR (Reaction B, still experimental, contact me with !credits if bugs are found) (Captains disabled for queues with less than 6 players)"
+        "A game has been made! Please select your preferred gamemode: Captains (Reaction C), Random (Reaction R) or Balance by MMR (Pls do /credits and send me a dm if you find bugs I had no ppl to test the v13 change lol)"
       );
 
       const rorcCount = {
@@ -274,7 +277,7 @@ const execute = async (message, queueSize) => {
         choosenMode: null,
       };
 
-      const rorcMessage = await message.channel.send(correctEmbed);
+      const rorcMessage = await sendFollowUp(interaction, correctEmbed);
 
       await rorcMessage.react("🇨");
 
@@ -283,7 +286,8 @@ const execute = async (message, queueSize) => {
       await rorcMessage.react("🇧");
 
       await rorcMessage
-        .awaitReactions((reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount), {
+        .awaitReactions({
+          filter: (reaction, user) => filterReactionrorc(reaction, user, queueArray, rorcCount),
           max: queueSize,
           time: 20000,
         })
@@ -370,7 +374,7 @@ const execute = async (message, queueSize) => {
             .addField("Captain for team 1", captainsObject.captain1.username)
             .addField("Captain for team 2", captainsObject.captain2.username);
 
-          sendMessage(message, CaptainsEmbed);
+          await sendFollowUp(interaction, CaptainsEmbed);
 
           const privateDmCaptain1 = await client.users.fetch(captainsObject.captain1.userId).catch(() => {
             throw new Error("Invalid captain");
@@ -387,14 +391,14 @@ const execute = async (message, queueSize) => {
             Captain1Embed.addField(`${k + 1} :`, queueArrayCopy[k].username);
           }
 
-          const privateDmCaptain1Message = await privateDmCaptain1.send(Captain1Embed).catch(() => {
+          const privateDmCaptain1Message = await privateDmCaptain1.send({ embeds: [Captain1Embed] }).catch(() => {
             const errorEmbed = new Discord.MessageEmbed()
               .setColor(EMBED_COLOR_WARNING)
               .setTitle(
                 `:x: Couldn't sent message to ${privateDmCaptain1.username}, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
               );
 
-            sendMessage(message, errorEmbed);
+            sendFollowUp(interaction, errorEmbed);
             throw new Error("PM'S Disabled");
           });
 
@@ -403,7 +407,7 @@ const execute = async (message, queueSize) => {
           }
 
           await privateDmCaptain1Message
-            .awaitReactions(filterReactionCaptains, { max: 1, time: 30000 })
+            .awaitReactions({ filter: filterReactionCaptains, max: 1, time: 30000 })
             .then((collected) => {
               if (collected.first() != null) {
                 const num = reactEmojisCaptains.indexOf(collected.first().emoji.name);
@@ -422,7 +426,7 @@ const execute = async (message, queueSize) => {
                   `:x: Error reacting to message in DMS, please check if your DM'S aren't set to friends only. You need to accept DM'S from the bot in order to use captains mode`
                 );
 
-              sendMessage(message, errorEmbed);
+              sendFollowUp(interaction, errorEmbed);
               throw new Error("PM'S Disabled");
             });
 
@@ -453,7 +457,7 @@ const execute = async (message, queueSize) => {
                 captain.team,
                 queueArrayCopy,
                 captainsObject,
-                message
+                interaction
               );
             }
           }
@@ -484,8 +488,6 @@ const execute = async (message, queueSize) => {
           break;
       }
 
-      const channelData = await ChannelsCollection.findOne({ channelId: message.channel.id });
-
       if (channelData.createVoiceChannels) {
         const permissionOverwritesTeam1 = [
           {
@@ -501,17 +503,17 @@ const execute = async (message, queueSize) => {
           });
         });
 
-        await message.guild.channels
+        await interaction.guild.channels
           .create(`🔸Team-1-Game-${gameCreatedObj.gameId}`, {
-            type: "voice",
-            parent: message.channel.parentID,
+            type: "GUILD_VOICE",
             permissionOverwrites: permissionOverwritesTeam1,
           })
           .then((e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
-            sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
+            sendFollowUp(interaction, "Error creating voice channels, are you sure the bot has permissions to do so?")
           );
 
         const permissionOverwritesTeam2 = [
@@ -528,17 +530,17 @@ const execute = async (message, queueSize) => {
           });
         });
 
-        await message.guild.channels
+        await interaction.guild.channels
           .create(`🔹Team-2-Game-${gameCreatedObj.gameId}`, {
-            type: "voice",
-            parent: message.channel.parentID,
+            type: "GUILD_VOICE",
             permissionOverwrites: permissionOverwritesTeam2,
           })
           .then((e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
-            sendMessage(message, "Error creating voice channels, are you sure the bot has permissions to do so?")
+            sendFollowUp(interaction, "Error creating voice channels, are you sure the bot has permissions to do so?")
           );
       }
 
@@ -558,17 +560,17 @@ const execute = async (message, queueSize) => {
           });
         });
 
-        await message.guild.channels
+        await interaction.guild.channels
           .create(`Matchmaker-Game-${gameCreatedObj.gameId}`, {
             type: "text",
-            parent: message.channel.parentID,
             permissionOverwrites,
           })
           .then(async (e) => {
+            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
-            sendMessage(message, "Error creating text chat, are you sure the bot has permissions to do so?")
+            sendFollowUp(interaction, "Error creating text chat, are you sure the bot has permissions to do so?")
           );
       }
 
@@ -584,14 +586,16 @@ const execute = async (message, queueSize) => {
           gameCreatedObj.team2.reduce((acc, curr) => `${acc}<@${curr.userId}>, `, "")
         );
 
-      sendMessage(message, discordEmbed1);
+      sendFollowUp(interaction, discordEmbed1);
 
       if (channelData.sendDirectMessage) {
         const JoinMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name)
-          .addField("Password:", valuesforpm.password)
-          .addField("You have to:", `Join match(Created by ${gameCreatedObj.team1[0].username})`);
+          .addFields(
+            { name: "Name:", value: valuesforpm.name.toString() },
+            { name: "Password:", value: valuesforpm.password.toString() },
+            { name: "You have to", value: `Join match(Created by ${gameCreatedObj.team1[0].username})` }
+          );
 
         const playersArray = gameCreatedObj.team1.concat(gameCreatedObj.team2);
 
@@ -601,7 +605,7 @@ const execute = async (message, queueSize) => {
               .fetch(users.userId)
               .then(async (user) => {
                 try {
-                  await user.send(JoinMatchEmbed);
+                  await user.send({ embeds: [JoinMatchEmbed] });
                 } catch (error) {
                   const errorEmbed = new Discord.MessageEmbed()
                     .setColor(EMBED_COLOR_WARNING)
@@ -609,10 +613,10 @@ const execute = async (message, queueSize) => {
                       `:x: Couldn't sent message to ${users.username}, please check if your DM'S aren't set to friends only.`
                     );
 
-                  sendMessage(message, errorEmbed);
+                  sendFollowUp(interaction, errorEmbed);
                 }
               })
-              .catch(() => sendMessage(message, "Invalid User"));
+              .catch(() => sendFollowUp(interaction, "Invalid User"));
             promises.push(fetchedUser);
           }
         });
@@ -621,22 +625,22 @@ const execute = async (message, queueSize) => {
 
         const CreateMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name)
-          .addField("Password:", valuesforpm.password)
+          .addField("Name:", valuesforpm.name.toString())
+          .addField("Password:", valuesforpm.password.toString())
           .addField("You have to:", "Create Custom Match");
 
         const fetchedUser = await client.users
           .fetch(gameCreatedObj.team1[0].userId)
-          .catch(() => sendMessage(message, "Invalid User"));
+          .catch(() => sendFollowUp(interaction, "Invalid User"));
 
-        await fetchedUser.send(CreateMatchEmbed).catch(() => {
+        await fetchedUser.send({ embeds: [CreateMatchEmbed] }).catch(() => {
           const errorEmbed = new Discord.MessageEmbed()
             .setColor(EMBED_COLOR_WARNING)
             .setTitle(
               `:x: Couldn't sent message to ${gameCreatedObj.team1[0].username}, please check if your DM'S aren't set to friends only.`
             );
 
-          sendMessage(message, errorEmbed);
+          sendFollowUp(interaction, errorEmbed);
         });
       }
       const ongoingGamesInsert = new OngoingGamesSolosCollection(gameCreatedObj);
@@ -649,7 +653,7 @@ const execute = async (message, queueSize) => {
     } catch (e) {
       wrongEmbed.setTitle(":x: Error creating teams, resetting queue.");
 
-      sendMessage(message, wrongEmbed);
+      sendFollowUp(interaction, wrongEmbed);
 
       queueArray.splice(0, queueSize);
 
@@ -662,6 +666,9 @@ const execute = async (message, queueSize) => {
 
 module.exports = {
   name: "q",
-  description: "Enter the queue (removes player after 45 minutes if no game has been made)",
+  description:
+    "Enter the queue (removes player after 45 minutes if no game has been made) (no need to set user if mode is solos)",
+  helpDescription:
+    "Enter the queue (removes player after 45 minutes if no game has been made) (no need to set user if mode is solos) (Captains disabled for queues with less than 6 players)",
   execute,
 };

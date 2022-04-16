@@ -4,7 +4,7 @@ const ChannelsCollection = require("../utils/schemas/channelsSchema");
 
 const { redisInstance } = require("../utils/createRedisInstance");
 
-const { sendMessage } = require("../utils/utils");
+const { sendReply } = require("../utils/utils");
 
 const availableQueueModes = ["solos", "teams"];
 
@@ -12,13 +12,17 @@ const wrongEmbed = new Discord.MessageEmbed().setColor("#F8534F");
 
 const correctEmbed = new Discord.MessageEmbed().setColor("#77B255");
 
-const execute = async (message) => {
-  const [, queueSize, queueMode] = message.content.split(" ");
+const execute = async (interaction) => {
+  const queueSize = interaction.options.getString("queue_size");
 
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  const queueMode = interaction.options.getString("queue_mode");
+
+  if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    return sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   const intGamemode = Number(queueSize);
@@ -26,42 +30,52 @@ const execute = async (message) => {
   if (Number.isNaN(intGamemode)) {
     wrongEmbed.setTitle(":x: Invalid parameter");
 
-    return sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (intGamemode % 2 !== 0) {
     wrongEmbed.setTitle(":x: Please choose an even number");
 
-    return sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (intGamemode < 2 || intGamemode > 12) {
     wrongEmbed.setTitle(":x: QueueSize must range between 2 and 12");
 
-    return sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
   if (!availableQueueModes.includes(queueMode)) {
     wrongEmbed.setTitle(":x: Invalid Queue Mode, please use either solos or teams");
 
-    return sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
+
+    return;
   }
 
-  const channelInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
+  const channelInfo = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
 
   if (channelInfo != null) {
     const channelQueues = await redisInstance.getObject("channelQueues");
 
     const isInGame =
-      channelQueues.find((e) => e.channelId === message.channel.id && e.players.length === e.queueSize) != null;
+      channelQueues.find((e) => e.channelId === interaction.channel.id && e.players.length === e.queueSize) != null;
 
     if (isInGame) {
       wrongEmbed.setTitle(":x: Cannot change queue type once a game has been made");
 
-      return sendMessage(message, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
+
+      return;
     }
 
-    const channelInQueue = channelQueues.find((e) => e.channelId === message.channel.id);
+    const channelInQueue = channelQueues.find((e) => e.channelId === interaction.channel.id);
 
     if (channelInQueue != null) {
       channelInQueue.queueType = queueMode;
@@ -72,7 +86,7 @@ const execute = async (message) => {
 
     await ChannelsCollection.updateOne(
       {
-        channelId: message.channel.id,
+        channelId: interaction.channel.id,
       },
       {
         $set: {
@@ -83,8 +97,8 @@ const execute = async (message) => {
     );
   } else {
     await ChannelsCollection.create({
-      channelId: message.channel.id,
-      guildId: message.guild.id,
+      channelId: interaction.channel.id,
+      guildId: interaction.guild.id,
       queueSize: intGamemode,
       queueMode,
     });
@@ -92,18 +106,23 @@ const execute = async (message) => {
 
   const queueTypeObject = await redisInstance.getObject("queueTypeObject");
 
-  if (queueTypeObject[message.channel.id] != null) {
-    queueTypeObject[message.channel.id] = { queueMode, queueSize: intGamemode };
+  if (queueTypeObject[interaction.channel.id] != null) {
+    queueTypeObject[interaction.channel.id] = { queueMode, queueSize: intGamemode };
   }
 
   await redisInstance.setObject("queueTypeObject", queueTypeObject);
 
   correctEmbed.setTitle(`:white_check_mark: QueueType set to ${queueSize} ${queueMode}`);
 
-  return sendMessage(message, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {
   name: "queuetype",
+  description: "Set the queue type for a channel, usage: /queuetype <queueSize> <queueMode>",
+  args: [
+    { name: "queue_size", description: "queue size, from 2 to 12", required: true, type: "string" },
+    { name: "queue_mode", description: "queue mode, solos or teams", required: true, type: "string" },
+  ],
   execute,
 };

@@ -11,6 +11,12 @@ const Discord = require("discord.js");
 
 const fastify = require("fastify")();
 
+const { SlashCommandBuilder } = require("@discordjs/builders");
+
+const { REST } = require("@discordjs/rest");
+
+const { Routes } = require("discord-api-types/v9");
+
 const client = require("./createClientInstance.js");
 
 const { redisInstance } = require("./createRedisInstance");
@@ -19,9 +25,7 @@ const ChannelsCollection = require("./schemas/channelsSchema");
 
 const { startIntervalMatchmakerBot } = require("../scripts/matchmaker/timeout");
 
-const { sendMessage, EMBED_COLOR_WARNING } = require("./utils");
-
-const prefix = process.env.PREFIX;
+const { sendReply } = require("./utils");
 
 const paths = ["", "/matchmaker/solos", "/matchmaker/teams"];
 
@@ -69,7 +73,9 @@ const createBotInstance = async () => {
   fastify.listen(3000, "0.0.0.0", (err) => {
     if (err) throw err;
   });
+
   startIntervalMatchmakerBot();
+
   try {
     client.once("ready", async () => {
       logger.info(
@@ -77,12 +83,13 @@ const createBotInstance = async () => {
           client.guilds.cache.map((a) => a.name).length
         }`
       );
-
-      client.user.setActivity("!help", {
+      // change to /
+      client.user.setActivity("/help", {
         type: "STREAMING",
         url: "https://www.twitch.tv/tweenoTV",
       });
     });
+
     logger.info(`Scripts loaded: ${[...client.commands].length}`);
 
     logger.info("Successfully created socket Client.Once -> Ready");
@@ -91,71 +98,102 @@ const createBotInstance = async () => {
 
     logger.error(e);
   }
+
   try {
-    client.on("message", async (message) => {
-      const args = message.content.slice(prefix.length).split(/ +/);
+    const commands = Array.from(client.commands, (e) => {
+      return { name: e[0], ...e[1] };
+    })
+      .filter((e, i, arr) => arr.map((ee) => ee.name).indexOf(e.name) === i)
+      .map((e) => {
+        const builder = new SlashCommandBuilder()
+          .setName(typeof e.name === "string" ? e.name : e.name[0])
+          .setDescription(e.description);
 
-      const command = args.shift().toLowerCase();
+        if (e.args) {
+          e.args.forEach((arg) => {
+            switch (arg.type) {
+              case "mention": {
+                builder.addUserOption((option) => {
+                  return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+                });
+                break;
+              }
+              case "string": {
+                builder.addStringOption((option) => {
+                  return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+                });
+                break;
+              }
+              default:
+                break;
+            }
+          });
+        }
+        builder.toJSON();
+        return builder;
+      });
 
-      if (!message.guild) return;
+    const rest = new REST({ version: "9" }).setToken(process.env.TOKEN);
 
-      if (!message.content.startsWith(prefix) || message.author.bot) return;
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
 
-      if (!client.commands.has(command)) return;
+    logger.info("Successfully registered application commands.");
+  } catch (e) {
+    logger.error("Error registering application commands.");
 
-      if (message.guild === undefined) return;
+    logger.error(e);
+  }
 
-      const redisChannels = await redisInstance.getObject("channels");
+  client.on("messageCreate", async (message) => {
+    if (message.content.startsWith(process.env.PREFIX) && client.commands.has(message.content.slice(1).split(" ")[0])) {
+      message.channel.send(
+        "The prefix for this bot has changed from ! to / , because of discord's new message content policy, which does not allow bots to track message content anymore without discord validation \nIf you can't see the slash interactions, please re-invite the bot in this link https://discord.com/api/oauth2/authorize?client_id=571839826744180736&permissions=2147486800&scope=applications.commands%20bot\nIf you still have issues, toss me a dm Tweeno#8687"
+      );
+    }
+  });
 
-      if (!redisChannels.includes(message.channel.id)) {
-        const embed = new Discord.MessageEmbed().setColor(EMBED_COLOR_WARNING);
+  try {
+    client.on("interactionCreate", async (interaction) => {
+      if (!interaction.isCommand()) return;
 
-        embed.setTitle(
-          "The prefix for this bot will change from ! to / starting 30th of April, because of discord's new message content policy, which does not allow users to track message content anymore."
-        );
+      const { commandName } = interaction;
 
-        sendMessage(message, embed);
-
-        redisChannels.push(message.channel.id);
-
-        await redisInstance.setObject("channels", redisChannels);
-      }
-
-      if (commandFilesMatchmakerSolos.includes(command) || commandFilesMatchmakerTeams.includes(command)) {
+      if (commandFilesMatchmakerSolos.includes(commandName) || commandFilesMatchmakerTeams.includes(commandName)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
-        if (!queueTypeObject[message.channel.id]) {
-          const guildsInfo = await ChannelsCollection.findOne({ channelId: message.channel.id });
+        if (!queueTypeObject[interaction.channel.id]) {
+          const guildsInfo = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
           if (!guildsInfo) {
             const embed = new Discord.MessageEmbed().setColor("#F8534F");
             embed.setTitle(
-              ":x:You need to set the Queue Type for this channel! For example !queueType 6 solos for 3v3 solo games, or !queueType 4 teams for 2v2 teams games. For list of commands do !help"
+              ":x:You need to set the Queue Type for this channel! For example /queueType 6 solos for 3v3 solo games, or /queueType 4 teams for 2v2 teams games. For list of commands do /help"
             );
 
-            sendMessage(message, embed);
+            await sendReply(interaction, embed);
             return;
           }
-          queueTypeObject[message.channel.id] = guildsInfo;
+          queueTypeObject[interaction.channel.id] = guildsInfo;
         }
 
         if (
-          (!commandFilesMatchmakerSolos.includes(command) &&
-            queueTypeObject[message.channel.id].queueMode === "solos") ||
-          (!commandFilesMatchmakerTeams.includes(command) && queueTypeObject[message.channel.id].queueMode === "teams")
+          (!commandFilesMatchmakerSolos.includes(commandName) &&
+            queueTypeObject[interaction.channel.id].queueMode === "solos") ||
+          (!commandFilesMatchmakerTeams.includes(commandName) &&
+            queueTypeObject[interaction.channel.id].queueMode === "teams")
         )
           return;
 
-        require(`../scripts/matchmaker/${queueTypeObject[message.channel.id].queueMode}/${command}.js`).execute(
-          message,
-          queueTypeObject[message.channel.id].queueSize
+        require(`../scripts/matchmaker/${queueTypeObject[interaction.channel.id].queueMode}/${commandName}.js`).execute(
+          interaction,
+          queueTypeObject[interaction.channel.id].queueSize
         );
 
         return;
       }
-      client.commands.get(command).execute(message);
+      client.commands.get(commandName).execute(interaction);
     });
-    logger.info("Successfully created socket Client.on -> Message");
+    logger.info("Successfully created socket Client.on -> interactionCreate");
   } catch (e) {
-    logger.error("Error creating event listener Client.on -> Message");
+    logger.error("Error creating event listener Client.on -> interactionCreate");
 
     logger.error(e);
   }

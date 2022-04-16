@@ -7,7 +7,7 @@ const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmake
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, messageEndswith, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
 const assignScoreTeams = async (game) => {
   const promises = [];
@@ -34,8 +34,8 @@ const assignScoreTeams = async (game) => {
   await Promise.all(promises);
 };
 
-const execute = async (message) => {
-  const [, secondArg] = message.content.split(" ");
+const execute = async (interaction) => {
+  const param = getContent(interaction)[0];
 
   const elo = new EloRank(16);
 
@@ -43,9 +43,9 @@ const execute = async (message) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const userId = message.author.id;
+  const userId = interaction.member.id;
 
-  const channelId = message.channel.id;
+  const channelId = interaction.channel.id;
 
   const ongoingGame = await OngoingGamesTeamsCollection.findOne({
     channelId,
@@ -64,26 +64,20 @@ const execute = async (message) => {
       ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
     );
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (!["win", "lose"].includes(secondArg)) {
+  if (!["win", "lose"].includes(param)) {
     wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (messageEndswith(message) !== "win" && messageEndswith(message) !== "lose") {
-    wrongEmbed.setTitle(":x: Invalid params, please use !report (win or lose)");
-
-    sendMessage(message, wrongEmbed);
-    return;
-  }
   if (
-    (ongoingGame.team1.captain === message.author.id && messageEndswith(message) === "win") ||
-    (ongoingGame.team2.captain === message.author.id && messageEndswith(message) === "lose")
+    (ongoingGame.team1.captain === interaction.member.id && param === "win") ||
+    (ongoingGame.team2.captain === interaction.member.id && param === "lose")
   ) {
     ongoingGame.winningTeam = 0;
   } else {
@@ -133,7 +127,7 @@ const execute = async (message) => {
     gameId: ongoingGame.gameId,
   });
 
-  const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...ongoingGame.channelIds] };
+  const deletableChannel = { originalChannelId: interaction.channel.id, channelIds: [...ongoingGame.channelIds] };
 
   const deletableChannels = await redisInstance.getObject("deletableChannels");
 
@@ -143,12 +137,14 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
 
-  sendMessage(message, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {
   name: "report",
-  description:
-    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: !report win OR !report lose",
+  helpDescription:
+    "Ends the game, giving the wining team one win and vice versa to the losing team. Usage: /report win OR /report lose",
+  description: "Reports the winner/loser of a game",
+  args: [{ name: "report_type", description: "win or lose", required: true, type: "string" }],
   execute,
 };

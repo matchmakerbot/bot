@@ -1,31 +1,31 @@
 const Discord = require("discord.js");
 
-const { sendMessage, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
-const execute = async (message, queueSize) => {
+const execute = async (interaction, queueSize) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, interaction.guild.id);
 
-  const index = queueArray.map((e) => e.userId).indexOf(message.author.id);
+  const index = queueArray.map((e) => e.userId).indexOf(interaction.member.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't leave now!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
   if (index === -1) {
     wrongEmbed.setTitle(":x: You aren't in the queue!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -34,10 +34,10 @@ const execute = async (message, queueSize) => {
   await redisInstance.setObject("channelQueues", channelQueues);
 
   correctEmbed.setTitle(
-    `:white_check_mark: ${message.author.username} left the queue! ${queueArray.length}/${queueSize}`
+    `:white_check_mark: ${interaction.member.user.username} left the queue! ${queueArray.length}/${queueSize}`
   );
 
-  sendMessage(message, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 };
 
 module.exports = {

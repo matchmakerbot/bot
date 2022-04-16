@@ -6,25 +6,28 @@ const Discord = require("discord.js");
 
 const fs = require("fs");
 
-const { sendMessage } = require("../utils/utils");
+const { sendReply } = require("../utils/utils");
 
 const commandFilesMatchmakerSolos = fs
   .readdirSync("./src/scripts/matchmaker/solos")
   .filter((file) => file.endsWith(".js"));
 
-const execute = (message) => {
+const execute = async (interaction) => {
   const discordEmbed = new Discord.MessageEmbed()
 
-    .setAuthor("MatchMaker Bot Help Page", "https://i.ibb.co/4drZsvN/Screenshot-4.png")
+    .setAuthor({ name: "Matchmaker Bot Help Page", iconURL: "https://i.ibb.co/4drZsvN/Screenshot-4.png" })
     .setColor("#F8534F")
-    .setTitle("For teams matchmaking help, please type !helpteamsmatchmaking");
+    .setTitle("For teams matchmaking help, please type /helpteamsmatchmaking");
   commandFilesMatchmakerSolos.forEach((file) => {
     const command = require(`./matchmaker/solos/${file}`);
     if (command.name != null) {
-      discordEmbed.addField(`!${command.name}`, command.description);
+      discordEmbed.addField(
+        `/${command.name}`,
+        command.helpDescription == null ? command.description : command.helpDescription
+      );
     }
   });
-  sendMessage(message, discordEmbed);
+  await sendReply(interaction, discordEmbed);
 };
 
 module.exports = {

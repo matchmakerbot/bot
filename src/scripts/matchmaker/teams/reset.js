@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendMessage } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getQueueArray, sendReply, getContent } = require("../../../utils/utils");
 
 const OngoingGamesMatchmakerTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema");
 
@@ -8,10 +8,10 @@ const TeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScor
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const execute = async (message, queueSize) => {
-  const channelId = message.channel.id;
+const execute = async (interaction, queueSize) => {
+  const channelId = interaction.channel.id;
 
-  const [, mode] = message.content.split(" ");
+  const [mode] = getContent(interaction);
 
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
@@ -19,19 +19,19 @@ const execute = async (message, queueSize) => {
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 
-  const queueArray = getQueueArray(channelQueues, queueSize, message.channel.id, message.guild.id);
+  const queueArray = getQueueArray(channelQueues, queueSize, interaction.channel.id, interaction.guild.id);
 
   if (queueArray.length === queueSize) {
     wrongEmbed.setTitle(":x: You can't reset the channel now!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (!message.member.hasPermission("ADMINISTRATOR")) {
+  if (!interaction.member.permissions.has("ADMINISTRATOR")) {
     wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -44,7 +44,7 @@ const execute = async (message, queueSize) => {
       if (fetchGamesByChannelId.length !== 0) {
         wrongEmbed.setTitle(":x: There are users in game!");
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
@@ -62,24 +62,24 @@ const execute = async (message, queueSize) => {
 
       correctEmbed.setTitle(":white_check_mark: Channel leaderboard reset!");
 
-      sendMessage(message, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       break;
     }
 
     case "team": {
-      let teamName = message.content.split(" ");
+      let teamName = getContent(interaction);
       teamName.splice(0, 2);
       teamName = teamName.join(" ");
 
       if (teamName === "" && !teamName) {
         wrongEmbed.setTitle(":x: You need to specify a team name!");
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
       const ongoingGame = await OngoingGamesMatchmakerTeamsCollection.findOne({
-        guildId: message.guild.id,
+        guildId: interaction.guild.id,
         $or: [
           {
             "team1.name": teamName,
@@ -93,41 +93,46 @@ const execute = async (message, queueSize) => {
       if (ongoingGame != null) {
         wrongEmbed.setTitle(":x: Team is in the middle of a game!");
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
-      const teamScore = TeamsScoreCollection.findOne({ channelId, guildId: message.guild.id, name: teamName });
+      const teamScore = TeamsScoreCollection.findOne({ channelId, guildId: interaction.guild.id, name: teamName });
 
       if (!teamScore) {
         wrongEmbed.setTitle(":x: This team hasn't played any games in this channel!");
 
-        sendMessage(message, wrongEmbed);
+        await sendReply(interaction, wrongEmbed);
         return;
       }
 
       await TeamsScoreCollection.deleteOne({
         name: teamScore.name,
-        guildId: message.guild.id,
+        guildId: interaction.guild.id,
         channelId,
       });
 
       correctEmbed.setTitle(":white_check_mark: Team's score reset!");
 
-      sendMessage(message, correctEmbed);
+      await sendReply(interaction, correctEmbed);
       break;
     }
     default: {
       wrongEmbed.setTitle(":x: Invalid Parameters!");
 
-      sendMessage(message, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
     }
   }
 };
 
 module.exports = {
   name: "reset",
-  description:
-    "Resets the score of an individual team (!reset team teamName) or the whole channel where this command is inserted (!reset channel)",
+  description: "Resets player or channel leaderboard",
+  helpDescription:
+    "Resets the score of an individual team (/reset team teamName) or the whole channel where this command is inserted (/reset channel)",
+  args: [
+    { name: "reset_type", description: "player or channel", required: true, type: "string" },
+    { name: "player_id", description: "player id", required: false, type: "string" },
+  ],
   execute,
 };

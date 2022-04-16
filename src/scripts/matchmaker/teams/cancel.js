@@ -1,31 +1,29 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent, sendReply } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
-const { sendMessage } = require("../../../utils/utils");
-
-const execute = async (message) => {
+const execute = async (interaction) => {
   const wrongEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_ERROR);
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-  const userId = message.author.id;
+  const userId = interaction.member.id;
 
-  const [, secondArg, gameIdInMessage] = message.content.split(" ");
+  const [secondArg, gameIdInMessage] = getContent(interaction);
 
   const cancelQueue = await redisInstance.getObject("cancelQueue");
 
   const deletableChannels = await redisInstance.getObject("deletableChannels");
 
   if (secondArg === "force") {
-    if (!message.member.hasPermission("ADMINISTRATOR")) {
+    if (!interaction.member.permissions.has("ADMINISTRATOR")) {
       wrongEmbed.setTitle(":x: You do not have Administrator permission!");
 
-      sendMessage(message, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
@@ -36,14 +34,14 @@ const execute = async (message) => {
     if (!fetchedGame) {
       wrongEmbed.setTitle(":x: Game not found!");
 
-      sendMessage(message, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
-    if (fetchedGame.channelId !== message.channel.id) {
+    if (fetchedGame.channelId !== interaction.channel.id) {
       wrongEmbed.setTitle(":x: This is the wrong channel!");
 
-      sendMessage(message, wrongEmbed);
+      await sendReply(interaction, wrongEmbed);
       return;
     }
 
@@ -57,7 +55,7 @@ const execute = async (message) => {
       await redisInstance.setObject("cancelQueue", cancelQueue);
     }
 
-    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
+    const deletableChannel = { originalChannelId: interaction.channel.id, channelIds: [...fetchedGame.channelIds] };
 
     deletableChannels.push(deletableChannel);
 
@@ -65,12 +63,12 @@ const execute = async (message) => {
 
     correctEmbed.setTitle(`:white_check_mark: Game ${fetchedGame.gameId} Cancelled!`);
 
-    sendMessage(message, correctEmbed);
+    await sendReply(interaction, correctEmbed);
     return;
   }
 
   const fetchedGame = await OngoingGamesTeamsCollection.findOne({
-    channelId: message.channel.id,
+    channelId: interaction.channel.id,
     $or: [
       {
         "team1.captain": userId,
@@ -86,7 +84,7 @@ const execute = async (message) => {
       ":x: You aren't in a game, or the game is in a different guild/channel, or you're not the captain!"
     );
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -96,14 +94,15 @@ const execute = async (message) => {
     cancelQueue[gameId] = [];
   }
 
-  const teamName = fetchedGame.team1.captain === message.author.id ? fetchedGame.team1.name : fetchedGame.team2.name;
+  const teamName =
+    fetchedGame.team1.captain === interaction.member.id ? fetchedGame.team1.name : fetchedGame.team2.name;
 
   const cancelQueueArray = cancelQueue[gameId];
 
   if (cancelQueueArray.includes(teamName)) {
     wrongEmbed.setTitle(":x: You've already voted to cancel!");
 
-    sendMessage(message, wrongEmbed);
+    await sendReply(interaction, wrongEmbed);
     return;
   }
 
@@ -113,12 +112,12 @@ const execute = async (message) => {
 
   correctEmbed.setTitle(`:exclamation: ${teamName} wants to cancel game ${gameId}. (${cancelQueueArray.length}/2)`);
 
-  sendMessage(message, correctEmbed);
+  await sendReply(interaction, correctEmbed);
 
   if (cancelQueueArray.length === 2) {
     const newCorrectEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
-    const deletableChannel = { originalChannelId: message.channel.id, channelIds: [...fetchedGame.channelIds] };
+    const deletableChannel = { originalChannelId: interaction.channel.id, channelIds: [...fetchedGame.channelIds] };
 
     deletableChannels.push(deletableChannel);
 
@@ -134,13 +133,13 @@ const execute = async (message) => {
       gameId,
     });
 
-    sendMessage(message, newCorrectEmbed);
+    await sendReply(interaction, newCorrectEmbed);
   }
 };
 
 module.exports = {
   name: "cancel",
-  description:
-    "Cancel the game (Only use this in the case of someone not playing etc...) Administrators can also do !cancel force gameId to force a game cancellatio",
+  description: "Cancel the game. Administrators can also do /cancel force gameId to force a game cancellation",
+  args: [{ name: "cancel_type", description: "force", required: false, type: "string" }],
   execute,
 };
