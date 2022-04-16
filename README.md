@@ -24,9 +24,9 @@ The bot will then create the teams and 2 different voice chats for each team to 
 
 Once the game has been completed, one player reports a win or loss to the bot. the bot will then automaticly give or take mmr from each player, dependent on wich team they were on, if abused, admins can revert the game.
 
-All commands can be seen using !helpsolosmatchmaking or !helpteammatchmaking
+All commands can be seen using /helpsolosmatchmaking or /helpteammatchmaking
 
-Hope you enjoy the bot. If you need any help feel free to use the !credits command to either report issues on my github or send me a pm on discord with questions, as i'll be there to answer any questions you may have.
+Hope you enjoy the bot. If you need any help feel free to use the /credits command to either report issues on my github or send me a pm on discord with questions, as i'll be there to answer any questions you may have.
 
 https://top.gg/bot/571839826744180736
 

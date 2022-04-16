@@ -266,7 +266,7 @@ const execute = async (interaction, queueSize) => {
       );
 
       correctEmbed.setTitle(
-        "A game has been made! Please select your preferred gamemode: Captains (Reaction C), Random (Reaction R) or Balance by MMR (Reaction B, still experimental, contact me with !credits if bugs are found) (Captains disabled for queues with less than 6 players)"
+        "A game has been made! Please select your preferred gamemode: Captains (Reaction C), Random (Reaction R) or Balance by MMR (Pls do /credits and send me a dm if you find bugs I had no ppl to test the v13 change lol)"
       );
 
       const rorcCount = {
@@ -668,5 +668,7 @@ module.exports = {
   name: "q",
   description:
     "Enter the queue (removes player after 45 minutes if no game has been made) (no need to set user if mode is solos)",
+  helpDescription:
+    "Enter the queue (removes player after 45 minutes if no game has been made) (no need to set user if mode is solos) (Captains disabled for queues with less than 6 players)",
   execute,
 };

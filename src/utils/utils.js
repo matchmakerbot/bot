@@ -13,9 +13,7 @@ const gameCount = {
 };
 
 // shits dumb, but cant be arsed to do it the right way, because im lazy
-const getContent = (interaction) => {
-  return interaction.options._hoistedOptions.map((e) => e.value);
-};
+const getContent = (interaction) => interaction.options._hoistedOptions.map((e) => e.value);
 
 const handleMesssageError = async (memberId) => {
   await client.users
