@@ -207,9 +207,9 @@ const execute = async (interaction, queueSize) => {
           .create(`🔸Team-${gameCreatedObj.team1.name}-Game-${gameCreatedObj.gameId}`, {
             type: "GUILD_VOICE",
             permissionOverwrites: permissionOverwritesTeam1,
+            parent: interaction.channel.parentId,
           })
           .then((e) => {
-            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>
@@ -234,9 +234,9 @@ const execute = async (interaction, queueSize) => {
           .create(`🔹Team-${gameCreatedObj.team2.name}-Game-${gameCreatedObj.gameId}`, {
             type: "GUILD_VOICE",
             permissionOverwrites: permissionOverwritesTeam2,
+            parent: interaction.channel.parentId,
           })
           .then((e) => {
-            e.setParent(interaction.channel.parentId);
             gameCreatedObj.channelIds.push(e.id);
           })
           .catch(() =>

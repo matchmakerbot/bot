@@ -51,7 +51,7 @@ const execute = async (interaction) => {
 
 module.exports = {
   name: "ongoinggames",
-  description: "Check the current games!",
+  description: "Check the current games! Usage: /ongoinggames <page> (default is 1)",
   args: [{ name: "page", description: "page", required: false, type: "string" }],
   execute,
 };
