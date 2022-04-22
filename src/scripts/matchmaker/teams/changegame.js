@@ -105,7 +105,7 @@ const execute = async (interaction) => {
 module.exports = {
   name: "changegame",
   description: "Cancels/reverts score of a finished game",
-  helpdescription:
+  helpDescription:
     "Cancels/reverts score of a finished game. Usage: /changegame (gameid) cancel, this example will cancel the game, as it never happen. /changegame (gameid) revert, this example will revert the scores",
   args: [
     { name: "gameid", description: "gameid", required: true, type: "string" },
