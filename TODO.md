@@ -8,3 +8,6 @@ join teams and solos files
 update name in q if its diff from api
 make it so that admins can force gamemodes
 league style role picking
+
+Errors
+cancel not deleting vc

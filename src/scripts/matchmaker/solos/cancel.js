@@ -2,7 +2,7 @@ const Discord = require("discord.js");
 
 const OngoingGamesSolosCollection = require("../../../utils/schemas/ongoingGamesSolosSchema");
 
-const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent } = require("../../../utils/utils");
+const { sendReply, EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent, sendFollowUp } = require("../../../utils/utils");
 
 const { redisInstance } = require("../../../utils/createRedisInstance");
 
@@ -129,7 +129,7 @@ const execute = async (interaction, queueSize) => {
       gameId,
     });
 
-    await sendReply(interaction, newCorrectEmbed);
+    await sendFollowUp(interaction, newCorrectEmbed);
   }
 };
 

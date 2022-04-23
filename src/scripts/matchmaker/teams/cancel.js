@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 
-const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent, sendReply } = require("../../../utils/utils");
+const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, getContent, sendReply, sendFollowUp } = require("../../../utils/utils");
 
 const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGamesTeamsSchema.js");
 
@@ -133,7 +133,7 @@ const execute = async (interaction) => {
       gameId,
     });
 
-    await sendReply(interaction, newCorrectEmbed);
+    await sendFollowUp(interaction, newCorrectEmbed);
   }
 };
 
