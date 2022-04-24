@@ -34,6 +34,7 @@ https://top.gg/bot/571839826744180736
 
 The following environment variabled are required to run the container:
 - **TOKEN**: Discord Bot Token.
+- **CLIENT_ID**: Discord Bot Client Id.
 - **REDIS_PASSWORD**: Redis Password
 - **MONGO_USERNAME**: MongoDB username.
 - **MONGO_PASSWORD**: MongoDB password.

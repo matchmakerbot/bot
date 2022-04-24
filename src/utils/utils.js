@@ -145,4 +145,5 @@ module.exports = {
   sendReply,
   sendFollowUp,
   getContent,
+  handleMesssageError,
 };

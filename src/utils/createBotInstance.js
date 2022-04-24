@@ -17,6 +17,8 @@ const { REST } = require("@discordjs/rest");
 
 const { Routes } = require("discord-api-types/v9");
 
+const { handleMesssageError } = require("./utils");
+
 const client = require("./createClientInstance.js");
 
 const { redisInstance } = require("./createRedisInstance");
@@ -146,9 +148,13 @@ const createBotInstance = async () => {
 
   client.on("messageCreate", async (message) => {
     if (message.content.startsWith(process.env.PREFIX) && client.commands.has(message.content.slice(1).split(" ")[0])) {
-      message.channel.send(
-        "The prefix for this bot has changed from ! to / (slash command) , because of discord's new message content policy, which does not allow bots to track message content anymore without discord validation \nIf you can't see the slash interactions, please re-invite the bot in this link https://discord.com/api/oauth2/authorize?client_id=571839826744180736&permissions=2147486800&scope=applications.commands%20bot\nIf you still have issues, toss me a dm Tweeno#8687"
-      );
+      await message.channel
+        .send(
+          "The prefix for this bot has changed from ! to / (slash command) , because of discord's new message content policy, which does not allow bots to track message content anymore without discord validation \nIf you can't see the slash interactions, please re-invite the bot in this link https://discord.com/api/oauth2/authorize?client_id=571839826744180736&permissions=2147486800&scope=applications.commands%20bot\nIf you still have issues, toss me a dm Tweeno#8687"
+        )
+        .catch(async () => {
+          await handleMesssageError(message.member.id);
+        });
     }
   });
 
