@@ -95,10 +95,10 @@ const createBotInstance = async () => {
     logger.info(`Scripts loaded: ${[...client.commands].length}`);
 
     logger.info("Successfully created socket Client.Once -> Ready");
-  } catch (e) {
+  } catch (err) {
     logger.error("Error creating event listener Client.once -> Ready");
 
-    logger.error(e);
+    logger.error(err);
   }
 
   try {
@@ -140,10 +140,10 @@ const createBotInstance = async () => {
     await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: commands });
 
     logger.info("Successfully registered application commands.");
-  } catch (e) {
+  } catch (err) {
     logger.error("Error registering application commands.");
 
-    logger.error(e);
+    logger.error(err);
   }
 
   client.on("messageCreate", async (message) => {
@@ -160,7 +160,7 @@ const createBotInstance = async () => {
 
   try {
     client.on("interactionCreate", async (interaction) => {
-      if (!interaction.isCommand()) return;
+      if (!interaction.isCommand() || !interaction.member) return;
 
       const { commandName } = interaction;
 
@@ -188,37 +188,43 @@ const createBotInstance = async () => {
         )
           return;
 
-        require(`../scripts/matchmaker/${queueTypeObject[interaction.channel.id].queueMode}/${commandName}.js`).execute(
-          interaction,
-          queueTypeObject[interaction.channel.id].queueSize
-        );
+        await require(`../scripts/matchmaker/${queueTypeObject[interaction.channel.id].queueMode}/${commandName}.js`)
+          .execute(interaction, queueTypeObject[interaction.channel.id].queueSize)
+          .catch((err) => {
+            logger.error(err);
+          });
 
         return;
       }
-      client.commands.get(commandName).execute(interaction);
+      await client.commands
+        .get(commandName)
+        .execute(interaction)
+        .catch((err) => {
+          logger.error(err);
+        });
     });
     logger.info("Successfully created socket Client.on -> interactionCreate");
-  } catch (e) {
+  } catch (err) {
     logger.error("Error creating event listener Client.on -> interactionCreate");
 
-    logger.error(e);
+    logger.error(err);
   }
   try {
     client.on("guildCreate", async (guild) => {
       logger.info(`Joined ${guild.name}`);
     });
     logger.info("Successfully created socket Client.on -> guildCreate");
-  } catch (e) {
+  } catch (err) {
     logger.error("Error creating event listener Client.on -> guildCreate");
 
-    logger.error(e);
+    logger.error(err);
   }
   try {
     await client.login(process.env.TOKEN);
     logger.info("Successfully logged in");
-  } catch (e) {
+  } catch (err) {
     logger.error("Error logging in");
-    logger.error(e);
+    logger.error(err);
   }
 };
 
