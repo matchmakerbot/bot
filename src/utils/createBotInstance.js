@@ -85,7 +85,6 @@ const createBotInstance = async () => {
           client.guilds.cache.map((a) => a.name).length
         }`
       );
-      // change to /
       client.user.setActivity("/help", {
         type: "STREAMING",
         url: "https://www.twitch.tv/tweenoTV",

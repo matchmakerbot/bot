@@ -651,13 +651,17 @@ const execute = async (interaction, queueSize) => {
 
       await redisInstance.setObject("channelQueues", channelQueues);
     } catch (e) {
-      wrongEmbed.setTitle(":x: Error creating teams, resetting queue.");
+      wrongEmbed.setTitle(
+        ":x: Error creating teams, most likely because of a permission that was not granted. Resetting queue"
+      );
 
       sendFollowUp(interaction, wrongEmbed);
 
       queueArray.splice(0, queueSize);
 
       await redisInstance.setObject("channelQueues", channelQueues);
+
+      logger.info(interaction.guild.id);
 
       logger.error(e);
     }

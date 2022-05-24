@@ -157,7 +157,8 @@ const updateChannels = async () => {
           if (e.type === "GUILD_TEXT" || e.members?.size === 0) {
             await e
               .delete()
-              .catch(async () => {
+              .catch(async (err) => {
+                logger.error(err);
                 warnNonDeletableChannel(deletableChannel.originalChannelId, 0);
               })
               .finally(() => {
@@ -165,7 +166,8 @@ const updateChannels = async () => {
               });
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          logger.error(err);
           deleteVC.push(channel);
           warnNonDeletableChannel(deletableChannel.originalChannelId, 1);
         });
