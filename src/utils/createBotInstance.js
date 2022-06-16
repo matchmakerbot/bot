@@ -72,7 +72,7 @@ const createBotInstance = async () => {
     reply.send("alive");
   });
 
-  fastify.listen(123, "0.0.0.0", (err) => {
+  fastify.listen(3000, "0.0.0.0", (err) => {
     if (err) throw err;
   });
 
