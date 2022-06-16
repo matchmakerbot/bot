@@ -19,7 +19,6 @@ const {
   getQueueArray,
   EMBED_COLOR_ERROR,
   EMBED_COLOR_WARNING,
-  gameCount,
   shuffle,
   balanceTeamsByMmr,
 } = require("../../../utils/utils.js");
@@ -210,7 +209,11 @@ const execute = async (interaction, queueSize) => {
     try {
       const channelData = await ChannelsCollection.findOne({ channelId: interaction.channel.id });
 
+      const gameCount = await redisInstance.getObject("gameCount");
+
       gameCount.value++;
+
+      await redisInstance.setObject("gameCount", gameCount);
 
       const gameCreatedObj = {
         queueSize,

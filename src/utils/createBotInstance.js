@@ -72,7 +72,7 @@ const createBotInstance = async () => {
     reply.send("alive");
   });
 
-  fastify.listen(3000, "0.0.0.0", (err) => {
+  fastify.listen(123, "0.0.0.0", (err) => {
     if (err) throw err;
   });
 
@@ -80,6 +80,7 @@ const createBotInstance = async () => {
 
   try {
     client.once("ready", async () => {
+      logger.info(`People: ${client.guilds.cache.reduce((a, b) => a + b.memberCount, 0)}`);
       logger.info(
         `Guilds: ${client.guilds.cache.map((a) => a.name).join(" || ")}\nNumber of Guilds: ${
           client.guilds.cache.map((a) => a.name).length
@@ -163,6 +164,18 @@ const createBotInstance = async () => {
 
       const { commandName } = interaction;
 
+      const warnedChannels = await redisInstance.getObject("warnedChannels");
+
+      if (!warnedChannels.includes(interaction.channel.id)) {
+        interaction.channel.send(
+          "A new website for the bot has been released where you can see all commands and check the leaderboard! (It is still in development, so a few bugs may occur) https://matchmakerbot.net"
+        );
+
+        warnedChannels.push(interaction.channel.id);
+
+        await redisInstance.setObject("warnedChannels", warnedChannels);
+      }
+
       if (commandFilesMatchmakerSolos.includes(commandName) || commandFilesMatchmakerTeams.includes(commandName)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
         if (!queueTypeObject[interaction.channel.id]) {
@@ -190,6 +203,9 @@ const createBotInstance = async () => {
         await require(`../scripts/matchmaker/${queueTypeObject[interaction.channel.id].queueMode}/${commandName}.js`)
           .execute(interaction, queueTypeObject[interaction.channel.id].queueSize)
           .catch((err) => {
+            interaction.channel.send(
+              "An error occured while executing the command, please contact Tweeno#8687, so they can try and fix it as soon as possible!"
+            );
             logger.error(err);
           });
 
@@ -199,6 +215,9 @@ const createBotInstance = async () => {
         .get(commandName)
         .execute(interaction)
         .catch((err) => {
+          interaction.channel.send(
+            "An error occured while executing the command, please contact Tweeno#8687, so they can try and fix it as soon as possible!"
+          );
           logger.error(err);
         });
     });

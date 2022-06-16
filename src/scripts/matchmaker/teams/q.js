@@ -20,7 +20,6 @@ const {
   EMBED_COLOR_WARNING,
   getQueueArray,
   shuffle,
-  gameCount,
   sendReply,
   sendFollowUp,
 } = require("../../../utils/utils");
@@ -136,7 +135,11 @@ const execute = async (interaction, queueSize) => {
 
   if (queueArray.length === 2) {
     try {
+      const gameCount = await redisInstance.getObject("gameCount");
+
       gameCount.value++;
+
+      await redisInstance.setObject("gameCount", gameCount);
 
       shuffle(queueArray);
 

@@ -25,14 +25,14 @@ const execute = async (interaction, queueSize) => {
     return;
   }
 
-  if (!interaction.mentions.members.first()) {
+  const pingedUser = interaction.options.getUser("user");
+
+  if (!pingedUser) {
     wrongEmbed.setTitle(":x: Please tag the user");
 
     await sendReply(interaction, wrongEmbed);
     return;
   }
-
-  const pingedUser = interaction.options.getUser("user");
 
   const channelQueues = await redisInstance.getObject("channelQueues");
 

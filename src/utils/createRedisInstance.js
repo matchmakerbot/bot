@@ -10,6 +10,8 @@ const cacheObject = {
   cancelQueue: {},
   invites: {},
   channels: [],
+  gameCount: { value: 0 },
+  warnedChannels: [],
 };
 
 class RedisInstance {

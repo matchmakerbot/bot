@@ -8,10 +8,6 @@ const EMBED_COLOR_CHECK = "#77B255";
 
 const EMBED_COLOR_WARNING = "#B78727";
 
-const gameCount = {
-  value: 0,
-};
-
 // shits dumb, but cant be arsed to do it the right way, because im lazy
 const getContent = (interaction) => interaction.options._hoistedOptions.map((e) => e.value);
 
@@ -139,7 +135,6 @@ module.exports = {
   EMBED_COLOR_ERROR,
   getQueueArray,
   EMBED_COLOR_WARNING,
-  gameCount,
   shuffle,
   balanceTeamsByMmr,
   sendReply,
