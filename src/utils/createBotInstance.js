@@ -167,9 +167,13 @@ const createBotInstance = async () => {
       const warnedChannels = await redisInstance.getObject("warnedChannels");
 
       if (!warnedChannels.includes(interaction.channel.id)) {
-        interaction.channel.send(
-          "A new website for the bot has been released where you can see all commands and check the leaderboard! (It is still in development, so a few bugs may occur) https://matchmakerbot.net"
-        );
+        interaction.channel
+          .send(
+            "A new website for the bot has been released where you can see all commands and check the leaderboard! (It is still in development, so a few bugs may occur) https://matchmakerbot.net"
+          )
+          .catch(async () => {
+            await handleMesssageError(interaction.member.id);
+          });
 
         warnedChannels.push(interaction.channel.id);
 
