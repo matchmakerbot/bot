@@ -24,6 +24,13 @@ const execute = async (interaction) => {
         $or: [{ captain: userId }, { memberIds: { $in: userId } }],
       });
 
+      if (!team) {
+        wrongEmbed.setTitle(":x: You haven't played any games yet!");
+
+        await sendReply(interaction, wrongEmbed);
+        return;
+      }
+
       const teamScore = await MatchmakerTeamsScoreCollection.findOne({
         channelId,
         name: team.name,
