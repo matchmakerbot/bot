@@ -67,14 +67,7 @@ const execute = async (interaction) => {
         skipCount = 1;
       }
 
-      if (
-        fourthArg != null &&
-        (interaction.guild.channels.cache.size === 0 ||
-          !interaction.guild.channels.cache
-            .array()
-            .map((e) => e.id)
-            .includes(fourthArg))
-      ) {
+      if (fourthArg != null && !interaction.guild.channels.cache.map((e) => e.id).includes(fourthArg)) {
         wrongEmbed.setTitle(":x: That channel does not belong to this server, or the channel is not in the bot cache!");
 
         await sendReply(interaction, wrongEmbed);
