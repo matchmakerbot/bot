@@ -66,4 +66,4 @@ I use GitHub Actions CI/CD and Kubernetes for my deployments. All required into 
 
 ## Authors
 
-- **David Pinto** *(iTweeno)*
+- **David**
