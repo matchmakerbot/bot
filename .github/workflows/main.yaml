@@ -51,6 +51,12 @@ jobs:
           chmod +x install.sh
           ./install.sh --accept-all-defaults
           echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Set up OCI credentials
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_CONFIG }}" | base64 -d > ~/.oci/config
+          echo "${{ secrets.OCI_API_KEY }}" | base64 -d > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
