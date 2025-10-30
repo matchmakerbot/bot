@@ -86,10 +86,6 @@ const createBotInstance = async () => {
           client.guilds.cache.map((a) => a.name).length
         }`
       );
-      client.user.setActivity("/help", {
-        type: "STREAMING",
-        url: "https://www.twitch.tv/tweenoTV",
-      });
     });
 
     logger.info(`Scripts loaded: ${[...client.commands].length}`);
@@ -122,6 +118,18 @@ const createBotInstance = async () => {
               }
               case "string": {
                 builder.addStringOption((option) => {
+                  return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+                });
+                break;
+              }
+              case "integer": {
+                builder.addIntegerOption((option) => {
+                  return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
+                });
+                break;
+              }
+              case "boolean": {
+                builder.addBooleanOption((option) => {
                   return option.setName(arg.name).setRequired(arg.required).setDescription(arg.description);
                 });
                 break;
@@ -164,22 +172,6 @@ const createBotInstance = async () => {
 
       const { commandName } = interaction;
 
-      const warnedChannels = await redisInstance.getObject("warnedChannels");
-
-      if (!warnedChannels.includes(interaction.channel.id)) {
-        interaction.channel
-          .send(
-            "A new website for the bot has been released where you can see all commands and check the leaderboard! (It is still in development, so a few bugs may occur) https://matchmakerbot.net"
-          )
-          .catch(async () => {
-            await handleMesssageError(interaction.member.id);
-          });
-
-        warnedChannels.push(interaction.channel.id);
-
-        await redisInstance.setObject("warnedChannels", warnedChannels);
-      }
-
       if (commandFilesMatchmakerSolos.includes(commandName) || commandFilesMatchmakerTeams.includes(commandName)) {
         const queueTypeObject = await redisInstance.getObject("queueTypeObject");
         if (!queueTypeObject[interaction.channel.id]) {
@@ -208,10 +200,11 @@ const createBotInstance = async () => {
           .execute(interaction, queueTypeObject[interaction.channel.id].queueSize)
           .catch((err) => {
             interaction.channel.send(
-              "An error occured while executing the command, please contact Tweeno#8687, so they can try and fix it as soon as possible!"
+              "An error occured while executing the command, please contact thisDavid, so they can try and fix it as soon as possible!"
             );
             logger.error(err);
-          });
+          })
+          .catch(() => {});
 
         return;
       }
@@ -220,10 +213,11 @@ const createBotInstance = async () => {
         .execute(interaction)
         .catch((err) => {
           interaction.channel.send(
-            "An error occured while executing the command, please contact Tweeno#8687, so they can try and fix it as soon as possible!"
+            "An error occured while executing the command, please contact thisDavid, so they can try and fix it as soon as possible!"
           );
           logger.error(err);
-        });
+        })
+        .catch(() => {});
     });
     logger.info("Successfully created socket Client.on -> interactionCreate");
   } catch (err) {
