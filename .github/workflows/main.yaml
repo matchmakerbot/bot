@@ -45,6 +45,12 @@ jobs:
         run: echo $KUBE_CONFIG | base64 --decode > $GITHUB_WORKSPACE/.kubeconfig
         env:
           KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      - name: Install OCI CLI
+        run: |
+          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh -o install.sh
+          chmod +x install.sh
+          ./install.sh --accept-all-defaults
+          echo "$HOME/bin" >> $GITHUB_PATH
       - name: Install helm
         run: curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
       - name: Update deployment
