@@ -5,7 +5,11 @@ const OngoingGamesTeamsCollection = require("../../../utils/schemas/ongoingGames
 
 const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmakerTeamsScoreSchema");
 
+const ServerSettingsCollection = require("../../../utils/schemas/serverSettingsSchema");
+
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
+
+const client = require("../../../utils/createClientInstance.js");
 
 const { EMBED_COLOR_CHECK, EMBED_COLOR_ERROR, sendReply, getContent } = require("../../../utils/utils");
 
@@ -43,6 +47,8 @@ const execute = async (interaction) => {
 
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
+  const warningEmbed = new Discord.MessageEmbed().setColor("#FFA500");
+
   const userId = interaction.member.id;
 
   const channelId = interaction.channel.id;
@@ -50,12 +56,10 @@ const execute = async (interaction) => {
   const ongoingGame = await OngoingGamesTeamsCollection.findOne({
     channelId,
     $or: [
-      {
-        "team1.captain": userId,
-      },
-      {
-        "team2.captain": userId,
-      },
+      { "team1.memberIds": userId },
+      { "team1.captain": userId },
+      { "team2.memberIds": userId },
+      { "team2.captain": userId },
     ],
   });
 
@@ -69,19 +73,134 @@ const execute = async (interaction) => {
   }
 
   if (!["win", "lose"].includes(param)) {
-    wrongEmbed.setTitle(":x: Invalid parameter, please use !report win or !report lose");
+    wrongEmbed.setTitle(":x: Invalid parameter, please use /report win or /report lose");
 
     await sendReply(interaction, wrongEmbed);
     return;
   }
 
-  if (
-    (ongoingGame.team1.captain === interaction.member.id && param === "win") ||
-    (ongoingGame.team2.captain === interaction.member.id && param === "lose")
-  ) {
-    ongoingGame.winningTeam = 0;
-  } else {
-    ongoingGame.winningTeam = 1;
+  const isTeam1 = ongoingGame.team1.captain === userId || ongoingGame.team1.memberIds.includes(userId);
+  const userTeam = isTeam1 ? "team1" : "team2";
+  const userTeamName = isTeam1 ? ongoingGame.team1.name : ongoingGame.team2.name;
+  const otherTeamName = isTeam1 ? ongoingGame.team2.name : ongoingGame.team1.name;
+
+  if (!ongoingGame.team1Reports) ongoingGame.team1Reports = [];
+  if (!ongoingGame.team2Reports) ongoingGame.team2Reports = [];
+
+  const userTeamReports = userTeam === "team1" ? ongoingGame.team1Reports : ongoingGame.team2Reports;
+  const otherTeamReports = userTeam === "team1" ? ongoingGame.team2Reports : ongoingGame.team1Reports;
+
+  const hasReported = userTeamReports.some((report) => report.userId === userId);
+  if (hasReported) {
+    wrongEmbed.setTitle(":x: You have already reported the result for this game!");
+    await sendReply(interaction, wrongEmbed);
+    return;
+  }
+
+  const newReport = {
+    userId,
+    result: param,
+    timestamp: new Date(),
+  };
+
+  userTeamReports.push(newReport);
+
+  await OngoingGamesTeamsCollection.updateOne(
+    { gameId: ongoingGame.gameId },
+    {
+      [`${userTeam}Reports`]: userTeamReports,
+    }
+  );
+
+  if (otherTeamReports.length === 0) {
+    correctEmbed.setTitle(`:white_check_mark: Report Submitted!`);
+    correctEmbed.setDescription(
+      `Team **${userTeamName}** reported **${param}**.\n\nWaiting for team **${otherTeamName}** to report their result.`
+    );
+    await sendReply(interaction, correctEmbed);
+    return;
+  }
+
+  const team1Result = ongoingGame.team1Reports[0].result;
+  const team2Result = ongoingGame.team2Reports[0].result;
+
+  const conflict =
+    (team1Result === "win" && team2Result === "win") || (team1Result === "lose" && team2Result === "lose");
+
+  if (conflict) {
+    const disputeReason = `Team ${ongoingGame.team1.name} reported ${team1Result}, Team ${ongoingGame.team2.name} reported ${team2Result}`;
+
+    await OngoingGamesTeamsCollection.updateOne(
+      { gameId: ongoingGame.gameId },
+      {
+        dispute: true,
+        disputeReason,
+      }
+    );
+
+    warningEmbed.setTitle("⚠️ Dispute Detected!");
+    warningEmbed.setDescription(
+      `**Conflicting reports:**\n` +
+        `• Team **${ongoingGame.team1.name}** reported: **${team1Result}**\n` +
+        `• Team **${ongoingGame.team2.name}** reported: **${team2Result}**\n\n` +
+        `Administrators have been notified in the admin channel.\n\n` +
+        `Game ID: **${ongoingGame.gameId}**`
+    );
+
+    await sendReply(interaction, warningEmbed);
+
+    try {
+      const serverSettings = await ServerSettingsCollection.findOne({ guildId: ongoingGame.guildId });
+
+      if (serverSettings?.adminChannelId) {
+        const adminChannel = await client.channels.fetch(serverSettings.adminChannelId);
+
+        if (adminChannel) {
+          const adminEmbed = new Discord.MessageEmbed()
+            .setColor("#FFA500")
+            .setTitle("⚠️ Game Dispute Requires Resolution")
+            .setDescription(
+              `**Game ID:** ${ongoingGame.gameId}\n` +
+                `**Channel:** <#${ongoingGame.channelId}>\n\n` +
+                `**Conflicting Reports:**\n` +
+                `• Team **${ongoingGame.team1.name}** reported: **${team1Result}**\n` +
+                `• Team **${ongoingGame.team2.name}** reported: **${team2Result}**\n\n` +
+                `**Choose the winning team below:**`
+            )
+            .addField("Team 1", ongoingGame.team1.name, true)
+            .addField("Team 2", ongoingGame.team2.name, true)
+            .setFooter({ text: `Game ID: ${ongoingGame.gameId}` })
+            .setTimestamp();
+
+          const row = new Discord.MessageActionRow().addComponents(
+            new Discord.MessageButton()
+              .setCustomId(`dispute_resolve_${ongoingGame.gameId}_1`)
+              .setLabel(`${ongoingGame.team1.name} Wins`)
+              .setStyle("SUCCESS"),
+            new Discord.MessageButton()
+              .setCustomId(`dispute_resolve_${ongoingGame.gameId}_2`)
+              .setLabel(`${ongoingGame.team2.name} Wins`)
+              .setStyle("PRIMARY"),
+            new Discord.MessageButton()
+              .setCustomId(`dispute_cancel_${ongoingGame.gameId}`)
+              .setLabel("Cancel Game")
+              .setStyle("DANGER")
+          );
+
+          await adminChannel.send({ embeds: [adminEmbed], components: [row] });
+        }
+      }
+      // eslint-disable-next-line no-empty
+    } catch (e) {}
+
+    return;
+  }
+
+  let winningTeam;
+  if (team1Result === "win" && team2Result === "lose") {
+    winningTeam = 0;
+  } else if (team1Result === "lose" && team2Result === "win") {
+    winningTeam = 1;
   }
 
   const mmrOfEachTeam = {
@@ -89,14 +208,14 @@ const execute = async (interaction) => {
     team2: ongoingGame.team2.mmr,
   };
 
-  const winningTeamMmr = ongoingGame.winningTeam === 0 ? mmrOfEachTeam.team1 : mmrOfEachTeam.team2;
+  const winningTeamMmr = winningTeam === 0 ? mmrOfEachTeam.team1 : mmrOfEachTeam.team2;
 
   const mmrDifference = Math.abs(
     Math.round(
       elo.updateRating(
         elo.getExpected(
           winningTeamMmr,
-          winningTeamMmr === ongoingGame.team1 ? mmrOfEachTeam.team2 : mmrOfEachTeam.team1
+          winningTeamMmr === ongoingGame.team1.mmr ? mmrOfEachTeam.team2 : mmrOfEachTeam.team1
         ),
         1,
         winningTeamMmr
@@ -108,7 +227,7 @@ const execute = async (interaction) => {
     channelId: ongoingGame.channelId,
     guildId: ongoingGame.guildId,
     gameId: ongoingGame.gameId,
-    winningTeam: ongoingGame.winningTeam,
+    winningTeam,
     mmrOfEachTeam,
     mmrDifference,
     team1: ongoingGame.team1,
@@ -136,6 +255,11 @@ const execute = async (interaction) => {
   await redisInstance.setObject("deletableChannels", deletableChannels);
 
   correctEmbed.setTitle(":white_check_mark: Game Completed! Thank you for Playing!");
+  correctEmbed.setDescription(
+    `Both teams confirmed the result.\n\n**Winner:** Team **${
+      winningTeam === 0 ? ongoingGame.team1.name : ongoingGame.team2.name
+    }**`
+  );
 
   await sendReply(interaction, correctEmbed);
 };

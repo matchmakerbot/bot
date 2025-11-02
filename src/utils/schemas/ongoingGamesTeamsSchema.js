@@ -25,6 +25,23 @@ const schema = new mongoose.Schema(
         type: String,
       },
     ],
+    team1Reports: [
+      {
+        userId: String,
+        result: String,
+        timestamp: Date,
+      },
+    ],
+    team2Reports: [
+      {
+        userId: String,
+        result: String,
+        timestamp: Date,
+      },
+    ],
+    dispute: { type: Boolean, default: false },
+    disputeReason: String,
+    winningTeam: Number,
   },
   { collection: "ongoingGamesTeams", versionKey: false }
 );

@@ -19,6 +19,8 @@ const { Routes } = require("discord-api-types/v9");
 
 const { handleMesssageError } = require("./utils");
 
+const { handleDisputeButton } = require("./handleDisputeButton");
+
 const client = require("./createClientInstance.js");
 
 const { redisInstance } = require("./createRedisInstance");
@@ -168,6 +170,16 @@ const createBotInstance = async () => {
 
   try {
     client.on("interactionCreate", async (interaction) => {
+      if (interaction.isButton()) {
+        const { customId } = interaction;
+
+        if (customId.startsWith("dispute_")) {
+          await handleDisputeButton(interaction);
+          return;
+        }
+        return;
+      }
+
       if (!interaction.isCommand() || !interaction.member) return;
 
       const { commandName } = interaction;

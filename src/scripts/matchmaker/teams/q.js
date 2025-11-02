@@ -12,6 +12,8 @@ const MatchmakerTeamsScoreCollection = require("../../../utils/schemas/matchmake
 
 const ChannelsCollection = require("../../../utils/schemas/channelsSchema.js");
 
+const ServerSettingsCollection = require("../../../utils/schemas/serverSettingsSchema.js");
+
 const { redisInstance } = require("../../../utils/createRedisInstance.js");
 
 const {
@@ -32,6 +34,18 @@ const execute = async (interaction, queueSize) => {
   const correctEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK);
 
   const channelId = interaction.channel.id;
+
+  const serverSettings = await ServerSettingsCollection.findOne({ guildId: interaction.guild.id });
+
+  if (!serverSettings || !serverSettings.adminChannelId) {
+    wrongEmbed.setTitle(":x: Admin Channel Not Configured!");
+    wrongEmbed.setDescription(
+      "An administrator must set up an admin notification channel before matchmaking can be used.\n\n" +
+        "**Admins:** Use `/setadminchannel` in your desired admin channel to configure it."
+    );
+    await sendReply(interaction, wrongEmbed);
+    return;
+  }
 
   const fetchedTeam = await MatchmakerTeamsCollection.findOne({
     guildId: interaction.guild.id,
@@ -314,11 +328,22 @@ const execute = async (interaction, queueSize) => {
       sendFollowUp(interaction, discordEmbed1);
 
       if (channelData.sendDirectMessage) {
-        const JoinMatchEmbed = new Discord.MessageEmbed()
-          .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name.toString())
-          .addField("Password:", valuesforpm.password.toString())
-          .addField("You have to:", `Join match(Created by <@${gameCreatedObj.team1.captain}>)`);
+        const serverSettingsForTemplates = await ServerSettingsCollection.findOne({ guildId: interaction.guild.id });
+        const joinTemplate =
+          serverSettingsForTemplates?.privateMessageTemplates?.joinMatch ||
+          "**You have to:** Join match (Created by <@{captainId}>)\n**Name:** {name}\n**Password:** {password}";
+        const createTemplate =
+          serverSettingsForTemplates?.privateMessageTemplates?.createMatch ||
+          "**You have to:** Create Custom Match\n**Name:** {name}\n**Password:** {password}";
+
+        const joinMessageText = joinTemplate
+          .replace(/{name}/g, valuesforpm.name.toString())
+          .replace(/{password}/g, valuesforpm.password.toString())
+          .replace(/{captainId}/g, gameCreatedObj.team1.captain)
+          .replace(/{ip}/g, valuesforpm.ip || "N/A")
+          .replace(/{roomName}/g, valuesforpm.name.toString());
+
+        const JoinMatchEmbed = new Discord.MessageEmbed().setColor(EMBED_COLOR_CHECK).setDescription(joinMessageText);
 
         [...gameCreatedObj.team1.memberIds, ...gameCreatedObj.team2.memberIds, gameCreatedObj.team2.captain].forEach(
           (id) => {
@@ -346,11 +371,15 @@ const execute = async (interaction, queueSize) => {
           }
         );
 
+        const createMessageText = createTemplate
+          .replace(/{name}/g, valuesforpm.name.toString())
+          .replace(/{password}/g, valuesforpm.password.toString())
+          .replace(/{ip}/g, valuesforpm.ip || "N/A")
+          .replace(/{roomName}/g, valuesforpm.name.toString());
+
         const CreateMatchEmbed = new Discord.MessageEmbed()
           .setColor(EMBED_COLOR_CHECK)
-          .addField("Name:", valuesforpm.name.toString())
-          .addField("Password:", valuesforpm.password.toString())
-          .addField("You have to:", "Create Custom Match");
+          .setDescription(createMessageText);
 
         const create1 = await client.users.fetch(gameCreatedObj.team1.captain);
         create1.send({ embeds: [CreateMatchEmbed] }).catch(() => {
